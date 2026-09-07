@@ -1,0 +1,36 @@
+name = "ccl"
+version = "0.1.0"
+defaultTargets = ["LocalMathlib", "CCL", "RFAP", "FiniteMeasure", "DivineProportions", "RationalRotations"]
+
+[[lean_lib]]
+name = "LocalMathlib"
+roots = ["mathlib"]
+globs = ["mathlib.+"]
+
+[[lean_lib]]
+name = "CCL"
+
+[[lean_lib]]
+name = "RFAP"
+
+[[lean_lib]]
+name = "FiniteMeasure"
+
+[[lean_lib]]
+name = "DivineProportions"
+
+[[lean_lib]]
+name = "RationalRotations"
+
+[[lean_exe]]
+name = "canonical_fraction_regression"
+root = "scripts.CanonicalFractionRegressionMain"
+
+[[lean_exe]]
+name = "canonical_pilot_benchmark"
+root = "scripts.CanonicalPilotBenchmark"
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4.git"
+rev = "v4.32.2"

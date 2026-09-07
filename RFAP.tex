@@ -1,0 +1,4577 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[a4paper,margin=30mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array,tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!55!black,
+  citecolor=blue!55!black,
+  urlcolor=blue!55!black,
+  pdftitle={A Finite Constructive Fundamental Theorem of Algebra and Rational-Function Argument Principle over the Gaussian Rationals},
+  pdfauthor={Anonymous},
+  pdfsubject={Winding certificates and rational-box root-approximation tracks}
+}
+\setlist{nosep,leftmargin=*}
+\setlength{\parskip}{0.35em}
+\setlength{\parindent}{1.25em}
+\setlength{\emergencystretch}{3em}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{construction}[theorem]{Construction}
+
+\newcommand{\Qi}{\mathbb{Q}(i)}
+\newcommand{\Zi}{\mathbb{Z}[i]}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Norm}[1]{\operatorname{N}\!\left(#1\right)}
+\newcommand{\Ree}{\operatorname{Re}}
+\newcommand{\Imm}{\operatorname{Im}}
+\newcommand{\Wind}{\operatorname{Wind}}
+\newcommand{\Ind}{\operatorname{Ind}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Disc}{\operatorname{Disc}}
+\newcommand{\diamq}{\operatorname{diag}^{2}}
+\newcommand{\Clear}{\operatorname{Clear}}
+\newcommand{\Count}{\operatorname{Count}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\half}{\tfrac12}
+\newcommand{\Defref}[1]{Definition~\ref{#1}}
+\newcommand{\Thmref}[1]{Theorem~\ref{#1}}
+\newcommand{\Corref}[1]{Corollary~\ref{#1}}
+\newcommand{\leanref}[1]{\par\smallskip\noindent
+  \emph{Formal verification:}\par\nobreak
+  {\raggedright\nolinkurl{#1}.\par}}
+
+\title{A Finite Constructive Fundamental Theorem of Algebra and Rational-Function Argument Principle over the Gaussian Rationals\\
+\large Signed winding certificates and rational-box approximation tracks}
+\author{Rich Lawrence}
+\date{August 8, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We prove a finite, computational analogue of the Fundamental Theorem of
+Algebra for polynomials over the Gaussian rationals.  For a squarefree
+polynomial $f\in\Qi[Z]$ of degree $d\ge2$, a finite algorithm returns exactly
+$d$ pairwise separated refinement machines.  Given a positive rational
+accuracy request, each machine returns a strictly refining rational box with
+clear boundary, algebraic winding number one, and squared diagonal below the
+requested bound.  Canonical Gaussian-rational anchors in these boxes satisfy
+explicit coefficient-dependent residual estimates, while the boxes also
+control Hermitian projective quadrance.  In degree one the zero is computed
+exactly.
+The construction does not assume that an ``irrational root'' is an
+object at all, completed or otherwise: the finite interface answering each
+finite request is the entire construction.  The construction computes winding
+through signed Euclidean remainder chains and uses fraction-free Sylvester
+eliminants, rational Taylor bounds, bounded searches, and recursion on natural
+numbers.
+
+We also derive a finite rational-function argument principle.  After
+executable cancellation and squarefree-multiplicity decomposition, the
+algorithm returns a jointly separated family of zero and pole sites, exact
+for linear factors and given by shrinking box tracks otherwise.  A site of
+multiplicity $m$ has winding $+m$ for a numerator factor and $-m$ for a
+denominator factor; the weighted totals are the reduced degrees, and a
+coefficient-computed outer square has winding
+$\deg F_{\rm red}-\deg G_{\rm red}$.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}
+
+The Fundamental Theorem of Algebra is ordinarily regarded as settled: every
+nonconstant polynomial over the complex numbers is said to have a complex
+zero.  That statement, however, is formulated inside a completed complex
+field, and every proof route known to us uses assumptions that this paper
+deliberately declines.  Analytic proofs begin with completed real and complex
+fields and use continuity there, whether through limits, the intermediate
+value theorem, compactness or minimization, integration, or related analytic
+machinery.  Algebraic and topological proofs may avoid some of those devices,
+but still appeal to infinitary structures or existence principles such as
+algebraic closures, infinite extensions, global collections of roots, or
+choice.  We do not dispute those proofs relative to their intended
+foundations.  We ask instead what can be proved when no completed real or
+complex field, actual infinite object or process, analytic principle, or
+choice-based existence argument is admitted.
+
+After fixing that discipline, this introductory section introduces, in
+dependency order, the finite definitions needed to state our constructive
+FTA and rational-function argument principle.  The remainder of the paper
+then serves as a full proof of those two theorems: each later section
+constructs and verifies part of the finite algorithms and the certificates
+they return.
+
+\subsection{Statement, terminology, and constructive discipline}
+
+Under our proposed discipline the classical conclusion cannot simply be restated:
+to assert an arbitrary complex zero would already assume the sort of object
+we have declined to introduce.  Our aim is the closest finite,
+calculation-based counterpart.  From finite Gaussian-rational coefficient
+data we compute coefficient-checked winding certificates and finitely many
+independent programs.  Each program answers any displayed finite accuracy
+request with a smaller rational box and finite proofs of refinement,
+clearance, winding, separation, and quantitative error bounds.  No
+irrational root is assumed to exist behind these answers, as a completed
+point or as an actual infinite sequence of approximations.  The finite
+request-and-answer interface is itself the result.
+
+\subsubsection{Related work}
+
+Choice-free constructive versions of the FTA already reach much further than
+a merely numerical approximation theorem.  Ruitenburg \cite{Ruitenburg}
+constructs roots over modulated Cauchy complex numbers without a choice
+principle.  Richman \cite{Richman} develops a completion suitable for a
+choiceless setting and identifies a monic polynomial with a completed limit
+multiset: a coherent method of approximately factoring the polynomial, with
+no advance selection of one member as a distinguished root.  This is
+conceptually close to the present output.  Indeed, each refinement procedure
+eventually returned here could be used as a computable name for a completed
+value: it answers every displayed positive rational accuracy request with
+finer rational data, from which one could subsequently form a Cauchy sequence
+and then a completed complex value.  We stop before doing so: no completion is
+formed, equivalent names are not quotiented, and convergence to or equality
+of completed points is not used.  Instead the finite program and each checked
+response are the theorem's objects.  For squarefree displayed input the
+output also keeps the degree-many refinement procedures separated and
+independently refinable, rather than completing one unordered multiset.
+Conversely, those
+constructive developments admit coefficients in their completed complex
+field, whereas our coefficient input is the narrower, fully displayed field
+$\Qi$.  The construction in Richman's paper is presented in prose, whereas
+here the finite interfaces, the programs producing their certificates, and
+their stated guarantees are formalized together in Lean.
+
+There is also a substantial formal lineage.  Geuvers, Wiedijk, and
+Zwanenburg \cite{GeuversWiedijkZwanenburg} formalize Kneser's constructive
+FTA in Coq.  Their real-number structure is axiomatically a Cauchy-complete
+Archimedean ordered field, and their complex numbers are pairs of such reals;
+the formal theorem therefore retains the completed carrier and its root
+conclusion.  Li and Paulson \cite{LiPaulson} formally verify in Isabelle/HOL
+that winding numbers can be evaluated through Cauchy indices, and combine
+that calculation with the classical argument principle to count complex
+roots in rectangles and half-planes.  Their work gives an effective,
+machine-checked root-counting procedure, but its correctness theorem still
+uses complex-analytic winding and existing complex roots.
+
+The closest algebraic route begins with Eisermann \cite{Eisermann}, who
+constructs a real-algebraic winding number from Sturm chains, derives the FTA
+over real-closed fields, and explains the resulting root-finding algorithm.
+This makes the classical theorem effective, but still assumes an ambient
+real-closed field and the polynomial intermediate value theorem.  Perrucci
+and Roy \cite{PerrucciRoyQuantitative} quantify that dependence, showing that
+degree-$d$ FTA by this route needs the intermediate value theorem only through
+degree $d^2$.  Perrucci and Roy \cite{PerrucciRoyWinding} later correct the
+unrestricted auxiliary product formula, give a fully additive algebraic
+winding, and extend the count to rational functions, including zeros and
+poles on rectangle boundaries.  Their result remains a
+theorem over $\mathbf C=\mathbf R[i]$, with $\mathbf R$ real closed, and counts
+zeros and poles already present in that algebraic closure.  Our finite
+Cauchy-index calculations begin from the same algebraic insight but construct
+signed sites without adopting that carrier or its collection of points.
+
+Finally, recursive rectangular isolation is itself classical algorithmic
+territory.  Wilf \cite{Wilf} gives a global bisection algorithm that repeatedly
+uses argument-principle root counts to refine complex isolating rectangles.
+The subdivision shape is therefore not new here.  What changes is its proof
+boundary and output: safe rational cuts, winding and clearance certificates,
+total independently callable refiners, and their machine-checked assembly
+without an analytic root-counting oracle.  Across these related lines, the
+distinctive claim of the present work is the combined package, not the
+novelty of constructive approximation, algebraic winding, or box subdivision
+taken separately.
+
+\subsubsection{Finite geometric language}
+
+This restriction governs the paper's geometric language as well.  Membership
+and path descriptions abbreviate calculations on displayed rational data.
+We use the following conventions.
+
+\begin{itemize}
+\item A rational interval or box is a finite record of endpoints.  To say
+that a displayed point is inside, outside, or on its boundary means that the
+corresponding decidable rational equalities and inequalities hold.
+
+\item A statement such as \emph{every $z\in B$} means that, given any
+displayed $z$, the box-membership inequalities imply the stated conclusion.
+It does not construct or range over a completed collection of all points of
+$B$.
+
+\item An oriented rational path is a finite list of affine
+parametrizations.  Its boundary image under a polynomial is the corresponding
+finite list of composed coordinate polynomials; it is not a completed curve
+or a set of all its point-values.
+
+\item A region is a rational box or cell record together with its predicates,
+and a family is always an explicitly finite list or finite-indexed record.
+Thus phrases such as \emph{on the path}, \emph{throughout the region}, and
+\emph{the image of the boundary} assert conditional identities or
+inequalities for displayed rational parameters.  They introduce no carrier
+containing all possible parameter values or points.
+\end{itemize}
+
+\subsubsection{Polynomial equality}
+\label{sec:polynomial-equality}
+
+A displayed polynomial is a normalized finite coefficient list, written from
+highest degree to constant term.  Leading zero entries are removed.  We
+define two displayed polynomials to be equal exactly when their normalized
+coefficient lists agree entry by entry.  For polynomials whose coefficients
+are themselves polynomials, and for the bivariate coordinate polynomials
+used below, the same definition is applied recursively to the finite
+coefficient data.
+
+Consequently every polynomial identity in this paper---including B\'ezout,
+factorization, derivative, substitution, and polynomial-matrix
+identities---means equality of normalized coefficient lists.  Evaluation by
+finite Horner calculation preserves such an identity, but agreement of
+values is never used as the definition of polynomial equality.  By contrast,
+an expression such as $p(q)=0$ is explicitly an equality of two displayed
+Gaussian-rational values after evaluation.
+
+\subsection{Machine verification}
+
+The finite machinery developed in this paper has also been implemented and
+verified in Lean.  The accompanying formalization contains the executable
+procedures together with machine-checked proofs of the paper-facing
+guarantees; the \emph{Formal verification} notes throughout identify the
+corresponding Lean declarations.  This is not only a transcription of the
+finished prose proof, but a second presentation in which the constructions
+themselves can be run and their full dependency boundary inspected.
+
+This is precisely the kind of mathematics that ought to benefit from machine
+verification.  Every object in the construction is finite data; every search
+has a displayed finite bound; every recursive call decreases an explicit
+natural measure; and every certificate is checked by finite algebra, integer
+arithmetic, or rational comparison.  There is no appeal to a picture, a
+limiting object, or an unnamed witness whose properties must be taken on
+trust.  A proof assistant can therefore check the argument at the same level
+at which the theorem is stated.  Lean also permits the programs and their
+correctness proofs to share one environment, so the formalization checks not
+only that the certificates imply the advertised conclusions, but that the
+finite procedures producing them are total and executable.  Machine
+verification is consequently part of the constructive discipline of this
+paper, not decorative evidence added after the mathematics was finished.
+
+The consequences of that choice for Lean, Mathlib, and the proof's audited
+axiom boundary are discussed in \cref{sec:formalization-audit}.
+
+\subsection{Definitions and theorem statements}
+
+The motivational and foundational preliminaries are now complete.  We begin
+the chain of finite definitions needed to state the two main theorems.  The
+definitions are arranged in dependency order and culminate first in the
+finite constructive FTA, and then in the finite rational-function argument
+principle.  This subsection deliberately prioritizes reaching those
+statements quickly: it retains the data needed to read them, while deferring
+most intuition, motivation, and derivation to the later section where each
+construction is first used.  The short links following each group point to
+that deferred development.
+
+Polynomial names are role-based.  The letter $f$ denotes the polynomial
+currently under the main winding, isolation, or FTA argument, whereas $p$
+denotes an arbitrary polynomial supplied to a reusable bound, auxiliary
+algorithm, or preprocessing step.  Letters such as $g,h$ denote temporary
+comparison polynomials, GCDs, or factors, and $U,V$ denote displayed Bézout
+cofactors.  In the rational-function statements, $F,G$ are the original
+numerator and denominator, $F_0,G_0$ their reduced cofactors, $P,Q$ a generic
+polynomial pair, and indexed $p_j,q_k$ individual squarefree factors.
+
+\subsubsection{Polynomial input certificates}
+
+\begin{definition}[squarefree certificate]
+\label{def:squarefree-certificate}
+For $f\in\Qi[Z]$, a \emph{squarefree certificate} is a checked nonzero
+constant output of the finite Euclidean GCD computation on $f,f'$.  Rescaling
+the computed Bézout cofactors gives displayed $U,V\in\Qi[Z]$ satisfying
+\[
+                       Uf+Vf'=1.
+\]
+\end{definition}
+
+\leanref{RFAP.Squarefree.SquarefreeCertificate;
+RFAP.Squarefree.CoprimeCertificate.identity}
+
+Its quantitative role is developed in \cref{sec:finite-bounds}.
+
+\subsubsection{Finite metric and box data}
+
+\begin{definition}[Gaussian-rational quadrance]
+\label{def:quadrance}
+For a displayed Gaussian rational $z=x+iy$, its \emph{quadrance} is
+\[
+             \Norm z=x^2+y^2\in\Q_{\ge0}.
+\]
+\end{definition}
+
+\leanref{RFAP.ConstructiveGaussian.Gaussian.normSq}
+
+\begin{definition}[Hermitian projective quadrance]
+\label{def:hermitian-projective-quadrance}
+For displayed $z,w\in\Qi$, their \emph{Hermitian projective quadrance} is
+\begin{equation}
+\label{eq:hermitian-projective-affine}
+ \chi^2(z,w)=
+ \frac{\Norm{z-w}}{(1+\Norm z)(1+\Norm w)}.
+\end{equation}
+This is the Gaussian-Hermitian affine analogue of Wildberger's projective
+quadrance \cite{Wildberger}; here it is used only as a rational error measure.
+\end{definition}
+
+\leanref{RFAP.Chordal.affineChordalSq}
+
+\begin{definition}[rational box]
+\label{def:rational-box}
+A \emph{rational box} is a tuple
+\[
+ B=(x_-,x_+,y_-,y_+)\in\Q^4,
+ \qquad x_-<x_+,\quad y_-<y_+.
+\]
+A point $z=x+iy$ belongs to $B$, written $z\in B$, when
+\[
+        x_-\le x\le x_+,\qquad y_-\le y\le y_+.
+\]
+The \emph{squared diagonal} of $B$ is
+\[
+       \diamq(B)=(x_+-x_-)^2+(y_+-y_-)^2.
+\]
+One box is contained in another, written $D\subseteq B$, when both of its
+coordinate intervals are contained; this symbol allows equality.  If
+$D=(u_-,u_+,v_-,v_+)$, write $D\subset B$ and call $D$ a \emph{strict box
+refinement} of $B$ when
+\[
+ x_-<u_-,\qquad u_+<x_+,\qquad
+ y_-<v_-,\qquad v_+<y_+.
+\]
+Thus $\subset$ always denotes strict coordinatewise containment between
+rational boxes in this paper, whereas $\subseteq$ denotes containment that
+may include equality.
+\end{definition}
+
+\leanref{RFAP.Boxes.Box; RFAP.Boxes.Box.Proper;
+RFAP.Boxes.Box.Contains; RFAP.Boxes.Box.Refines;
+RFAP.Boxes.Box.StrictInterior; RFAP.Boxes.Box.diagonalSq}
+
+\begin{definition}[box anchor and opposite corner]
+\label{def:box-corners}
+For the rational box $B$ of \cref{def:rational-box}, put
+\[
+ q_B=x_-+iy_-,
+ \qquad
+ v_B=x_++iy_+.
+\]
+Call $q_B$ the canonical rational \emph{anchor} of $B$.
+\end{definition}
+
+\leanref{RFAP.Boxes.Box.anchor; RFAP.Chordal.oppositeCorner}
+
+\begin{definition}[coefficient isolation square]
+\label{def:coefficient-isolation-square}
+Let
+\[
+       f(Z)=a_dZ^d+\sum_{k=0}^{d-1}a_kZ^k,
+       \qquad d\ge1,\quad a_d\ne0.
+\]
+Compute the two positive rational quantities
+\begin{equation}
+\label{eq:isolation-radius}
+ C_f=d\sum_{k=0}^{d-1}2^k\Norm{a_k},
+ \qquad
+ R_f=\max\left\{1,\frac{C_f}{\Norm{a_d}}+1\right\}.
+\end{equation}
+The \emph{coefficient isolation square} of $f$ is the rational box
+\[
+                     K_f=(-R_f,R_f,-R_f,R_f).
+\]
+\end{definition}
+
+\leanref{RFAP.GlobalWinding.denseLargeSquareRadius;
+RFAP.GlobalWinding.largeSquareBox}
+
+\begin{definition}[ambient box]
+\label{def:ambient-box}
+An \emph{ambient box} is a fixed rational box $A$
+together with the stored containment certificates $B\subseteq A$ for the
+working boxes, supplying one common domain for coefficient bounds.  In the
+main polynomial theorem $A=K_f$.
+\end{definition}
+
+\begin{definition}[common coefficient isolation square]
+\label{def:common-coefficient-isolation-square}
+For two nonzero polynomials $P,Q$, let $R_{P,Q}$ be the larger of the radii
+given by \eqref{eq:isolation-radius} for their nonconstant members.  A
+constant imposes no radius condition; if both polynomials are constant, put
+$R_{P,Q}=1$.  Their
+\emph{common coefficient isolation square} is
+\[
+ K_{P,Q}=(-R_{P,Q},R_{P,Q},-R_{P,Q},R_{P,Q}).
+\]
+\end{definition}
+
+For box records, $A$ denotes a fixed ambient box, $B$ a generic current or
+parent box, $C$ an intermediate child selected during subdivision, and $D$
+a returned refined box.  The symbols $K_f,K_R,K_{P,Q}$ are reserved for
+coefficient-computed outer isolation squares rather than arbitrary boxes.
+Displayed Gaussian-rational samples are denoted by $z,w,q$; $q_B$ and $v_B$
+are respectively the anchor and opposite corner of $B$.
+
+\begin{definition}[quadrance-Lipschitz certificate]
+\label{def:quadrance-lipschitz}
+Let $p\in\Qi[Z]$ and let $A$ be a rational box.  A
+\emph{quadrance-Lipschitz certificate} on $A$ is a displayed rational
+$L>0$ together with a finite proof that, for any displayed $z,w\in\Qi$,
+the two box-membership predicates imply
+\begin{equation}
+\label{eq:quadrance-lipschitz}
+             \Norm{p(z)-p(w)}\le L\Norm{z-w}.
+\end{equation}
+We write $L_1(p,A)$ for the particular coefficient-computed certificate
+constructed in \cref{sec:finite-bounds} from the finite divided-difference
+identity \eqref{eq:divdiff}.
+\end{definition}
+
+\leanref{RFAP.PolynomialBounds.denseLipschitzBound;
+RFAP.PolynomialBounds.normSq_eval_sub_eval_le_denseLipschitzBound}
+
+The metric estimates are proved in \cref{sec:finite-bounds}, and the degree
+winding of the coefficient isolation square in \cref{sec:global-winding}.
+
+\subsubsection{Certified states and finite tracks}
+
+\begin{definition}[boundary-clearance certificate]
+\label{def:boundary-clearance}
+For $f\in\Qi[Z]$ and a rational box $B$, a
+\emph{boundary-clearance certificate} is a displayed rational $m_B>0$
+together with four finite proofs that
+\[
+                 m_B\le\Norm{f(z)}
+\]
+on the four rational edge parametrizations of $B$.
+\end{definition}
+
+\leanref{RFAP.BoxClearance.BoundaryClearance}
+
+\begin{definition}[box winding]
+\label{def:rational-function-winding}
+Let $P,Q\in\Qi[Z]$, and let a rational box $B$ carry boundary-clearance
+certificates for both polynomials.  On each oriented affine edge, represent
+the direction of the displayed quotient $P(z)/Q(z)$ by the
+Gaussian-rational coordinate pair
+\[
+                         P(z)\overline{Q(z)}.
+\]
+The four finite signed Cauchy--Sturm edge calculations,
+realized explicitly in \cref{sec:winding-realization}, give the integer
+$\Wind_4(P/Q;B)$.  Its conventional normalization is
+\[
+                         \Wind_{P/Q}(B)=\Wind_4(P/Q;B)/4.
+\]
+For a polynomial $f$, the case $P=f,Q=1$ is denoted
+$\Wind_4(f;B)$ and $\Wind_f(B)$.  The finite constructions below use
+$\Wind_4$; the normalized notation is reserved for the headline statements.
+No winding is assigned without the required boundary-clearance certificates.
+\end{definition}
+
+\leanref{RFAP.RationalWinding.rationalQuadrupledWinding;
+RFAP.RationalWinding.rationalBoxWinding;
+RFAP.Winding.quadrupledBoxWinding; RFAP.Winding.boxWinding}
+
+\begin{definition}[winding-one certificate]
+\label{def:winding-one-certificate}
+A \emph{winding-one certificate} for $f$ and $B$ consists of its four finite
+edge-chain calculations, their endpoint signs, and the integer check
+\[
+                           \Wind_4(f;B)=4.
+\]
+A finite root state also carries the clearance certificate of
+\cref{def:boundary-clearance}.
+\end{definition}
+
+\leanref{RFAP.ShrinkingTrack.WindingOneState;
+RFAP.Winding.quadrupledBoxWinding}
+
+\begin{definition}[finite root state]
+\label{def:finite-root-state}
+Let $f\in\Qi[Z]$.  A \emph{finite root state} consists of
+\[
+       (B,\mathcal C,\mathcal W),
+\]
+where $B$ is a rational box, $\mathcal C$ is a boundary-clearance
+certificate, and $\mathcal W$ is a winding-one certificate.
+Its displayed sample is the anchor $q_B$ of
+\cref{def:box-corners}; the defining rational inequalities give
+$q_B\in B$.
+\end{definition}
+
+\leanref{RFAP.ShrinkingTrack.WindingOneState}
+
+\begin{definition}[refinement of root states]
+\label{def:root-state-refinement}
+A finite root state $\sigma'$ \emph{refines} a state $\sigma$ when its box
+$B'$ satisfies $B'\subseteq B$ in the sense of
+\Defref{def:rational-box}.  The state refinement is \emph{strict} when
+$B'\subset B$.  In either case its refinement certificate is the finite list
+of coordinate inequalities witnessing the indicated box relation.
+\end{definition}
+
+From this point $\sigma,\sigma'$ denote complete certified state records;
+$B,B'$ denote their box components when no other state data is needed.
+
+\begin{definition}[root-approximation track, RAT]
+\label{def:rat}
+A \emph{root-approximation track}, abbreviated \emph{RAT}, for $f$ consists
+of a finite initial root state $\sigma_0$ and a deterministic refinement rule.
+Given the current root state $\sigma$ and a displayed $\eps\in\Q_{>0}$, the rule
+terminates and returns one new root state
+\[
+                    (\sigma,\eps)\longmapsto
+                    \sigma'=\operatorname{refine}(\sigma,\eps).
+\]
+The returned state $\sigma'$ is a strict refinement of $\sigma$, and its box $B'$
+satisfies
+\[
+                  \diamq(B')\le\eps^2.
+\]
+\end{definition}
+
+\leanref{RFAP.ShrinkingTrack.WindingOneTrack;
+RFAP.ShrinkingTrack.ofInitial}
+
+\begin{definition}[finite observations and separation]
+\label{def:finite-observation-separation}
+An \emph{exact terminal} for a polynomial $p$ is a displayed $q\in\Qi$
+with exact evaluation $p(q)=0$.  A \emph{finite observation}
+is either an exact terminal or a RAT.  At any finite stage it has a rational
+\emph{support record}
+\[
+                   S=(x_-^S,x_+^S,y_-^S,y_+^S).
+\]
+For an exact terminal $q=a+ib$, put $S=(a,a,b,b)$.  For a RAT, make a
+finite call and use its returned box as $S$.
+
+Two finite observations are \emph{separated} when we can produce support
+records $S,T$ and a displayed $g\in\Q_{>0}$ satisfying one of
+\[
+\begin{array}{ll}
+ x_+^S+g\le x_-^T, & x_+^T+g\le x_-^S,\\[2pt]
+ y_+^S+g\le y_-^T, & y_+^T+g\le y_-^S.
+\end{array}
+\]
+A finite family is \emph{jointly separated} when such a certificate is
+stored for every pair of distinct observations.  Refining a RAT preserves
+every stored witness.
+\end{definition}
+
+\leanref{RFAP.Boxes.Box.Separated;
+RFAP.Boxes.Box.SeparationCertificate;
+RFAP.Boxes.Box.separationCertificate;
+RFAP.Boxes.Box.Separated.of_refines;
+RFAP.RationalSites.PositiveSideInput.ObservationsSeparated;
+RFAP.RationalSites.PositiveSideInput.separateObservations;
+RFAP.SignedMultiplicity.TrackPairSeparation}
+
+Certified states, separation, and total tracks are constructed in
+\cref{sec:local-extraction,sec:track-separation,sec:exact-isolation}.
+
+\subsubsection{The finite theorem}
+
+\begin{theorem}[finite constructive FTA]
+\label{thm:main}
+Let $f\in\Qi[Z]$ have degree $d\ge1$, nonzero leading coefficient, and a
+squarefree certificate.  A finite algorithm returns one of the following.
+\begin{enumerate}[label=(\roman*)]
+\item If $d=1$, it returns a directly computed exact terminal $q\in\Qi$ for
+$f$.
+\item If $d\ge2$, it returns a list of exactly $d$ RATs.
+\end{enumerate}
+In the second case the returned family has four certified properties.
+\begin{enumerate}[label=(\alph*)]
+\item \emph{Separation.}  Its initial boxes are pairwise separated in the
+sense of \Defref{def:finite-observation-separation}, viewing each RAT as a
+finite observation, with displayed positive rational gaps.
+\item \emph{Refinement.}  Every call terminates and returns the strict
+refinement required by \Defref{def:rat}, including the anchor $q_B$ of
+\Defref{def:box-corners}.
+\item \emph{Quantitative control.}  Let $K_f$ be the coefficient isolation
+square of \Defref{def:coefficient-isolation-square}.  Every returned box
+satisfies $B\subseteq K_f$.  The quadrance-Lipschitz certificate of
+\Defref{def:quadrance-lipschitz} gives
+\[
+             \Norm{f(q_B)}\le L_1(f,K_f)\diamq(B).
+\]
+For every displayed $z\in B$, one also has
+\[
+ \begin{aligned}
+ \chi^2(q_B,z)&\le\diamq(B),\\
+ \Norm{f(z)}&\le4L_1(f,K_f)\diamq(B),\\
+ \Norm{f(q_B)}&\le
+ L_1(f,K_f)(1+\Norm{q_B})(1+\Norm{v_B})\chi^2(q_B,v_B).
+ \end{aligned}
+\]
+In particular a request with $\diamq(B)\le\eps^2$ bounds both quantities by
+$\chi^2(q_B,z)\le\eps^2$ and
+$\Norm{f(q_B)}\le L_1(f,K_f)\eps^2$.  Consecutive anchors $q_B,q_{B'}$ satisfy
+$\Norm{q_{B'}-q_B}\le\diamq(B)$ for the earlier box.
+\item \emph{Finite maximality.}  No finite family of pairwise separated RATs
+supported in the same coefficient isolation square $K_f$ has length greater
+than $d$.
+\end{enumerate}
+The algorithm uses only finite arithmetic, bounded searches over displayed
+finite lists, and recursion on natural numbers.
+\end{theorem}
+
+\leanref{RFAP.BoxFTA.provePositive; RFAP.Paper.isolateByBoxes}
+
+The proof is completed in \cref{sec:exact-isolation}.
+
+\subsubsection{Rational-function data and statement}
+
+The rational-function theorem uses the same polynomial tracks.  The extra
+records below say exactly what cancellation, multiplicity, sign, and
+cross-side separation mean.
+
+\begin{definition}[reduced quotient presentation]
+\label{def:reduced-quotient}
+Let $F,G\in\Qi[Z]$ be displayed nonzero polynomials.  A
+\emph{reduced quotient presentation} consists of five displayed polynomials
+\[
+                        H,F_0,G_0,U,V\in\Qi[Z]
+\]
+and the identities
+\[
+ \begin{gathered}
+ F=HF_0,\qquad G=HG_0,\\
+ UF_0+VG_0=1,
+ \end{gathered}
+\]
+together with the finite-division degree checks
+\[
+ \deg H+\deg F_0=\deg F,
+ \qquad
+ \deg H+\deg G_0=\deg G.
+\]
+\end{definition}
+
+\leanref{RFAP.RationalReduction.ReducedPair;
+RFAP.RationalReduction.reduce}
+
+\begin{definition}[finite squarefree-multiplicity presentation]
+\label{def:squarefree-multiplicity-presentation}
+For a displayed nonzero polynomial $P$, a
+\emph{finite squarefree-multiplicity presentation} is an identity
+\[
+                 P=u\prod_{j=1}^{r}p_j^{m_j},
+\]
+where $u\in\Qi^\times$, every $p_j$ has positive degree and a squarefree
+certificate, every $m_j$ is a displayed positive integer, and every pair of
+distinct factors $p_j,p_k$ carries displayed $A_{jk},B_{jk}\in\Qi[Z]$ with
+the Bézout identity
+\[
+                 A_{jk}p_j+B_{jk}p_k=1.
+\]
+The record also contains the checked degree identity
+\[
+                  \sum_{j=1}^{r}m_j\deg p_j=\deg P.
+\]
+A nonzero constant has $r=0$ and the empty product.
+\end{definition}
+
+\leanref{RFAP.Factorization.Decomposition.positiveMultiplicityEntries;
+RFAP.Factorization.Decomposition.positiveMultiplicityDegree;
+RFAP.Multiplicity.PositiveEntry}
+
+\begin{definition}[signed rational-function site]
+\label{def:signed-site}
+Fix one factor $p_j$ in a presentation of a reduced numerator or
+denominator.  A \emph{signed site} records its positive multiplicity $m_j$,
+the sign $+$ for a numerator factor or $-$ for a denominator factor, and a
+finite observation in the sense of
+\Defref{def:finite-observation-separation}, with the following additional
+data.
+\begin{enumerate}[label=(\roman*)]
+\item If $\deg p_j=1$, the observation is an exact terminal $q$, together
+with a certificate that the opposite reduced cofactor does not vanish at
+$q$.
+\item If $\deg p_j\ge2$, the observation is one of the $\deg p_j$ RATs for
+$p_j$, together with
+finite boundary certificates showing that the full reduced quotient has
+winding $+4m_j$ on its returned boxes in the numerator case, or $-4m_j$ in
+the denominator case.
+\end{enumerate}
+\end{definition}
+
+\leanref{RFAP.RationalSites.PositiveSideInput.FactorObservation;
+RFAP.SignedMultiplicity.TrackSiteInput}
+
+The rational-function theorem uses the box winding of
+\Defref{def:rational-function-winding}.
+
+\begin{theorem}[finite constructive rational-function action principle]
+\label{thm:rfap-general}
+For displayed $F,G\in\Qi[Z]$ with $G\ne0$, a total finite algorithm returns
+one of the following.
+\begin{enumerate}[label=(\alph*)]
+\item If $F=0$, it returns the exact zero-numerator certificate.  It assigns
+no boundary winding to the identically zero quotient.
+\item If $F\ne0$, it returns a reduced quotient presentation in the sense of
+\Defref{def:reduced-quotient}; finite squarefree-multiplicity presentations
+of $F_0$ and $G_0$ in the sense of
+\Defref{def:squarefree-multiplicity-presentation}; and all their signed
+sites in the sense of \Defref{def:signed-site}.  The sites are jointly
+separated as finite observations in the sense of
+\Defref{def:finite-observation-separation}.
+
+The degree-weighted positive numerator multiplicities total $\deg F_0$, and
+the degree-weighted absolute denominator multiplicities total $\deg G_0$, as in
+\Defref{def:squarefree-multiplicity-presentation}.  The common coefficient
+isolation square $K_{F_0,G_0}$ of
+\Defref{def:common-coefficient-isolation-square} is boundary-clear for both
+cofactors and satisfies
+\[
+             \Wind_{F_0/G_0}(K_{F_0,G_0})
+                    =\deg F_0-\deg G_0
+\]
+in the sense of \Defref{def:rational-function-winding}.
+\end{enumerate}
+For every higher squarefree factor, any competing winding-one RAT supported
+in that factor's coefficient isolation square has a deterministically
+computed owner among the returned tracks.  Consequently every
+pairwise-separated competing family for that factor has cardinality at most
+its degree.
+\end{theorem}
+
+\leanref{RFAP.RationalSites.prove;
+RFAP.Paper.rationalFunctionArgumentPrinciple}
+
+The multiplicity presentations are constructed in
+\cref{sec:general-polynomials}; the remaining signed-site construction and
+the proof of \Thmref{thm:rfap-general} are completed in \cref{sec:rfap}.
+
+\subsection{Proof-route glossary}
+\label{sec:proof-route-glossary}
+
+These entries form a reader's map, not a second set of formal definitions:
+their dependency order makes the direction of the proof visible.
+
+\paragraph{Displayed data.}
+An object is \emph{displayed} when it is given by finite rational or integer
+data on which the stated calculation can actually be run.  A displayed
+polynomial is its normalized finite coefficient list; a displayed point has
+Gaussian-rational coordinates.
+
+\paragraph{Certificate.}
+A \emph{certificate} is displayed data together with finite checks implying
+the claimed property.  Later algorithms consume the certificate itself and
+return further certificates.
+
+\paragraph{Polynomial identity.}
+A \emph{polynomial identity} is a certificate that the normalized
+coefficient lists agree, as fixed in \cref{sec:polynomial-equality}.
+Substitution may turn such an identity into an
+identity of displayed values, but value agreement is not polynomial
+equality.
+
+\paragraph{Squarefree certificate.}
+The B\'ezout identity $Uf+Vf'=1$ is the \emph{squarefree certificate}.  Finite
+coefficient bounds for $U$ and $V$ turn it into quantitative squarefreeness:
+if the displayed value of $f$ is small in a box, the displayed value of
+$f'$ there cannot also be small.  The resulting conditional positive lower
+bound for $\Norm{f'}$ is the \emph{derivative margin} used by the Newton step.
+
+\paragraph{Quadrance, projective quadrance, and coefficient bound.}
+For a displayed Gaussian rational $z=x+iy$, we write
+$\Norm z=x^2+y^2\in\Q_{\ge0}$ for its norm, which will also refer to as its \emph{quadrance}. A
+\emph{Hermitian projective quadrance} is the normalized rational error
+\[
+             \chi^2(z,w)=
+             \frac{\Norm{z-w}}{(1+\Norm z)(1+\Norm w)};
+\]
+it is the bounded metric quantity controlled by the rational boxes.  A
+\emph{coefficient bound} is a rational number computed by a finite fold over
+a polynomial's coefficients and proved to bound a stated quadrance on a
+rational interval or box.  A \emph{quadrance-Lipschitz certificate} packages
+such bounds for $f(z)-f(w)$ and its first-order Taylor remainder.  A
+\emph{Horner majorant} is a coefficient bound computed by running a rational
+Horner recursion on the displayed coefficient list; it is not a maximum over
+an interval or box.
+
+\paragraph{Rational box, anchor, and ambient box.}
+A \emph{rational box} is four rational endpoints; its \emph{anchor} is its
+lower-left Gaussian-rational corner, and its \emph{squared diagonal} is the
+sum of the squares of its two side lengths.  An \emph{ambient box} is a fixed
+outer box in which coefficient bounds have been certified and inside which
+working boxes are refined.  A \emph{support record} is the same four-endpoint
+shape used uniformly for separation: a RAT supplies one of its boxes, while
+an exact terminal supplies the degenerate box at its displayed value.
+
+\paragraph{Boundary clearance.}
+A box is \emph{boundary-clear} for a polynomial when a certificate gives one
+positive rational lower bound for its quadrance on all four displayed edge
+parametrizations.  Clearance is what permits the winding calculation below
+and is preserved when a cleared edge is reused by subdivision.  Combining
+clearance with coefficient bounds gives a \emph{protected boundary radius}:
+within that rational coordinate distance, a new boundary still cannot make
+$f$ vanish.  A \emph{protected parent} is a proper boundary-clear box together
+with its refinement into a fixed ambient box; it retains exactly the finite
+local data needed for residual-driven Newton extraction, whether or not its
+winding is recorded.
+
+\paragraph{Signed remainder chain and Cauchy index.}
+A \emph{signed remainder chain} is the finite Euclidean remainder program
+for two rational coordinate polynomials.  Its endpoint sign variations give
+their \emph{Cauchy index}, a signed count of crossing events on a displayed
+interval.
+
+\paragraph{Box winding.}
+The \emph{box winding} $\Wind_4$ is the integer obtained by adding the four
+Cauchy indices on a boundary-clear box.  The subscript records the retained
+factor of four; a \emph{winding-one} box has $\Wind_4=4$.
+
+\paragraph{Eliminant, safe cut, and subdivision.}
+An \emph{eliminant} is a displayed nonzero rational polynomial whose nonzero
+value at a coordinate produces a boundary-clearance certificate for the
+corresponding vertical or horizontal line.  A bounded scan finds such a
+\emph{safe cut}.  Safe cuts divide a boundary-clear box into a finite grid of
+boundary-clear boxes, and winding additivity distributes the parent's box
+winding among those children.
+
+\paragraph{Leading--tail dominance, global winding budget, and local
+extraction.}
+Outside the \emph{coefficient isolation square}, the polynomial's displayed
+\emph{leading monomial} dominates its \emph{lower tail}; their explicit
+quadrance gap is the \emph{leading--tail dominance margin}.  On the boundary
+of that square this gives the \emph{global winding budget}
+$\Wind_4=4\deg f$.  \emph{Local extraction} repeatedly subdivides a child
+with nonzero winding and uses finite Newton and Taylor certificates to obtain
+a \emph{winding-one root state}: a rational box carrying both
+boundary-clearance and winding-one certificates.
+
+\paragraph{Newton centre, Newton band, and finite Rouch\'e certificate.}
+When the derivative margin proves $f'(a)\ne0$, the \emph{Newton centre} is
+the displayed Gaussian rational $c=a-f(a)/f'(a)$.  At radius $r>0$, a
+\emph{Newton band} is a rational rectangle whose left, right, bottom, and top
+sides are chosen respectively at coordinate distances between $r$ and $2r$
+from $c$.  Safe-cut searches choose its four sides.  A Taylor
+\emph{dominance certificate} proves on the complete boundary that the affine
+Newton term is larger than the nonlinear remainder; the finite Rouch\'e rule
+then transfers winding four from the affine term to the selected band.
+
+\paragraph{Root-approximation track (RAT) and finite observation.}
+A \emph{RAT} packages a winding-one root state with a total refinement
+program.  A request for a displayed accuracy returns a strictly smaller
+boundary-clear, winding-one box and its anchor.  A \emph{finite observation}
+is either such a RAT or an \emph{exact terminal}, which is a displayed
+Gaussian-rational point whose polynomial value is exactly zero.
+
+\paragraph{Residual.}
+The polynomial \emph{residual} at a displayed $q$ is the rational quadrance
+$\Norm{f(q)}$.  Small winding-one boxes give small residuals; with a protected
+parent, a sufficiently small residual conversely constructs a nearby RAT.
+
+\paragraph{Separation, ownership, and finite maximality.}
+\emph{Separation} is a positive rational coordinate gap between the support
+boxes of two observations.  Given output boxes $B_1,\ldots,B_d$ and a new
+refined box $D$, an \emph{ownership certificate} gives the unique index
+$j$, with $1\le j\le d$, for which $D\subset B_j$; the $j$th returned RAT is
+called the \emph{owner}.  For a separated family these assignments are
+distinct, giving \emph{finite
+maximality}: there can be no more competing RATs than output boxes.
+
+\paragraph{Squarefree preprocessing, multiplicity presentation, and signed
+site.}
+\emph{Squarefree preprocessing} is the terminating finite gcd recursion that
+splits a displayed polynomial into squarefree occurrences and then folds
+overlaps into pairwise-coprime factors.  Its output is a \emph{multiplicity
+presentation}: a polynomial identity built from those factors and positive
+integer powers.  A \emph{signed site} is an exact terminal or RAT for one such
+factor, labelled by its multiplicity and by $+$ for a numerator or $-$ for a
+denominator.
+
+\paragraph{Reduced quotient and rational-function action principle.}
+A \emph{reduced quotient} cancels the displayed common factor of numerator
+and denominator and certifies the remaining pair as coprime.  Applying the
+polynomial construction to its multiplicity presentations produces jointly
+separated signed sites; adding their signed winding contributions is the
+finite rational-function action principle.
+
+\paragraph{Protected quotient residual.}
+At a numerator site for a reduced quotient $P/Q$, a finite B\'ezout
+certificate, a source RAT, and its current state form a \emph{local quotient
+context}.  Its finite refinement gives a \emph{protected state} on which the
+opposite polynomial $Q$ has displayed positive lower and finite upper
+quadrance bounds.  The \emph{quotient residual} is $\Norm{P(q)/Q(q)}$.  At a
+denominator site the roles are exchanged: the shrinking quantity is the
+reciprocal residual $\Norm{Q(q)/P(q)}$, and the protected opposite polynomial
+is $P$.
+
+\section{Finite polynomial bounds over \texorpdfstring{$\Qi$}{Q(i)}}
+\label{sec:finite-bounds}
+
+This section computes coefficient bounds for displayed polynomials on
+rational boxes.  These bounds turn squarefree certificates into the
+boundary-clearance and local-extraction certificates used later.
+
+The estimates in this section have three simple jobs.  The coefficient
+$L_1$ controls how much a polynomial value can change across a small box;
+$L_2$ controls the error made by replacing the polynomial there with its
+affine Taylor expression; and the pair $(\tau,\eta)$ turns squarefreeness
+into the implication ``small value, non-small derivative.''  Later
+constructions repeatedly choose a rational scale at which these three
+controls are simultaneously valid.  The formulas are lengthy because every
+constant is computed from coefficients, not because they introduce three
+different notions of approximation.
+
+\begin{lemma}[finite quadrance algebra]
+\label{lem:finite-quadrance-algebra}
+For displayed $z,w,u,v\in\Qi$,
+\[
+ \Norm{zw}=\Norm z\Norm w,
+ \qquad
+ \Norm{u+v}\le 2\bigl(\Norm u+\Norm v\bigr).
+\]
+For every displayed finite list $u_1,\dots,u_m\in\Qi$,
+\begin{equation}
+\label{eq:finite-sum}
+ \Norm{u_1+\cdots+u_m}\le m\sum_{j=1}^{m}\Norm{u_j}.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Expand the two rational coordinates for the product identity.  The
+two-term inequality follows after subtracting the left side from the right:
+the difference is a sum of two rational squares.  For the finite-list bound,
+apply
+\[
+       (r_1+\cdots+r_m)^2\le m\sum_{j=1}^{m}r_j^2
+\]
+separately to the real and imaginary coordinate lists and add the two
+inequalities.  The difference in the displayed scalar inequality is a finite
+sum of squares.
+\end{proof}
+
+\leanref{RFAP.ConstructiveGaussian.Gaussian.normSq_mul;
+RFAP.ConstructiveGaussian.Gaussian.normSq_add_le_two;
+RFAP.ConstructiveFiniteNorm.normSq_gaussianSum_le}
+
+\begin{lemma}[rational-box norm bound]
+\label{lem:box-norm-bound}
+For a rational box $B$, put
+\[
+  R_B=2\max\{x_-^2,x_+^2,y_-^2,y_+^2\}.
+\]
+Every displayed $z\in B$ satisfies $\Norm z\le R_B$.
+\end{lemma}
+
+\begin{proof}
+The rational interval inequalities for the two coordinates give
+\[
+ \Ree(z)^2\le\max\{x_-^2,x_+^2\},\qquad
+ \Imm(z)^2\le\max\{y_-^2,y_+^2\}.
+\]
+Both right-hand sides are at most the maximum of all four endpoint squares.
+Adding the two bounds proves the claim.
+\end{proof}
+
+\leanref{RFAP.Boxes.Box.normSqBound;
+RFAP.Boxes.Box.normSq_le_normSqBound}
+
+Quadrance is squared Euclidean magnitude kept rational, so no square root is
+required.  The Hermitian projective quadrance used here is the
+Gaussian-Hermitian analogue, on the affine chart, of Wildberger's algebraic
+projective separation of homogeneous directions: $z,w$ represent $[z:1]$
+and $[w:1]$.  Its displayed rational value is the error measure used below.
+
+\begin{proposition}[box calibration of Hermitian projective quadrance]
+\label{prop:box-projective-calibration}
+For a rational box $B$ and every displayed $z,w\in B$,
+\begin{equation}
+\label{eq:projective-box-upper}
+       \chi^2(z,w)\le\Norm{z-w}\le\diamq(B).
+\end{equation}
+At the distinguished opposite corners the exact comparison is
+\begin{equation}
+\label{eq:box-projective-exact}
+ \diamq(B)=
+ (1+\Norm{q_B})(1+\Norm{v_B})\chi^2(q_B,v_B).
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The denominator in \cref{eq:hermitian-projective-affine} is at least one.
+Membership in $B$ bounds the real and imaginary coordinate differences by the two side
+lengths, proving \cref{eq:projective-box-upper}.  For $q_B,v_B$, the numerator
+$\Norm{q_B-v_B}$ is exactly $\diamq(B)$; clearing the explicitly positive
+denominator gives \cref{eq:box-projective-exact}.
+\end{proof}
+
+\leanref{RFAP.Chordal.affineChordalSq_le_box_diagonal;
+RFAP.Chordal.diagonalSq_eq_cornerWeight_mul_affineChordalSq}
+
+\begin{lemma}[finite Horner evaluation bound]
+\label{lem:eval-bound}
+Let $p\in\Qi[Z]$ and let $B$ be a rational box.  Write the displayed
+high-to-low coefficient list of $p$ as
+$[a_n,\ldots,a_0]$.  Starting from $M_0=0$, perform the finite recurrence
+\[
+        M_{k+1}=2\bigl(M_kR_B+\Norm{a_{n-k}}\bigr).
+\]
+Then every $z$ satisfying the predicate of $B$ obeys
+$\Norm{p(z)}\le M_{n+1}$.  Simultaneously folding
+$S_{k+1}=2(S_kR_B+M_k)$ gives the finite divided-difference coefficient used
+below.  Both outputs are rational computations on the finite coefficient
+list.
+\end{lemma}
+
+\begin{proof}
+Induct over the Horner fold and use
+$\Norm{uv}=\Norm u\Norm v$ and
+$\Norm{u+v}\le2(\Norm u+\Norm v)$ at each step.  Applying the same induction
+to two Horner evaluations gives the displayed $S_k$ recurrence.
+\end{proof}
+
+\leanref{RFAP.PolynomialBounds.denseHornerNormBounds;
+RFAP.PolynomialBounds.normSq_eval_le_denseEvalNormBound}
+
+The same finite fold has the following one-variable rational specialization.
+We name it separately because it is the form used below for B\'ezout
+cofactors on parameter intervals.
+
+\begin{definition}[rational-interval Horner majorant]
+\label{def:interval-horner-majorant}
+Let $a\le b$ be displayed rationals, write $I=[a,b]$, and put
+\[
+                         R_I=\max\{a^2,b^2\}.
+\]
+For $W\in\Q[T]$ with displayed high-to-low coefficient list
+$[w_n,\ldots,w_0]$, start from $H_0=0$ and perform the finite recurrence
+\[
+                  H_{k+1}=2\bigl(H_kR_I+w_{n-k}^2\bigr).
+\]
+The resulting rational
+\[
+                         \mathcal H_I(W):=H_{n+1}
+\]
+is the \emph{Horner majorant} of $W$ on $I$.  It is computed from the finite
+coefficient list and the two endpoints; it is not a maximum taken over the
+parameters satisfying the interval predicate.
+\end{definition}
+
+\begin{lemma}[rational-interval Horner bound]
+\label{lem:interval-horner-majorant}
+For the data of \cref{def:interval-horner-majorant} and every displayed
+$t\in\Q$ satisfying $a\le t\le b$,
+\[
+                         W(t)^2\le\mathcal H_I(W).
+\]
+The majorant is a nonnegative rational computed by one finite fold over the
+displayed coefficient list.
+\end{lemma}
+
+\begin{proof}
+The endpoint inequalities give $t^2\le R_I$.  Let $E_0=0$ and
+$E_{k+1}=E_kt+w_{n-k}$ be the corresponding Horner evaluation.  If
+$E_k^2\le H_k$, then
+\[
+ \begin{aligned}
+ E_{k+1}^2
+   &\le 2\bigl(E_k^2t^2+w_{n-k}^2\bigr)\\
+   &\le 2\bigl(H_kR_I+w_{n-k}^2\bigr)=H_{k+1}.
+ \end{aligned}
+\]
+Finite induction gives $W(t)^2=E_{n+1}^2\le H_{n+1}$.  The same induction,
+starting from $H_0=0$, proves $H_k\ge0$ at every step.
+\end{proof}
+
+\leanref{RFAP.PathClearance.evalSqBoundStep;
+RFAP.PathClearance.evalSqBound;
+RFAP.PathClearance.eval_sq_le_evalSqBound}
+
+\begin{lemma}[explicit geometric depth]
+\label{lem:reciprocal-search}
+For displayed rationals $w\ge0$ and $\eps>0$, define
+\[
+ \operatorname{geometricDepth}(w,\eps)
+       :=\left\lceil\frac{2w}{\eps}\right\rceil\in\N.
+\]
+Then
+\[
+ \left(\frac23\right)^{\operatorname{geometricDepth}(w,\eps)}w
+       \le\eps.
+\]
+Finite minima of displayed positive rationals remain positive.
+\end{lemma}
+
+\begin{proof}
+Put $N=\operatorname{geometricDepth}(w,\eps)$.
+The constructive rational ceiling gives $2w/\eps\le N$.  The finite
+Bernoulli induction
+$(3/2)^N\ge1+N/2$ then implies
+$(2/3)^Nw\le\eps$.  Positivity of a finite minimum is proved by induction on
+the displayed list.
+\end{proof}
+
+\leanref{RFAP.SafeCandidates.geometricDepth;
+RFAP.SafeCandidates.geometricDepth_sufficient}
+
+\begin{lemma}[finite divided-difference bound]
+\label{lem:divided-difference-bound}
+Let $p\in\Qi[Z]$ and let $B$ be a rational box.  Write
+$p(Z)=\sum_{j=0}^{n}a_jZ^j$.  The finite identity
+\begin{equation}
+\label{eq:divdiff}
+ p(z)-p(w)=(z-w)D_p(z,w),\qquad
+ D_p(z,w)=\sum_{j=1}^{n}a_j\sum_{r=0}^{j-1}z^{j-1-r}w^r
+\end{equation}
+computes a rational $L_1(p,B)>0$ such that, whenever $z,w\in B$,
+\begin{equation}
+\label{eq:lip1}
+ \Norm{p(z)-p(w)}\le L_1(p,B)\Norm{z-w}
+\end{equation}
+and hence supplies the certificate of
+\Defref{def:quadrance-lipschitz}.
+\end{lemma}
+
+\begin{proof}
+Factor $z^j-w^j$ as
+$(z-w)\sum_{r=0}^{j-1}z^{j-1-r}w^r$ and sum the finitely many monomial
+identities to obtain \eqref{eq:divdiff}.  The resulting $D_p$ is a displayed
+finite bivariate polynomial.  Apply the Horner bounds of
+\cref{lem:eval-bound} in the two variables using the box norm bound of
+\cref{lem:box-norm-bound}, and combine the result with norm
+multiplicativity from \cref{lem:finite-quadrance-algebra}.
+\end{proof}
+
+\leanref{RFAP.PolynomialBounds.denseLipschitzBound;
+RFAP.PolynomialBounds.normSq_eval_sub_eval_le_denseLipschitzBound}
+
+\begin{lemma}[finite Taylor remainder bound]
+\label{lem:finite-taylor-bound}
+Let $p\in\Qi[Z]$ and let $B$ be a rational box.  There is a displayed finite
+polynomial $T_p(z,w)$ satisfying
+\begin{equation}
+\label{eq:taylor}
+ p(z)-p(w)-p'(w)(z-w)=(z-w)^2T_p(z,w),
+\end{equation}
+and the same finite coefficient calculation computes $L_2(p,B)>0$ such
+that, whenever $z,w\in B$,
+\begin{equation}
+\label{eq:lip2}
+ \Norm{p(z)-p(w)-p'(w)(z-w)}
+       \le L_2(p,B)\Norm{z-w}^2.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Expand every monomial $z^j=(w+(z-w))^j$ by the finite binomial identity and
+remove its constant and linear terms.  Every remaining term contains
+$(z-w)^2$, giving the displayed $T_p$.  Apply the same finite Horner bound as
+in \cref{lem:divided-difference-bound} and use
+$\Norm{(z-w)^2}=\Norm{z-w}^2$.
+\end{proof}
+
+\leanref{RFAP.PolynomialBounds.denseTaylorRemainderBound;
+RFAP.PolynomialBounds.normSq_dense_taylor_remainder_le_denseTaylorRemainderBound}
+
+The first estimate is the squared-distance form of the usual Lipschitz
+bound, retained so that every quantity remains rational.  Both results are
+finite polynomial identities followed by rational inequalities.
+
+The identity $Uf+Vf'=1$ is the useful content of the squarefree certificate.
+Direct substitution says that $f$ and $f'$ cannot both vanish at one
+displayed argument; finite bounds on $U,V$ strengthen this to the numerical
+rule needed below: a small value of $f$ forces a non-small derivative.  This
+is the local derivative control used by the extraction step.
+
+\begin{lemma}[finite squarefree-cofactor bounds]
+\label{lem:squarefree-cofactor-bounds}
+Let the squarefree certificate supply displayed $U,V\in\Qi[Z]$ satisfying
+the identity
+\[
+                         Uf+Vf'=1.
+\]
+For any rational box $B$, apply the Horner recurrence of
+\cref{lem:eval-bound} separately to the high-to-low coefficient lists of
+$U,V$, obtaining $H_U,H_V$, and put
+\[
+                       M_U=\max\{1,H_U\},
+                       \qquad
+                       M_V=\max\{1,H_V\}.
+\]
+Then $M_U,M_V\ge1$, and every displayed $z\in B$ satisfies
+\[
+                  \Norm{U(z)}\le M_U,
+                  \qquad
+                  \Norm{V(z)}\le M_V.
+\]
+\end{lemma}
+
+\begin{proof}
+The two applications of \cref{lem:eval-bound} give
+$\Norm{U(z)}\le H_U$ and $\Norm{V(z)}\le H_V$.  Each output is at most its
+maximum with $1$, which also proves the two positivity bounds.
+\end{proof}
+
+\leanref{RFAP.PolynomialBounds.denseHornerNormBounds;
+RFAP.PolynomialBounds.normSq_eval_le_denseEvalNormBound}
+
+From these bounds define
+\begin{equation}
+\label{eq:bez-margins}
+       \tau=\frac{1}{16M_U},\qquad \eta=\frac{1}{16M_V}.
+\end{equation}
+
+\begin{lemma}[derivative margin from the Bézout certificate]
+\label{lem:derivative-margin}
+For every rational $z$ satisfying the predicate of $B$,
+\[
+  \Norm{f(z)}\le\tau \quad\Longrightarrow\quad \Norm{f'(z)}\ge\eta.
+\]
+\end{lemma}
+
+\begin{proof}
+From $1=U(z)f(z)+V(z)f'(z)$ and \eqref{eq:finite-sum},
+\[
+  1\le 2M_U\Norm{f(z)}+2M_V\Norm{f'(z)}.
+\]
+If the displayed conclusion failed, then both products
+$M_U\Norm{f(z)}$ and $M_V\Norm{f'(z)}$ would be at most $1/16$.
+The right side would therefore be at most $1/4$, contradicting $1\le1/4$.
+\end{proof}
+
+\leanref{RFAP.LocalExtraction.derivativeMargin;
+RFAP.LocalExtraction.derivativeMargin_le_of_small_residual;
+RFAP.LocalExtraction.derivative_ne_zero_of_small_residual}
+
+\section{Sturm chains as finite programs}
+
+This section constructs the signed remainder chains whose endpoint
+variations give Cauchy indices.  These indices are the inputs to box winding.
+
+We use the signed Euclidean remainder sequence as the \emph{definition} of
+the index over $\Q$.  The proof below represents every crossing event by a
+rational isolating interval and a refinement routine.  Throughout this paper,
+every Cauchy--Sturm index is
+normalized at twice the conventional scale: an interior crossing contributes
+$\pm2$ and an endpoint crossing contributes $\pm1$.  This normalization is
+built directly into the endpoint variation defined below, avoiding an
+intermediate halving followed by a doubling in the index.  We write simply
+$\Var_a$ and $\Ind_a^b$, since no competing undoubled variation or index is
+used.
+
+\begin{definition}[rational interval partition]
+\label{def:rational-interval-partition}
+A rational interval $I=[a,b]$ is the endpoint pair $(a,b)$ together with the
+predicate $a\le t\le b$ on a displayed rational $t$.  An \emph{interval
+partition} rooted at $I$ is a finite binary tree of such endpoint records.
+An internal node $J=[u,v]$ stores a displayed rational cut $c$ with $u<c<v$
+and has the two children $[u,c]$ and $[c,v]$.  A \emph{leaf} is a terminal
+node, and the finitely many leaves of the tree are extracted as a finite
+list.
+\end{definition}
+
+\leanref{RFAP.SturmEventPartition.Cell;
+RFAP.SturmEventPartition.SafeSplit;
+RFAP.SturmEventPartition.Subdivision;
+RFAP.SturmEventPartition.Subdivision.leaves}
+
+\begin{definition}[central-third cut]
+\label{def:central-third-cut}
+For a proper rational interval $J=[u,v]$, its \emph{open central third} is
+specified by the two rational bounds
+\[
+ u+\frac{v-u}{3}<c< u+2\frac{v-u}{3}.
+\]
+A \emph{central-third cut} is a displayed rational $c$ satisfying these
+inequalities.
+\end{definition}
+
+\begin{lemma}[central-third contraction]
+\label{lem:central-third-contraction}
+If $c$ is a central-third cut of $J=[u,v]$, then its two child widths obey
+\[
+ c-u<\frac23(v-u),\qquad v-c<\frac23(v-u).
+\]
+\end{lemma}
+
+\begin{proof}
+Subtract the left central-third inequality from $c$, and subtract the right
+one from $v$.
+\end{proof}
+
+\begin{lemma}[finite safe-cut search]
+\label{lem:safe-central-third-cut}
+Let $H\in\Q[T]$ be a displayed nonzero polynomial, let $D\in\N$ be a
+displayed bound with $\deg H\le D$, and let $J$ be a proper rational
+interval.  A bounded search returns an $H$-safe central-third cut $c$:
+$c$ lies in the open central third of $J$ and $H(c)\ne0$.
+\end{lemma}
+
+\begin{proof}
+Place $D+1$ distinct, equally spaced rational candidates strictly between
+the two central-third bounds and evaluate $H$ on that finite list.  If all
+evaluations vanished, repeated exact division by the corresponding linear
+factors $T-c$ would force $H$ to have degree at least $D+1$.  Hence one
+candidate has nonzero evaluation.  Return the first such candidate in the
+displayed list.
+\end{proof}
+
+\leanref{RFAP.SafeCandidates.centralLower;
+RFAP.SafeCandidates.centralUpper;
+RFAP.SafeCandidates.centralBounds;
+RFAP.SafeCandidates.centralSearchValue;
+RFAP.SafeCandidates.centralSearchValue_spec;
+RFAP.SafeCandidates.centralSearchValue_contraction}
+
+The central-third condition and a finite guard polynomial solve two
+independent problems at once.  Choosing near the middle guarantees visible
+geometric progress, while avoiding the finitely many guarded zeros makes the
+new endpoint safe for the sign calculation encoded by $H$.  The scan of
+$D+1$ candidates is the finite substitute for saying ``choose a generic
+cut.''  For a signed chain, the product of its members will be exactly such
+a guard.
+
+\subsection{Signs, variations, and signed remainders}
+
+\begin{definition}[doubled sign variation]
+\label{def:sign-variation}
+For $r\in\Q$, $\operatorname{sgn}(r)\in\{-1,0,1\}$ is decidable.  For a
+finite list $s=(s_0,\dots,s_n)$ define
+\begin{equation}
+\label{eq:variation}
+ \Var(s)=\sum_{j=1}^{n}|\operatorname{sgn}(s_{j-1})-
+                                  \operatorname{sgn}(s_j)|.
+\end{equation}
+This doubled variation is an integer: a direct switch between positive and
+negative contributes two, while a comparison between zero and a nonzero
+value contributes one.  For polynomials $S_0,\dots,S_n\in\Q[T]$ and
+$a\in\Q$, write
+\[
+ \Var_a(S_0,\dots,S_n)=\Var(S_0(a),\dots,S_n(a)),\qquad
+ \Var_a^b=\Var_a-\Var_b.
+\]
+Note this is twice the normal definition, but removing the $1/2$ here removes the
+need to double the contributions for the Cauchy--Sturm index calculation.
+\end{definition}
+
+\leanref{RFAP.Sturm.signJump; RFAP.Sturm.variation2;
+RFAP.Sturm.endpointVariation2}
+
+To interpret this number, freeze the parameter at $t$ and read the signs of
+the chain from left to right.  $\Var_t$ records sign switches on the
+doubled scale fixed at the start of this section: a zero at one end of a
+comparison is a half-switch on the conventional scale and therefore
+contributes one here.  As $t$ moves, the signed remainder identities force
+changes at an interior chain member to
+cancel between its two neighbours.  A net change survives only at the first
+member $S_0$, namely the denominator of $R/S$ after GCD reduction.  Thus
+$\Var_a-\Var_b$ is a finite algebraic ledger of the oriented
+pole-crossing events of $R/S$ between the two endpoints.  It extracts from
+endpoint signs the information ordinarily read from the graph of the
+quotient.
+
+\begin{definition}[reduced signed remainder chain]
+\label{def:reduced-signed-remainder-chain}
+Given $R,S\in\Q[T]$ with $S\ne0$, run the finite extended Euclidean program
+to remove their displayed common GCD $g$, and put $S_0=S/g$.  If $R=0$,
+the returned chain is $[S_0]$.  Otherwise put $S_1=R/g$ and repeatedly
+perform
+\begin{equation}
+\label{eq:srem}
+       S_{j+1}=Q_jS_j-S_{j-1},\qquad \deg S_{j+1}<\deg S_j,
+\end{equation}
+stopping immediately before the zero remainder.  The resulting finite list
+of nonzero polynomials is the \emph{reduced signed remainder chain} of
+$(R,S)$.
+\end{definition}
+
+\begin{lemma}[termination and coprimality of the signed chain]
+\label{lem:signed-chain-termination}
+The computation in \cref{def:reduced-signed-remainder-chain} terminates after
+finitely many steps.  Every consecutive pair in the returned chain is
+coprime, and hence no two consecutive members can vanish at the same
+displayed rational parameter.
+\end{lemma}
+
+\begin{proof}
+At every nonterminal Euclidean step, the natural degree count of the next
+remainder is strictly smaller than that of the current divisor.  Recursion
+on that displayed natural number therefore terminates.  The initial reduced
+pair comes with the B\'ezout identity returned by extended Euclid, and the
+identity in \eqref{eq:srem} transports coprimality to each consecutive pair.
+Indeed, if consecutive members $S_j,S_{j+1}$ have displayed cofactors $U,V$
+with
+\[
+                       US_j+VS_{j+1}=1,
+\]
+then substitution of any displayed $t\in\Q$ preserves this polynomial
+identity and gives
+\[
+             U(t)S_j(t)+V(t)S_{j+1}(t)=1.
+\]
+If both chain members vanished at $t$, the left-hand side would be zero,
+contradicting $0\ne1$ in $\Q$.
+\end{proof}
+
+\leanref{RFAP.Sturm.signedRemainderChain;
+RFAP.Sturm.signedRemainderChain_length_le;
+RFAP.Sturm.signedRemainderChain_all_nonzero;
+RFAP.Sturm.noAdjacentZero_signedRemainderChain;
+RFAP.SturmRootCount.reducedChain}
+
+\begin{corollary}[safe cut for a signed remainder chain]
+\label{cor:sturm-safe-cut}
+For a reduced signed remainder chain $S_0,\ldots,S_m$, put
+\[
+                         G:=\prod_{j=0}^{m}S_j.
+\]
+There is a finite central-third search returning a cut $c$ at which every
+$S_j(c)$ is nonzero.  Both child intervals contract by the factor in
+\cref{lem:central-third-contraction}.
+\end{corollary}
+
+\begin{proof}
+By definition, all members of the returned chain are nonzero polynomials,
+so their finite product $G$ is nonzero.  Apply
+\cref{lem:safe-central-third-cut} to $G$ and its computed degree.  Since a
+nonzero product has no zero factor, $G(c)\ne0$ proves $S_j(c)\ne0$ for every
+member of the finite chain.  The contraction conclusion is
+\cref{lem:central-third-contraction}.
+\end{proof}
+
+\leanref{RFAP.SturmRootCount.chainGuard;
+RFAP.SturmRootCount.safeCut;
+RFAP.SturmRootCount.safeCut_avoids_chain;
+RFAP.SturmRootCount.safeCut_contraction}
+
+\begin{definition}[finite Cauchy--Sturm index]
+\label{def:index}
+For rational endpoints $a,b$, set the index to zero when $R=0$ or $S=0$.
+Otherwise, for the chain $S_0,\ldots,S_m$ of
+\cref{def:reduced-signed-remainder-chain}, define
+\[
+       \Ind_a^b\!\left(\frac{R}{S}\right)
+          =\Var_a^b(S_0,S_1,\dots,S_m).
+\]
+This is exactly the integer stored by the finite program on rational
+coefficients and endpoints.  The doubled
+normalization is already built into \eqref{eq:variation}, so no additional
+factor is inserted here.  Reversing the endpoints changes the sign by
+definition.
+\end{definition}
+
+\leanref{RFAP.Sturm.cauchyIndex2}
+
+The word \emph{index} therefore refers to a signed event count, not to a
+location.  A nonzero index certifies that the interval contains an
+uncancelled crossing event.  Its sign records orientation, and its magnitude
+is the net count retained by the refinement machinery.
+
+The local event scanner used below is entirely finite.  It
+refines a rational interval to a coefficient-computed natural depth, records
+stable signs for the complete reduced chain on every leaf, and checks the
+resulting endpoint variation there.
+
+\begin{theorem}[finite Sturm calculation]
+\label{thm:sturm}
+For the displayed $R,S$ of \cref{def:index}, the index and the safe
+partition program of \cref{cor:sturm-safe-cut} satisfy the following
+identities.
+\begin{enumerate}[label=(\alph*)]
+\item Subdivision and reversal:
+\[
+ \Ind_a^b(R/S)+\Ind_b^c(R/S)=\Ind_a^c(R/S),\qquad
+ \Ind_b^a(R/S)=-\Ind_a^b(R/S).
+\]
+\item If the displayed denominator is nonzero at both endpoints, the
+reduced index is even.
+\item If $S\ne0$, then for an input rational interval $I=[a,b]$ a
+coefficient-computed finite event partition returns a finite leaf list.  For each leaf
+$J=[u_J,v_J]$, its classification stores formal signs for
+the GCD-reduced numerator and denominator, proves that at least one of those
+signs is nonzero, proves their stability against the displayed endpoint
+evaluations at $u_J$ and $v_J$, and identifies
+$\Ind_{u_J}^{v_J}(R/S)$ with the resulting finite endpoint event formula.
+The partition also proves the exact telescoping identity
+\[
+ \Ind_a^b(R/S)
+ =\sum_{J\text{ a leaf}}\Ind_{u_J}^{v_J}(R/S).
+\]
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Part (a) follows by addition and subtraction of the three displayed endpoint
+variations.  For (b), the finite parity lemma for a coprime signed remainder
+chain is applied at the two clear endpoints.  For (c), use the safe
+central-third cut of \cref{cor:sturm-safe-cut} at every internal node.
+A coefficient-computed depth makes the finite sign classifier succeed on
+every terminal interval.  Its stored stability equalities give the endpoint
+event formula for that leaf.  Subdivision distributes the parent index to
+its two children, and induction over the same finite depth telescopes the
+leaf list.
+\end{proof}
+
+\leanref{RFAP.Sturm.cauchyIndex2_add; RFAP.Sturm.cauchyIndex2_reverse;
+RFAP.SturmRootCount.reducedCauchyIndex2_even;
+RFAP.SturmEventPartition.classifyEvents;
+RFAP.SturmEventPartition.leafEvent_index2;
+RFAP.SturmEventPartition.eventSubdivision_cellIndex2_sum}
+
+\subsection{Univariate approximation tracks and positive lower bounds}
+
+\begin{definition}[one-dimensional nonzero-event track]
+\label{def:one-dimensional-track}
+A nonzero-event track for a displayed nonzero polynomial $p$ is a rational
+interval $[u,v]$ carrying the explicit certificate
+\[
+                         \Ind_u^v(p'/p)\ne0,
+\]
+together with the deterministic refinement program from
+\cref{thm:sturm}.  A positive rational width request is answered by one
+finite nested interval of at most that width, again carrying an explicit
+nonzero-index certificate.
+\end{definition}
+
+\leanref{RFAP.OneDimensional.ZeroEventTrack}
+
+The retained certificate is exactly the nonzero signed event that survives
+each refinement request; it is not silently strengthened to count one.
+
+Termination uses only the natural geometric-depth computation of
+\cref{lem:reciprocal-search}.  Each safe
+central-third cut of \cref{cor:sturm-safe-cut} contracts the retained
+interval by the fixed rational factor $2/3$;
+the depth needed to cross a positive requested width is computed before the
+finite recursion starts.
+
+\begin{theorem}[finite one-dimensional event machinery]
+\label{thm:1d-isolation}
+For rational polynomials $R,S$ with $S\ne0$ and a rational input interval
+$I=[a,b]$, the finite event-tree algorithm of \cref{thm:sturm} classifies
+all leaves $J=[u_J,v_J]$ and proves
+\[
+ \Ind_a^b(R/S)
+   =\sum_{J\text{ a leaf}}\Ind_{u_J}^{v_J}(R/S).
+\]
+For every explicitly selected nonzero-event track of
+\cref{def:one-dimensional-track}, a total refinement function answers each
+positive rational width request by a nested interval of at most that width
+while retaining a nonzero Sturm index.  Successive answers are nested by
+composition of their displayed rational refinement certificates.
+\end{theorem}
+
+\begin{proof}
+Let $V_t$ denote the doubled endpoint variation of the GCD-reduced signed
+chain at $t$.  At an internal interval $[u,v]$, the safe cut $c$ of
+\cref{cor:sturm-safe-cut} gives the exact integer calculation
+\[
+\begin{aligned}
+ \Ind_u^v(R/S)
+   &=V_u-V_v\\
+   &=(V_u-V_c)+(V_c-V_v)\\
+   &=\Ind_u^c(R/S)+\Ind_c^v(R/S).
+\end{aligned}
+\]
+Induction over the finite binary tree now replaces each parent by the sum of
+its two children.  Write
+$\mathcal I([r,s])=\Ind_r^s(R/S)$, and let $L$ and $M$ be the finite leaf
+lists of the left and right subtrees.  Associativity of integer addition and
+the finite-list identity
+\[
+ \sum_{J\in L\mathbin{++}M}\mathcal I(J)
+   =\sum_{J\in L}\mathcal I(J)+\sum_{J\in M}\mathcal I(J)
+\]
+give exactly the displayed leaf sum.  This is the subdivision part of
+\cref{thm:sturm} written out algebraically.
+
+Now let a track for $p$ have current interval $[u,v]$ and nonzero count
+\[
+                         C=\Ind_u^v(p'/p)\ne0.
+\]
+At its safe cut $c$, compute the two displayed integers
+\[
+ C_L=\Ind_u^c(p'/p),\qquad C_R=\Ind_c^v(p'/p),
+ \qquad C=C_L+C_R.
+\]
+Integer equality is decidable.  If $C_L\ne0$, retain $[u,c]$.  Otherwise
+$C_L=0$, and $C_R=0$ would force $C=0$; hence retain $[c,v]$ with the
+certificate $C_R\ne0$.  Thus one finite step preserves the nonzero count
+and refines the current interval.
+
+If $w_n$ is the retained width after $n$ steps, the central-third
+inequalities give
+\[
+                 w_{n+1}<\frac23w_n,
+ \qquad          w_N\le\left(\frac23\right)^Nw_0.
+\]
+For a request $\eps>0$, the natural number
+$N=\operatorname{geometricDepth}(w_0,\eps)$ of
+\cref{lem:reciprocal-search} makes the last quantity at most $\eps$.
+Executing exactly those $N$ steps therefore
+returns the requested nonzero-event interval.  For successive requests,
+the coordinate inequalities for the second returned interval refine those
+for the first, and those for the first refine the original; transitivity of
+the two endpoint inequalities proves the claimed nesting.
+\end{proof}
+
+\leanref{RFAP.OneDimensional.classify;
+RFAP.OneDimensional.ClassifiedPartition.indexSum;
+RFAP.SturmNonzeroEvent.step;
+RFAP.SturmNonzeroEvent.refineN_refines;
+RFAP.SturmNonzeroEvent.refineN_width_le;
+RFAP.SafeCandidates.geometricDepth_sufficient;
+RFAP.OneDimensional.ZeroEventTrack.request;
+RFAP.OneDimensional.ZeroEventTrack.request_refines;
+RFAP.OneDimensional.ZeroEventTrack.request_width_le;
+RFAP.OneDimensional.ZeroEventTrack.request_countNonzero;
+RFAP.OneDimensional.ZeroEventTrack.successive_refines}
+
+The next construction converts symbolic coprimality into a numerical safety
+margin.  The identity $UP+VQ=1$ says that $P$ and $Q$ cannot vanish
+simultaneously.  Bounding the displayed cofactors $U,V$ on the interval says
+more: the pair $(P(t),Q(t))$ cannot even become simultaneously too small.
+This is the recurring mechanism by which a finite algebraic certificate
+becomes boundary clearance.
+
+\begin{lemma}[finite Bézout clearance]
+\label{lem:positive-lower}
+Let $P,Q\in\Q[T]$, let $I=[a,b]$, and supply displayed $U,V$ with the
+polynomial identity $UP+VQ=1$.  Using
+\cref{def:interval-horner-majorant}, put
+\[
+ M=\max\{1,\mathcal H_I(U)+\mathcal H_I(V)\},
+ \qquad m=\frac1M.
+\]
+Then $m\in\Q_{>0}$ and
+\[
+             P(t)^2+Q(t)^2\ge m
+\]
+for every rational parameter satisfying $a\le t\le b$.  The same certificate
+restricts unchanged to every displayed rational subinterval.
+\end{lemma}
+
+\begin{proof}
+By \cref{lem:interval-horner-majorant},
+\[
+                  U(t)^2+V(t)^2\le M.
+\]
+The exact two-square identity gives
+\[
+ 1=(U(t)P(t)+V(t)Q(t))^2
+ \le (U(t)^2+V(t)^2)(P(t)^2+Q(t)^2)
+ \le M(P(t)^2+Q(t)^2).
+\]
+Since $M\ge1$, division gives $m=1/M>0$ and the required lower bound.  A
+displayed rational subinterval has no new members, so the same inequality
+and the same $m$ restrict unchanged.
+\end{proof}
+
+\leanref{RFAP.PathClearance.bezoutSqMajorant;
+RFAP.PathClearance.certificateOfCoprime;
+RFAP.PathClearance.Certificate.restrict}
+
+\section{Algebraic winding on rational paths}
+\label{sec:winding-realization}
+
+This section combines the four Cauchy indices on a rational-box boundary
+into box winding and proves the finite rules used by subdivision and the
+rational-function action principle.
+
+\begin{definition}[oriented affine edges and box boundary]
+\label{def:oriented-box-boundary}
+An oriented segment from $u$ to $v$ is the affine expression
+$e(t)=u+t(v-u)$ under the parameter predicate $0\le t\le1$.  The boundary
+of a rational box $B$ is its positively oriented four-element list
+$\operatorname{edges}(B)$ of such expressions.  The notation $\partial B$
+used in prose abbreviates this finite list and its four parameter predicates.
+\end{definition}
+
+Clearance is the numerical guardrail around this boundary.  Its positive
+margin says not only that the boundary value avoids zero, but by how much;
+that margin later permits perturbation, subdivision, and comparison without
+changing the winding calculation.
+
+The intended winding picture is familiar: traverse the four edges and watch
+the direction of the polynomial or quotient value.  Its net signed number of
+turns about zero is recovered here without angles or a continuous image
+curve, using only finitely many signed real-axis crossings.
+
+\begin{definition}[division-free quotient edge]
+\label{def:division-free-quotient-edge}
+For displayed $P,Q\in\Qi[Z]$ and an oriented edge $e$ of
+\cref{def:oriented-box-boundary}, write
+\[
+ \begin{aligned}
+ P(e(t))&=A_{P,e}(t)+iB_{P,e}(t),\\
+ Q(e(t))&=A_{Q,e}(t)+iB_{Q,e}(t),
+ \end{aligned}
+ \qquad A_{P,e},B_{P,e},A_{Q,e},B_{Q,e}\in\Q[t].
+\]
+The division-free direction polynomial on the edge is
+\[
+ \begin{aligned}
+ H_{P/Q,e}(t)
+   &:=P(e(t))\overline{Q(e(t))}\\
+   &=A_{P,e}A_{Q,e}+B_{P,e}B_{Q,e}
+     +i\bigl(B_{P,e}A_{Q,e}-A_{P,e}B_{Q,e}\bigr)\\
+   &=:C_{P/Q,e}(t)+iD_{P/Q,e}(t).
+ \end{aligned}
+\]
+Here conjugation is performed on the two rational coordinate polynomials
+of the affine edge; it is not treated as a holomorphic polynomial operation
+in $Z$.
+\end{definition}
+
+\begin{lemma}[division-free quotient direction]
+\label{lem:quotient-direction}
+At a displayed edge parameter $t$, put $z=e(t)$.  If $Q(z)\ne0$, then
+\begin{equation}
+\label{eq:quotient-direction}
+             \frac{P(z)}{Q(z)}
+             =\frac{H_{P/Q,e}(t)}{\Norm{Q(z)}},
+             \qquad \Norm{Q(z)}>0.
+\end{equation}
+If also $P(z)\ne0$, then $H_{P/Q,e}(t)\ne0$, so
+$C_{P/Q,e}(t)$ and $D_{P/Q,e}(t)$ do not vanish simultaneously.
+\end{lemma}
+
+\begin{proof}
+The Gaussian-rational identities are
+\[
+ Q(z)\overline{Q(z)}=\Norm{Q(z)},\qquad
+ Q(z)^{-1}=\frac{\overline{Q(z)}}{\Norm{Q(z)}}.
+\]
+The norm is a sum of two rational squares and is strictly positive when
+$Q(z)\ne0$, proving
+\eqref{eq:quotient-direction}.  If $P(z)$ and $Q(z)$ are both nonzero, their
+product $P(z)\overline{Q(z)}$ is nonzero in the Gaussian-rational field;
+therefore its two rational coordinates cannot both be zero.
+\end{proof}
+
+\leanref{RFAP.RationalWinding.quotientPathReal;
+RFAP.RationalWinding.quotientPathImag;
+RFAP.RationalWinding.quotientEdge}
+
+\begin{definition}[quotient winding]
+\label{def:quotient-winding}
+Let $B$ carry boundary-clearance certificates for $P$ and $Q$.  The
+contribution of an oriented edge and the box winding are the finite
+Cauchy--Sturm calculations
+\[
+ \Wind_4(P/Q;e)
+   :=\Ind_0^1\!\left(\frac{C_{P/Q,e}}{D_{P/Q,e}}\right),
+ \qquad
+ \Wind_4(P/Q;B)
+   :=\sum_{e\text{ in }\operatorname{edges}(B)}\Wind_4(P/Q;e),
+\]
+where the index is that of \cref{def:index}.  This formula uses only the
+displayed rational coordinate polynomials; it never evaluates a division
+by $Q$.  The clearance certificates required in
+\cref{def:rational-function-winding}, together with
+\cref{lem:quotient-direction}, prove that $H_{P/Q,e}$ never has both
+coordinates zero under an edge predicate.
+\end{definition}
+
+\leanref{RFAP.RationalWinding.quotientBoundary;
+RFAP.RationalWinding.rationalQuadrupledWinding}
+
+Concretely, along one edge the finite Sturm program reads the endpoint signs
+of $(C_{P/Q,e},D_{P/Q,e})$ on rational event intervals.  A change recorded
+in the sign ledger for $D_{P/Q,e}$ is the division-free surrogate for a
+real-axis crossing; the stored sign data for $C_{P/Q,e}$ and the orientation
+of that change determine its signed contribution.  The program preserves
+this integer event count together with its rational interval and sign
+certificates.  When the four oriented edges are joined, endpoint half-events at
+a shared vertex cancel, and the remaining signed crossing total is exactly
+the net number of turns.  This is the bridge between the sign variations of
+the preceding section and the box winding used throughout the rest of the
+paper.
+
+\begin{lemma}[polynomial specialization]
+\label{lem:polynomial-winding-specialization}
+For $P=f$ and $Q=1$, the quotient-edge construction satisfies
+$H_{f/1,e}=f(e)=A_{f,e}+iB_{f,e}$ and hence
+\[
+ \Wind_4(f;e)=\Ind_0^1\!\left(\frac{A_{f,e}}{B_{f,e}}\right),
+ \qquad
+ \Wind_4(f;B)=\sum_{e\text{ in }\operatorname{edges}(B)}\Wind_4(f;e).
+\]
+This is the polynomial specialization of \cref{def:quotient-winding}.
+\end{lemma}
+
+\begin{proof}
+The coordinate polynomials of the constant denominator $1$ are $1$ and
+$0$.  Hence \cref{def:division-free-quotient-edge} gives
+\[
+ \begin{aligned}
+ H_{f/1,e}
+   &=f(e)\overline{1}=f(e),\\
+ C_{f/1,e}
+   &=A_{f,e}\cdot1+B_{f,e}\cdot0=A_{f,e},\\
+ D_{f/1,e}
+   &=B_{f,e}\cdot1-A_{f,e}\cdot0=B_{f,e}.
+ \end{aligned}
+\]
+Unfolding the edge definition therefore gives
+\[
+ \Wind_4(f;e)
+   =\Wind_4(f/1;e)
+   =\Ind_0^1\!\left(\frac{C_{f/1,e}}{D_{f/1,e}}\right)
+   =\Ind_0^1\!\left(\frac{A_{f,e}}{B_{f,e}}\right).
+\]
+Summing this equality over the four entries of
+$\operatorname{edges}(B)$ proves the box identity.
+\end{proof}
+
+\leanref{RFAP.RationalWinding.rationalQuadrupledWinding;
+RFAP.Winding.quadrupledBoxWinding}
+
+Every $\Wind_4$ value is obtained by four finite Euclidean chains, and every
+winding-one state stores the exact equality $\Wind_4(f;B)=4$.
+
+\begin{lemma}[edge reversal]
+\label{lem:winding-edge-reversal}
+For an oriented affine edge $e$, put $e^{\mathrm{rev}}(t):=e(1-t)$.
+Whenever the edge winding of a displayed polynomial or division-free
+quotient expression $F$ is defined,
+\[
+             \Wind_4(F;e^{\mathrm{rev}})=-\Wind_4(F;e).
+\]
+\end{lemma}
+
+\begin{proof}
+The coordinate polynomials on $e^{\mathrm{rev}}$ are those on $e$ after the
+affine change $t\mapsto1-t$.  Thus traversing $e^{\mathrm{rev}}$ from
+$t=0$ to $t=1$ is the same finite Cauchy--Sturm calculation as traversing
+$e$ from $t=1$ to $t=0$.  The reversal identity in \cref{thm:sturm} negates
+that index.
+\end{proof}
+
+\leanref{RFAP.Sturm.cauchyIndex2_reverse}
+
+\begin{lemma}[box subdivision]
+\label{lem:winding-add}
+If a vertical or horizontal rational cut divides a proper box $B$ into
+$B_1$ and $B_2$, then
+\[
+       \Wind_4(f;B)=\Wind_4(f;B_1)+\Wind_4(f;B_2).
+\]
+The corresponding statement holds for a finite rectangular grid.
+\end{lemma}
+
+\begin{proof}
+In the sum of the two child boundary lists, the internal cut occurs once in
+each orientation.  Its two contributions cancel by
+\cref{lem:winding-edge-reversal}.  Each outer edge of $B$ is either unchanged
+or divided into two consecutive rationally parametrized segments; the
+subdivision identity in \cref{thm:sturm} replaces the contributions of those
+segments by the contribution of the original edge.  The remaining sum is
+therefore exactly $\Wind_4(f;B)$.  Iterating the same finite argument over
+the cuts proves the rectangular-grid case.
+\end{proof}
+
+\leanref{RFAP.Winding.quadrupledBoxWinding_vertical_split;
+RFAP.Winding.quadrupledBoxWinding_horizontal_split}
+
+\begin{proposition}[coordinate winding]
+\label{prop:coordinate-normalization}
+For every displayed $R>0$, let $B=[-R,R]^2$.  For the coordinate polynomial
+$Z$, one has $\Wind_4(Z;B)=4$.
+\end{proposition}
+
+\begin{proof}
+Substitute the four affine edge parametrizations of the symmetric square.
+Each index is the variation of a chain of degree at most one; the finite sign
+table gives edge contributions $0,2,0,2$, whose sum is four.
+\end{proof}
+
+\leanref{RFAP.GlobalWinding.coordinate_symmetric_normalization}
+
+\begin{proposition}[winding parity]
+\label{prop:parity}
+If a displayed polynomial $f$ carries a boundary-clearance certificate on a
+proper rational box $B$, then $\Wind_4(f;B)$ is even.
+\end{proposition}
+
+\begin{proof}
+The four endpoint parity corrections telescope at the shared vertices of
+the oriented boundary, so the box sum is even.
+\end{proof}
+
+\leanref{RFAP.Winding.quadrupledBoxWinding_even_of_boundaryCoprime}
+
+\begin{proposition}[product formula]
+\label{prop:product}
+If $f$ and $g$ carry quantitative boundary-clearance certificates on a
+proper rational box $B$, then
+\[
+       \Wind_4(fg;B)=\Wind_4(f;B)+\Wind_4(g;B).
+\]
+In particular, for every nonzero constant $c$,
+$\Wind_4(c;B)=0$.
+\end{proposition}
+
+\begin{proof}
+On one edge write $f=A+iB$ and $g=C+iD$.  Then
+\[
+ \Ree(fg)=AC-BD,\qquad \Imm(fg)=AD+BC.
+\]
+The finite local product calculation has one correction determined by the
+endpoint signs of $(A,B,C,D)$.  Its generic and coordinate-degenerate
+branches are finite sign tables.  Summing around the four sides cancels each
+outgoing correction with the incoming correction at the same vertex; the
+clearance hypotheses remove simultaneous-zero cases.  What remains is the
+displayed identity.  This follows the algebraic product strategy of
+Eisermann \cite{Eisermann}, but does not invoke its unrestricted auxiliary
+formula.  Perrucci and Roy \cite{PerrucciRoyWinding} explain why that formula
+needs additional cases.  Here a finite guard partition resolves simultaneous
+coordinate events, the coordinate-degenerate branches are checked
+separately, and only then are the endpoint corrections telescoped.
+\end{proof}
+
+\leanref{RFAP.WindingProduct.quadrupledBoxWinding_mul_of_boundaryClearances}
+
+\begin{theorem}[finite quotient winding formula]
+\label{thm:rfap-quotient}
+Let $P,Q\in\Qi[Z]$, and let $C$ be a proper rational box whose boundary
+carries positive clearance certificates for both polynomials.  The generic
+division-free construction of \cref{def:quotient-winding} satisfies
+\[
+       \Wind_4(P/Q;C)=\Wind_4(P;C)-\Wind_4(Q;C).
+\]
+\end{theorem}
+
+\begin{proof}
+On one oriented affine edge write
+\[
+ P(e)=A+iB,
+ \qquad
+ Q(e)=C+iD.
+\]
+The direction polynomial from the generic construction is
+\[
+ P(e)\overline{Q(e)}=(AC+BD)+i(BC-AD).
+\]
+Apply the finite product calculation underlying
+\cref{prop:product} to the coordinate pairs $(A,B)$ and $(C,-D)$.
+It expresses the edge index of their product as the sum of their two edge
+indices plus a correction determined entirely by the endpoint signs.
+Conjugation changes the sign of the second edge index.  After the four
+oriented edges are added, the outgoing correction at each vertex cancels
+the incoming correction at that same vertex.  Boundary clearance excludes
+the simultaneous-zero cases in every finite sign table.  The remaining
+identity is therefore the stated subtraction of windings.  Every step is a
+signed Euclidean-remainder calculation over $\Q$.
+\end{proof}
+
+\leanref{RFAP.RationalWinding.rationalQuadrupledWinding_eq_sub_of_boundaryClearances}
+
+\subsection{Certified homotopies and a finite Rouché lemma}
+
+\begin{definition}[dominance certificate]
+\label{def:dominance-certificate}
+A \emph{dominance certificate} for displayed polynomial expressions $F,G$
+on a rationally parametrized boundary consists of a positive rational margin
+$m$ and a finite polynomial-inequality proof of
+\[
+        \Norm{F(t)}-\Norm{G(t)}\ge m>0
+\]
+under each rational edge predicate.
+\end{definition}
+
+Every later use constructs the margin in
+\cref{def:dominance-certificate} directly from finite coefficient bounds;
+no unbounded search is hidden in the certificate.  Intuitively, it records
+enough room to add $G$ to $F$ without allowing the boundary value to reach
+zero.
+
+\begin{lemma}[half-plane winding]
+\label{lem:half-plane}
+If the four coordinate-polynomial expressions obtained by composing a
+displayed polynomial $h$ with the edges of a proper rational box $B$ have
+quantitative clearance and satisfy $\Ree h(e(t))>0$ under their rational
+parameter predicates, then $\Wind_4(h;B)=0$.
+\end{lemma}
+
+\begin{proof}
+The imaginary part may cross zero, but the real part is positive at every such crossing.  In the endpoint variation formula the two half-crossings on adjacent edges cancel, and no crossing of the negative real ray occurs.  Equivalently, apply the product formula after multiplying by a fixed rational constant; the four composed edge expressions then carry certificates for the displayed half-plane predicate.
+\end{proof}
+
+\leanref{RFAP.HalfPlane.quadrupledBoxWinding_eq_zero_of_positive_real}
+
+\begin{lemma}[finite dominance homotopy]
+\label{lem:dominance-homotopy}
+Let $F,G$ be displayed polynomial expressions on a proper rational-box
+boundary, with clearance for $F$.  A dominance certificate in the sense of
+\cref{def:dominance-certificate} proves
+\[
+       \Wind_4(F+G;B)=\Wind_4(F;B).
+\]
+\end{lemma}
+
+\begin{proof}
+On each affine edge form the displayed coordinate polynomial for
+$\overline F(F+G)$.  The exact two-square identity and the supplied positive
+margin make its real coordinate positive throughout the edge.  Finite Horner
+bounds turn the same margin into a clearance certificate for $F+G$.
+The half-plane formula and the finite product formula then identify the edge
+index of $F+G$ with that of $F$, up to one explicit endpoint correction.
+The four corrections telescope around the box, leaving the displayed winding
+identity.
+\end{proof}
+
+\leanref{RFAP.WindingHomotopy.quadrupledBoxWinding_add_of_boundaryNormDominance}
+
+\begin{corollary}[finite Rouché rule]
+\label{cor:rouche}
+Whenever a rational norm bound proves $\Norm{g(z)}<\Norm{f(z)}$ on the clear
+boundary of a proper rational box $B$,
+\[
+        \Wind_4(f+g;B)=\Wind_4(f;B).
+\]
+\end{corollary}
+
+\begin{proof}
+The supplied strict rational inequality is a dominance certificate.
+Lemma~\ref{lem:dominance-homotopy} gives the displayed identity.
+\end{proof}
+
+\leanref{RFAP.WindingHomotopy.quadrupledBoxWinding_add_of_boundaryNormDominance}
+
+\section{Clearing axis-parallel lines}
+
+This section constructs eliminants and uses them to compute safe vertical and
+horizontal cuts.  Their boundary-clearance certificates make rational-box
+subdivision available to local extraction.
+
+Write
+\[
+ f(x+iy)=A_f(x,y)+iB_f(x,y),\qquad A_f,B_f\in\Q[x,y].
+\]
+
+A vertical coordinate $x=c$ is usable when an explicit B\'ezout calculation
+rules out simultaneous vanishing of the two displayed coordinate
+polynomials along that line; a horizontal coordinate is treated analogously.
+The two eliminants below are univariate guard polynomials for those
+calculations.  A nonzero guard value at $c$ lets us construct the required
+B\'ezout and quantitative-clearance certificates using finite arithmetic.
+The guards thereby choose safe grid lines.
+
+\subsection{Safe axis-parallel cuts}
+
+\begin{definition}[fraction-free scaled-inverse recursion]
+\label{def:fraction-free-scaled-inverse}
+Let $M$ be a square matrix over $\Qi[T]$.  Its scaled-inverse data $(s,N)$
+are defined by recursion on its dimension.  In dimension zero put $s=1$ and
+take the empty matrix for $N$.  If $M$ has positive dimension $n+1$, write
+\[
+ M=\begin{pmatrix}a&u\\ v&M_{\mathrm{tail}}\end{pmatrix},
+ \qquad S=aM_{\mathrm{tail}}-vu,
+\]
+where $a$ is a scalar, $u$ is a $1\times n$ row, $v$ is an $n\times1$
+column, and $M_{\mathrm{tail}}$ and $S$ are $n\times n$ matrices.  If
+recursion on the smaller matrix $S$ returns $(s',N')$, return
+\[
+ s=as',\qquad
+ N=\begin{pmatrix}
+      s'+uN'v&-auN'\\
+      -aN'v&a^2N'
+    \end{pmatrix}.
+\]
+\end{definition}
+
+\begin{lemma}[scaled-inverse identity]
+\label{lem:scaled-inverse-identity}
+If the recursion of \cref{def:fraction-free-scaled-inverse} returns $(s,N)$
+from $M$, then the following identities hold over $\Qi[T]$:
+\[
+                         NM=sI=MN.
+\]
+\end{lemma}
+
+\begin{proof}
+Induct on the dimension.  The zero-dimensional case is immediate.  In
+positive dimension, for $S=aM_{\mathrm{tail}}-vu$, the induction hypothesis
+gives the polynomial-matrix identities
+\[
+                 N'S=s'I=SN'.
+\]
+Multiplying the two block matrices in
+\cref{def:fraction-free-scaled-inverse}, the off-diagonal blocks of $NM$
+reduce to
+\[
+ s'u-uN'(aM_{\mathrm{tail}}-vu)=s'u-us'=0,
+ \qquad -a^2N'v+a^2N'v=0,
+\]
+while its diagonal blocks reduce to $as'$ and $aN'S=as'I$.
+Thus $NM=as'I=sI$.  Multiplication in the other order uses $SN'=s'I$ and
+gives $MN=as'I$ in the same way.
+\end{proof}
+
+\leanref{RFAP.SeparatedVariables.scaledInverseData_coefficientIdentity}
+
+\begin{definition}[separated-variable Schur--Sylvester eliminants]
+\label{def:axis-eliminants}
+Put
+\[
+       P_T(U)=f(U),\qquad Q_T(U)=\overline f(2T-U),
+\]
+where $\overline f$ means coefficientwise conjugation, and let $S_x(T)$ be
+their displayed $2d\times2d$ Sylvester coefficient matrix over $\Qi[T]$.
+Write $(s_x,N_x)$ for the scaled-inverse data of $S_x$ from
+\cref{def:fraction-free-scaled-inverse}.  Define $E_x\in\Q[T]$ by taking
+coefficientwise the imaginary part of $s_x$ when the real part of its
+leading coefficient is zero, and otherwise taking its coefficientwise real
+part.
+
+Apply the same construction to the quarter-turned polynomial
+$f^{\circlearrowleft}(Z)=f(iZ)$; write $(s_y,N_y)$ for its scaled-inverse
+data and $E_y\in\Q[T]$ for the rational coordinate selected by the same
+rule.  Finally put
+\[
+             D_f=\max\{\deg E_x,\deg E_y\}.
+\]
+\end{definition}
+
+\begin{lemma}[nonzero Schur--Sylvester eliminants]
+\label{lem:eliminant-nonzero}
+If $f$ is nonconstant, then $E_x$ and $E_y$ of
+\cref{def:axis-eliminants} are nonzero.
+\end{lemma}
+
+\begin{proof}
+Write $a_d$ for the nonzero leading coefficient of $f$.  In each of the
+first $d$ columns of $S_x(T)$, coming from $Q_T$, use $d$ as the displayed
+parameter-degree bound; in each of the last $d$ columns, coming from
+$P_T=f$, use degree zero.  Reading the finite coefficient lists shows that
+the matrix of these column-leading coefficients is upper triangular.  Its
+first $d$ diagonal entries are
+\[
+                  2^d\overline{a_d},
+\]
+the top parameter coefficient created by repeatedly substituting $2T-U$
+in $\overline f$, and its last $d$ diagonal entries are $a_d$.  Both are
+nonzero in $\Qi$.  Entries strictly below the diagonal have degree strictly
+below their column's displayed bound.
+
+Now consider one Schur step of \cref{def:fraction-free-scaled-inverse}.
+Suppose the current matrix has column-degree bounds $\delta_j$ and nonzero
+diagonal leading coefficients $\lambda_j$.  The head entry has leading term
+$\lambda_0T^{\delta_0}$.  In column $j$ of
+\[
+                 S=aM_{\mathrm{tail}}-vu,
+\]
+the first product has degree at most $\delta_0+\delta_{j+1}$ and diagonal
+leading coefficient $\lambda_0\lambda_{j+1}$.  In the correcting product
+$vu$, the entry from the left column lies strictly below the original
+diagonal, so its degree is too small to cancel that leading term.  Thus $S$
+again has an upper-triangular leading-coefficient matrix, now with diagonal
+entries $\lambda_0\lambda_{j+1}$, all nonzero.
+
+Induction therefore shows that the head entry at every recursive stage is a
+nonzero polynomial.  Since the recursion starts with scalar $1$ and replaces
+$s'$ by $as'$, its output $s_x$ is a finite product of those nonzero pivots
+and is itself nonzero.  Let $\alpha+i\beta$ be the leading coefficient of
+the normalized $s_x$.  If $\alpha\ne0$, the coefficientwise real part has
+leading coefficient $\alpha$; if $\alpha=0$, then $\beta\ne0$ and the
+coefficientwise imaginary part has leading coefficient $\beta$.  The rule in
+\cref{def:axis-eliminants} therefore makes $E_x$ nonzero.  Finally,
+$f^{\circlearrowleft}(Z)=f(iZ)$ has the same degree and leading coefficient
+$a_di^d\ne0$, so the identical argument gives $E_y\ne0$.
+\end{proof}
+
+\leanref{RFAP.SeparatedVariables.separatedSylvester_leading;
+RFAP.ConstructivePolynomialMatrixLeading.scaledInverseData_scalar_nonzero;
+RFAP.SeparatedVariables.separatedScalar_nonzero;
+RFAP.ConstructiveSylvesterBezout.scalarEliminant_nonzero;
+RFAP.ConstructiveSylvesterBezout.horizontalEliminant_nonzero;
+RFAP.AxisSafeCuts.separatedEliminationDegree}
+
+\begin{lemma}[specialized axis B\'ezout certificates]
+\label{lem:axis-bezout}
+For every displayed $c\in\Q$ with $E_x(c)\ne0$, finite calculation returns
+$U_c,V_c\in\Q[Y]$ with the polynomial identity
+\[
+             1=U_c(Y)A_f(c,Y)+V_c(Y)B_f(c,Y).
+\]
+Likewise, $E_y(c)\ne0$ returns displayed polynomials satisfying the
+corresponding polynomial identity for $A_f(X,c)$ and $B_f(X,c)$.
+\end{lemma}
+
+\begin{proof}
+Coefficientwise real and imaginary projection commute with Horner
+evaluation at the rational parameter $c$.  Consequently $E_x(c)$ is either
+the real or the imaginary coordinate of $s_x(c)$.  If $s_x(c)$ were zero,
+that selected coordinate would be zero as well; hence
+\[
+                    E_x(c)\ne0\quad\Longrightarrow\quad s_x(c)\ne0.
+\]
+
+Use the right-hand identity of \cref{lem:scaled-inverse-identity} and take
+the first column after specializing at $c$:
+\[
+             S_x(c)N_x(c)e_0=s_x(c)e_0.
+\]
+Split the displayed column $N_x(c)e_0$ into its first and last $d$
+entries, say $(\ell_0,\ldots,\ell_{d-1})$ and
+$(r_0,\ldots,r_{d-1})$, and form
+\[
+       L_c(U)=\sum_{j<d}\ell_jU^j,
+       \qquad R_c(U)=\sum_{j<d}r_jU^j.
+\]
+Multiplying the Sylvester rows by $1,U,\ldots,U^{2d-1}$ and summing is a
+finite rearrangement of coefficients.  The first $d$ columns reconstruct
+$Q_c(U)$ and the last $d$ columns reconstruct $P_c(U)$, so the displayed
+matrix identity gives the polynomial identity
+\[
+              L_c(U)Q_c(U)+R_c(U)P_c(U)=s_x(c)
+\]
+in $\Qi[U]$.  Division by the now certified nonzero scalar
+$s_x(c)$ gives polynomials $\widehat L_c,\widehat R_c$ satisfying
+\begin{equation}
+\label{eq:normalized-separated-bezout}
+              \widehat L_c(U)Q_c(U)+
+              \widehat R_c(U)P_c(U)=1.
+\end{equation}
+
+Substitute the polynomial $c+iY$ into
+\eqref{eq:normalized-separated-bezout}.  Since
+$\overline{2c-(c+iY)}=c+iY$, the definitions of the separated pair give
+\[
+ P_c(c+iY)=f(c+iY),
+ \qquad
+ Q_c(c+iY)=\overline{f(c+iY)}.
+\]
+Write $f(c+iY)=A_f(c,Y)+iB_f(c,Y)$.  Taking the real part of the substituted
+polynomial identity yields
+\[
+\begin{aligned}
+1={}&\bigl(\Ree\widehat L_c(c+iY)+\Ree\widehat R_c(c+iY)\bigr)A_f(c,Y)\\
+ &+\bigl(\Imm\widehat L_c(c+iY)-\Imm\widehat R_c(c+iY)\bigr)B_f(c,Y).
+\end{aligned}
+\]
+The two parenthesized expressions are displayed polynomials
+$U_c,V_c\in\Q[Y]$, proving the vertical claim.
+
+For the horizontal claim apply the same construction to
+$f^{\circlearrowleft}(w)=f(iw)$.  A horizontal point $t+ic$ is obtained from
+the displayed parameter $w=c-it$ because $iw=t+ic$.  The vertical identity
+for the quarter-turned polynomial therefore becomes the asserted identity
+for $A_f(X,c)$ and $B_f(X,c)$ after the same real-coordinate calculation.
+\end{proof}
+
+\leanref{RFAP.ConstructiveSylvesterBezout.scalar_ne_zero_of_eliminant_eval_ne_zero;
+RFAP.ConstructiveSylvesterBezout.verticalCoprimeCertificate;
+RFAP.ConstructiveSylvesterBezout.horizontalCoprimeCertificate}
+
+\begin{lemma}[bounded safe-cut search]
+\label{lem:safe-cut}
+Let $[a,b]$ be a nondegenerate rational $x$-interval and let $[r,s]$ be a
+bounded rational $y$-interval.  Apply \cref{lem:safe-central-third-cut} to
+$H=E_x$ with the degree bound $D_f$ of \cref{def:axis-eliminants}.
+The resulting finite scan returns $c$ in the open central third of $[a,b]$
+with $E_x(c)\ne0$ and computes a positive rational $m_c$ such that
+\[
+       A_f(c,t)^2+B_f(c,t)^2\ge m_c
+       \qquad(r\le t\le s).
+\]
+Thus the full vertical line segment $c+it$ carries a quantitative boundary
+clearance certificate.  Interchanging $x$ and $y$ gives the analogous safe
+horizontal cut.
+\end{lemma}
+
+\begin{proof}
+By \cref{lem:eliminant-nonzero}, $E_x$ is nonzero and
+$\deg E_x\le D_f$.  The bounded search in
+\cref{lem:safe-central-third-cut} therefore returns the stated $c$ after at most
+$D_f+1$ exact evaluations.
+
+Apply \cref{lem:axis-bezout} to $E_x(c)\ne0$ to obtain the displayed
+polynomials $U_c,V_c$ and their Bézout identity.
+Apply the finite Bézout-clearance calculation of
+\cref{lem:positive-lower} to this identity on $[r,s]$.
+It returns $m_c>0$ with
+$A_f(c,t)^2+B_f(c,t)^2\ge m_c$ for every displayed rational $t$ satisfying
+$r\le t\le s$.  This is exactly $m_c\le\Norm{f(c+it)}$.  The calculation
+for $E_y$ is identical after interchanging the coordinates.
+\end{proof}
+
+\leanref{RFAP.AxisSafeCuts.separatedAxisEliminationCertificate;
+RFAP.AxisSafeCuts.verticalSafeCoordinate_spec;
+RFAP.AxisSafeCuts.horizontalSafeCoordinate_spec;
+RFAP.AxisSafeCuts.verticalSafeCoordinate_contraction;
+RFAP.AxisSafeCuts.horizontalSafeCoordinate_contraction;
+RFAP.AxisSafeCuts.buildClearFourGrid}
+
+The inequalities in \cref{lem:central-third-contraction} make both child widths
+strictly less than $2/3$ of the parent width.  This is the contraction used
+by every refinement routine.
+
+\section{The degree winding on a large square}
+\label{sec:global-winding}
+
+This section computes the global winding budget on the coefficient isolation
+square from displayed coefficient bounds.
+
+Let
+\[
+       f(Z)=a_dZ^d+\sum_{k=0}^{d-1}a_kZ^k,
+       \qquad a_d\ne0.
+\]
+Recall from \Defref{def:coefficient-isolation-square} that
+\[
+              C_f=d\sum_{k=0}^{d-1}2^k\Norm{a_k}
+\]
+is the displayed weighted norm bound for the nonleading coefficients.  Take
+the coefficient radius $R=R_f$ from the same definition.  It satisfies
+\begin{equation}
+\label{eq:large-R}
+             1\le R,\qquad C_f<\Norm{a_d}R\le\Norm{a_d}R^2.
+\end{equation}
+These are direct rational comparisons from the displayed formula
+\eqref{eq:isolation-radius}; no search over a geometric object is involved.
+The square is called \emph{global} only because every output track uses it as
+a common containing box.  It remains finite endpoint data, and the displayed
+inequalities are the leading-term margin used below.
+
+\begin{definition}[leading monomial, lower tail, and dominance margin]
+\label{def:leading-tail-margin}
+For the displayed polynomial $f$ and coefficient radius $R$, put
+\[
+ L_f(Z)=a_dZ^d,
+ \qquad
+ T_f(Z)=\sum_{k=0}^{d-1}a_kZ^k,
+ \qquad
+ f=L_f+T_f.
+\]
+The associated \emph{leading--tail dominance margin} is the displayed
+rational
+\[
+ M_f=\bigl(\Norm{a_d}R^2-C_f\bigr)(R^2)^{d-1}.
+\]
+\end{definition}
+
+\begin{lemma}[leading--tail annular margin]
+\label{lem:leading-tail-annular-margin}
+The margin $M_f$ is positive.  Every displayed $q\in\Qi$ satisfying
+\[
+                   R^2\le\Norm q\le2R^2
+\]
+also satisfies
+\[
+       M_f\le \Norm{L_f(q)}-\Norm{T_f(q)}.
+\]
+\end{lemma}
+
+\begin{proof}
+Positivity follows from $C_f<\Norm{a_d}R^2$ in \eqref{eq:large-R} and
+$R>0$.  For the annular estimate, \eqref{eq:finite-sum}, the upper bound on
+$\Norm q$, and $R\ge1$ give
+\[
+\begin{aligned}
+ \Norm{T_f(q)}
+ &\le d\sum_{k<d}\Norm{a_k}(2R^2)^k\\
+ &=d\sum_{k<d}2^k\Norm{a_k}R^{2k}\\
+ &\le C_fR^{2d-2}.
+\end{aligned}
+\]
+The lower bound on $\Norm q$ gives
+\[
+       \Norm{L_f(q)}=\Norm{a_d}\Norm q^d
+       \ge\Norm{a_d}R^{2d}.
+\]
+Subtracting the two rational bounds yields
+\[
+ \Norm{L_f(q)}-\Norm{T_f(q)}
+ \ge\bigl(\Norm{a_d}R^2-C_f\bigr)R^{2d-2}=M_f.
+\]
+\end{proof}
+
+\leanref{RFAP.GlobalWinding.leadingMonomial;
+RFAP.GlobalWinding.lowerTermsPolynomial;
+RFAP.GlobalWinding.leadingMonomial_add_lowerTerms_eval;
+RFAP.GlobalWinding.largeSquareDominanceMargin;
+RFAP.GlobalWinding.largeSquareDominanceMargin_pos;
+RFAP.GlobalWinding.largeSquare_radial_dominance_margin}
+
+Let $K_R=(-R,R,-R,R)$.  Its boundary satisfies
+$R^2\le\Norm z\le2R^2$, so
+Lemma~\ref{lem:leading-tail-annular-margin} gives
+\[
+       0<M_f\le\Norm{L_f(z)}-\Norm{T_f(z)}.
+\]
+
+The meaning of this estimate is simple: on the outer square the leading
+monomial is larger than the sum of all lower terms, so the finite Rouché rule
+allows the tail to be discarded without changing winding.  Multiplication by
+$Z$ contributes one turn, and the product rule therefore makes $Z^d$
+contribute $d$.  This is the sole source of the global count used later.
+
+\begin{theorem}[global degree winding]
+\label{thm:global-wind}
+The boundary of $K_R$ is clear and
+\[
+             \Wind_4(f;K_R)=4d,\qquad \Wind_f(K_R)=d.
+\]
+\end{theorem}
+
+\begin{proof}
+The dominance inequality of Lemma~\ref{lem:leading-tail-annular-margin} and
+\cref{cor:rouche} give
+\[
+                 \Wind_4(f;K_R)=\Wind_4(L_f;K_R).
+\]
+A nonzero constant has winding zero, $Z$ has winding four by
+\cref{prop:coordinate-normalization}, and repeated use of
+\cref{prop:product} gives $\Wind_4(L_f;K_R)=4d$.  The conventional value
+$\Wind_f(K_R)=d$ follows from
+\cref{def:rational-function-winding}.
+\end{proof}
+
+\leanref{RFAP.GlobalWinding.quadrupledBoxWinding_largeSquare_eq_degree}
+
+\section{Local extraction from a nonzero-winding box}
+\label{sec:local-extraction}
+
+This section performs local extraction: from a boundary-clear box with
+nonzero box winding, it extracts one winding-one root state and retains a
+boundary-clear subdivision carrying all the remaining winding.  Applied to
+a winding-one state, the same construction is the refinement step later
+packaged as a RAT.
+
+More precisely, put $w=\Wind_4(f;B)\ne0$.  For any displayed request
+$\eps>0$, the algorithm returns four safe cut lines and their full clear
+$3\times3$ subdivision of $B$.  Its central box $D$ is strictly inside $B$
+and satisfies
+\[
+                 \Wind_4(f;D)=4,
+                 \qquad \diamq(D)\le\eps^2.
+\]
+If $\mathcal R$ is the list of the eight noncentral boxes,
+\cref{lem:winding-add} gives
+\[
+             w=4+\sum_{E\in\mathcal R}\Wind_4(f;E).
+\]
+Thus only the selected box is normalized to winding four.  If $w>4$, total
+winding $w-4$ remains in the complementary boxes; if $w=4$, their total is
+zero.  Before nonnegativity is proved, $w$ may also be negative; the same
+equation then gives the complementary total $w-4$.  The fact that each
+extraction removes exactly four from the retained remainder is the step
+iterated in the counting argument of \cref{sec:exact-isolation}.
+
+The construction has five stages.
+
+\begin{enumerate}[label=(\roman*)]
+\item Safely subdivide $B$ until a nonzero-winding child $C$ is small and lies
+away from the parent's boundary.
+\item Use the small diameter and nonzero winding to prove that the rational
+anchor $a_C$ has a small residual $\Norm{f(a_C)}$.
+\item Use the squarefree Bézout certificate to prove that $f'(a_C)$ is not
+small, and hence compute a rational Newton center.
+\item Use the explicit Taylor bound to show that the affine part about that
+center dominates the nonlinear remainder on a small surrounding band.
+\item Choose four eliminant-safe lines in that band.  Their central rectangle
+is the returned box $D$; the full grid records both $D$ and its eight
+complementary boxes.
+\end{enumerate}
+
+The constants introduced below merely allocate enough rational margin for
+these five steps to hold simultaneously.
+
+\subsection{Finite local bounds and the protected boundary}
+
+\begin{definition}[local finite Horner bounds]
+\label{def:local-horner-bounds}
+Fix a current rational box $B$ and write
+\[
+ R_B=2\max\{x_-^2,x_+^2,y_-^2,y_+^2\}.
+\]
+For the displayed high-to-low coefficient list
+$[a_n,\ldots,a_0]$ of $f$, start with
+$(M_0,S_0,T_0)=(0,0,0)$ and, for $0\le k\le n$, compute
+\[
+\begin{aligned}
+ M_{k+1}&=2\bigl(M_kR_B+\Norm{a_{n-k}}\bigr),\\
+ S_{k+1}&=2\bigl(S_kR_B+M_k\bigr),\\
+ T_{k+1}&=2\bigl(S_k+R_BT_k\bigr).
+\end{aligned}
+\]
+Define the rationals
+\[
+             L_1(B)=\max\{1,S_{n+1}\},\qquad
+             L_2(B)=\max\{1,T_{n+1}\}.
+\]
+\end{definition}
+
+\begin{lemma}[local Horner estimates]
+\label{lem:local-horner-estimates}
+The quantities of \cref{def:local-horner-bounds} are positive, since
+\[
+                         L_1(B),L_2(B)\ge1.
+\]
+For every pair of displayed Gaussian rationals $z,w$ satisfying the
+membership predicate of $B$, they also satisfy
+\begin{align}
+ \Norm{f(z)-f(w)}
+   &\le L_1(B)\Norm{z-w},
+   \label{eq:local-l1}\\
+ \Norm{f(z)-f(w)-f'(w)(z-w)}
+   &\le L_2(B)\Norm{z-w}^2.
+   \label{eq:local-l2}
+\end{align}
+\end{lemma}
+
+\begin{proof}
+Run Horner evaluation simultaneously on the displayed coefficient prefixes
+at $z$ and $w$.  At stage $k$, $M_k$ bounds the two partial values, $S_k$
+bounds their divided difference, and $T_k$ bounds the remainder after
+removing its constant and linear terms.  Multiplication by the next argument
+uses $\Norm z,\Norm w\le R_B$; adjoining the next coefficient uses the finite
+two-term inequality $\Norm{x+y}\le2(\Norm x+\Norm y)$.  These are exactly the
+three updates defining $M_{k+1},S_{k+1},T_{k+1}$.  Induction over the finite
+coefficient list therefore gives the two displayed estimates with
+$S_{n+1}$ and $T_{n+1}$.  Replacing them by their maxima with $1$ preserves
+the inequalities and gives $L_1(B),L_2(B)>0$.
+\end{proof}
+
+Thus $L_1(B)$ is the squared-distance Lipschitz coefficient and $L_2(B)$
+is the quadratic Taylor-remainder coefficient.  They are obtained by one
+finite fold over the coefficient list; neither is a maximum or supremum over
+the points satisfying the box predicate.  In the notation of
+\eqref{eq:lip1} and \eqref{eq:lip2}, they are $L_1(f,B)$ and $L_2(f,B)$.
+
+\leanref{RFAP.PolynomialBounds.HornerNormBounds.step;
+RFAP.PolynomialBounds.denseHornerNormBounds;
+RFAP.PolynomialBounds.denseLipschitzBound;
+RFAP.PolynomialBounds.HornerTaylorNormBounds.step;
+RFAP.PolynomialBounds.denseHornerTaylorNormBounds;
+RFAP.PolynomialBounds.denseTaylorRemainderBound;
+RFAP.PolynomialBounds.normSq_eval_sub_eval_le_denseLipschitzBound;
+RFAP.PolynomialBounds.normSq_dense_taylor_remainder_le_denseTaylorRemainderBound}
+
+We continue to write $\tau(B),\eta(B)$ for the quantities in
+\eqref{eq:bez-margins} computed on $B$, and $\mu(B)>0$ for the bound in its
+four-edge clearance certificate.
+
+\begin{definition}[protected boundary radius]
+\label{def:protected-boundary-radius}
+Define
+\[
+ \rho(B)=\min\left\{\frac1{512},
+       \frac{\mu(B)}{2L_1(B)},
+       \frac{\operatorname{width}_x(B)}{16},
+       \frac{\operatorname{width}_y(B)}{16}\right\}
+\]
+from the displayed clearance, Horner bound, and endpoint data of $B$.
+\end{definition}
+
+\begin{lemma}[positivity of the protected radius]
+\label{lem:protected-radius-positive}
+If $B$ is proper and carries the stated clearance certificate, then
+$\rho(B)>0$.
+\end{lemma}
+
+\begin{proof}
+Properness of $B$ makes both coordinate widths positive.  The clearance
+certificate gives $\mu(B)>0$, while
+\cref{lem:local-horner-estimates} gives $L_1(B)>0$.  Hence all four entries
+in the finite minimum of \cref{def:protected-boundary-radius} are positive.
+\end{proof}
+
+\leanref{RFAP.ProtectedBoundary.protectedBoundaryRadius;
+RFAP.ProtectedBoundary.protectedBoundaryRadius_pos}
+
+\begin{lemma}[protected boundary strip]
+\label{lem:protected-strip}
+Let $B$ be proper and carry the stated clearance certificate.  If a rational
+subbox $D\subseteq B$ has $\diamq(D)\le\rho(B)^2$ and meets the coordinate
+boundary strip of width $4\rho(B)$, then $\Wind_4(f;D)=0$.
+\end{lemma}
+
+\begin{proof}
+Put $\rho=\rho(B)$, $L=L_1(B)$, and $\mu=\mu(B)$.  Properness of $B$ makes
+both coordinate widths positive; $L$, $\mu$, and $\rho$ are positive by
+their finite certificates and \cref{lem:protected-radius-positive}.
+
+Meeting the strip supplies a displayed $z\in D$ and one of four rational
+side inequalities.  Consider the left-side case
+\[
+                  \Ree z\le x_-^B+4\rho;
+\]
+the other three cases are the same calculation with the relevant coordinate
+reversed.  Since $D\subseteq B$, also $x_-^B\le\Ree z$.  Project $z$ to the
+displayed parent-boundary point
+\[
+                         b=x_-^B+i\Imm z.
+\]
+Then $b$ satisfies the left-edge parametrization predicate of $B$ and
+\[
+             \Norm{b-z}=(\Ree z-x_-^B)^2\le16\rho^2.
+\]
+Let $q=a_D$ be the fixed lower-left anchor of $D$.  Membership of $z$ and
+$q$ in $D$ gives
+\[
+                     \Norm{z-q}\le\diamq(D)\le\rho^2.
+\]
+Using $b-q=(b-z)+(z-q)$ and the finite two-term quadrance inequality,
+\begin{align*}
+ \Norm{b-q}
+ &\le2\bigl(\Norm{b-z}+\Norm{z-q}\bigr)\\
+ &\le2(16\rho^2+\rho^2)=34\rho^2\le64\rho^2.
+\end{align*}
+The point $b$ satisfies the boundary-membership predicate of $B$.  Also
+$q\in D$ and $D\subseteq B$, so $q$ satisfies the membership predicate of
+$B$.  We may therefore apply \eqref{eq:local-l1} to the displayed pair
+$(b,q)$.  Substituting the preceding distance estimate gives
+\[
+ \Norm{f(b)-f(q)}\le L\Norm{b-q}\le L(64\rho^2)=64L\rho^2,
+\]
+and hence
+\begin{equation}
+\label{eq:protected-boundary-variation}
+                 \Norm{f(b)-f(q)}\le64L\rho^2.
+\end{equation}
+
+Set
+\[
+                 A=L\diamq(D),\qquad V=64L\rho^2.
+\]
+The definition of $\rho$ gives
+\[
+ A\le L\rho^2,\qquad \rho\le\frac1{512},\qquad
+ 2L\rho\le\mu.
+\]
+Since $130/512<2$ and $L,\rho>0$, these rational inequalities yield
+\begin{equation}
+\label{eq:protected-boundary-budget}
+       2(A+V)\le130L\rho^2<2L\rho\le\mu.
+\end{equation}
+
+The boundary-clearance certificate at $b$, followed by the two-term
+quadrance inequality and
+\eqref{eq:protected-boundary-variation}, gives
+\[
+ \mu\le\Norm{f(b)}
+   \le2\bigl(\Norm{f(q)}+\Norm{f(b)-f(q)}\bigr)
+   \le2\bigl(\Norm{f(q)}+V\bigr).
+\]
+If $\Norm{f(q)}\le A$, this contradicts
+\eqref{eq:protected-boundary-budget}, because the preceding display would
+then give the impossible chain
+\[
+                  \mu\le2(A+V)<\mu.
+\]
+Consequently
+\begin{equation}
+\label{eq:protected-anchor-dominates}
+                         A<\Norm{f(q)}.
+\end{equation}
+
+Finally, let $x$ be any displayed point on one of the four edge
+parametrizations of $D$.  Both $x$ and $q$ satisfy the membership predicate
+of $D$, and hence, because $D\subseteq B$, that of $B$.  We may apply
+\eqref{eq:local-l1} once more; the box-diagonal certificate then gives
+\[
+ \Norm{f(x)-f(q)}\le L\Norm{x-q}\le L\diamq(D)=A<\Norm{f(q)}.
+\]
+Moreover $A\ge0$, so \eqref{eq:protected-anchor-dominates} implies
+$f(q)\ne0$.  In the exact polynomial decomposition
+\[
+                    f=f(q)+\bigl(f-f(q)\bigr),
+\]
+the nonzero constant polynomial $f(q)$ therefore strictly dominates the
+second summand on the complete rational boundary of $D$.
+\Cref{lem:dominance-homotopy} identifies $\Wind_4(f;D)$ with the winding of
+that constant, which is zero by \cref{prop:product}.  Hence
+$\Wind_4(f;D)=0$, as required.
+\end{proof}
+
+\leanref{RFAP.ProtectedBoundary.nearbyBoundaryPoint;
+RFAP.ProtectedBoundary.protectedBoundaryRadius_dominates;
+RFAP.ProtectedBoundary.quadrupledBoxWinding_eq_zero_of_boundaryStripWitness;
+RFAP.ProtectedBoundary.strictly_inside_protectedBoundary;
+RFAP.LocalExtraction.quadrupledBoxWinding_eq_zero_of_anchorResidualBound_lt}
+
+\subsection{Newton center and extraction}
+
+\begin{lemma}[small nonzero box gives a rational Newton center]
+\label{lem:newton-center}
+Let $C\subseteq B$ be a rational box with $\Wind_4(f;C)\ne0$, fixed lower-left
+anchor $a=a_C\in\Qi$, and squared diagonal $\delta^2$.  Then
+\[
+     \Norm{f(a)}\le L_1(B)\delta^2.
+\]
+If in addition $L_1(B)\delta^2\le\tau(B)$, then
+$\Norm{f'(a)}\ge\eta(B)$, and consequently
+\[
+       c=a-\frac{f(a)}{f'(a)}\in\Qi,
+       \qquad
+       \Norm{c-a}\le\frac{L_1(B)\delta^2}{\eta(B)}.
+\]
+\end{lemma}
+
+\begin{proof}
+Every displayed boundary point $z$ of $C$ lies with $a$ in $B$, and
+$\Norm{z-a}\le\delta^2$.  Hence \cref{lem:local-horner-estimates} gives
+\[
+       \Norm{f(z)-f(a)}\le L_1(B)\delta^2.
+\]
+If the claimed residual bound failed, the nonzero constant $f(a)$ would
+strictly dominate $f-f(a)$ on all four edges of $C$.  The finite Rouch\'e rule
+would then give $\Wind_4(f;C)=0$, contrary to the supplied certificate.
+Therefore $\Norm{f(a)}\le L_1(B)\delta^2$.
+
+Under the additional hypothesis this is at most $\tau(B)$, so
+\cref{lem:derivative-margin} gives
+$\Norm{f'(a)}\ge\eta(B)>0$.  In particular $f'(a)\ne0$, and field arithmetic
+constructs the displayed $c\in\Qi$.  Finally,
+\[
+ \Norm{c-a}
+ =\Norm{\frac{f(a)}{f'(a)}}
+ =\frac{\Norm{f(a)}}{\Norm{f'(a)}}
+ \le\frac{L_1(B)\delta^2}{\eta(B)},
+\]
+using multiplicativity of the Gaussian-rational norm and the two preceding
+bounds.
+\end{proof}
+
+\leanref{RFAP.LocalExtraction.anchor_residual_le_of_quadrupledBoxWinding_ne_zero;
+RFAP.LocalExtraction.computeNewtonCenterOfRawWinding}
+
+\begin{definition}[local extraction scales]
+\label{def:local-extraction-scales}
+For a proper cleared box $B$ and a request $\eps>0$, define
+\[
+ r_{\mathrm{ext}}(B,\eps)=
+ \min\left\{\frac{\rho(B)}2,1,
+       \frac{\eta(B)}{648L_2(B)},\frac\eps8\right\},
+\]
+and, abbreviating this radius to $r$, define the source-diagonal threshold
+\[
+ \theta_{\mathrm{src}}(B,\eps)=
+ \min\left\{\rho(B)^2,
+       \frac{\tau(B)}{L_1(B)},
+       \frac{\eta(B)r^2}{L_1(B)}\right\}.
+\]
+\end{definition}
+
+\begin{lemma}[extraction-scale budgets]
+\label{lem:local-extraction-scale-budgets}
+Let $B$ and $\eps>0$ satisfy the hypotheses of
+\cref{def:local-extraction-scales}.  Put $r=r_{\mathrm{ext}}(B,\eps)$ and
+$\theta=\theta_{\mathrm{src}}(B,\eps)$.  Then $r,\theta>0$ and
+\[
+\begin{gathered}
+ 2r\le\rho(B),\qquad r\le1,\qquad
+ 648L_2(B)r\le\eta(B),\qquad 8r\le\eps,\\
+ \theta\le\rho(B)^2,\qquad
+ L_1(B)\theta\le\tau(B),\qquad
+ L_1(B)\theta\le\eta(B)r^2.
+\end{gathered}
+\]
+\end{lemma}
+
+\begin{proof}
+The quantities $\rho(B),\tau(B),\eta(B),L_1(B),L_2(B)$ and $\eps$ are
+positive, so every entry in both displayed finite minima is positive.  The
+four bounds on $r$ are the four minimum projections, with positive
+denominators cleared.  The three bounds on $\theta$ follow identically from
+its three minimum projections.
+\end{proof}
+
+\leanref{RFAP.NewtonExtraction.extractionRadius;
+RFAP.NewtonExtraction.extractionRadius_pos;
+RFAP.NewtonExtraction.extractionRadius_twice_le_protected;
+RFAP.NewtonExtraction.extractionRadius_le_one;
+RFAP.NewtonExtraction.extractionRadius_le_eighth;
+RFAP.NewtonExtraction.extractionRadius_taylor;
+RFAP.NewtonExtraction.sourceDiagonalThreshold;
+RFAP.NewtonExtraction.sourceDiagonalThreshold_pos;
+RFAP.NewtonExtraction.sourceDiagonalThreshold_le_protected;
+RFAP.NewtonExtraction.sourceDiagonalThreshold_le_derivative;
+RFAP.NewtonExtraction.sourceDiagonalThreshold_le_displacement}
+
+\begin{definition}[Newton band]
+\label{def:newton-band}
+Let $c\in\Qi$ and $r\in\Q_{>0}$.  A \emph{Newton band} of centre $c$ and
+radius $r$ is a rational box $D$ satisfying
+\[
+\begin{aligned}
+ \Ree c-2r&\le x_-^D\le\Ree c-r,
+ &\Ree c+r&\le x_+^D\le\Ree c+2r,\\
+ \Imm c-2r&\le y_-^D\le\Imm c-r,
+ &\Imm c+r&\le y_+^D\le\Imm c+2r.
+\end{aligned}
+\]
+Thus $c$ lies strictly inside $D$, both side lengths are at most $4r$, and
+$\diamq(D)\le32r^2$.  An \emph{eliminant-safe Newton band} additionally
+carries the four full-line clearance certificates obtained by selecting its
+sides with the bounded safe-cut searches.
+\end{definition}
+
+\leanref{RFAP.NewtonBand.NewtonBandBox;
+RFAP.NewtonBand.NewtonBandBox.center_strictly_inside;
+RFAP.NewtonBand.NewtonBandBox.diagonalSq_le}
+
+\begin{theorem}[local extraction]
+\label{thm:extract-one}
+Fix the displayed squarefree and axis-elimination certificates.  Let $B$ be
+a proper rational box carrying certificates for ambient containment,
+boundary clearance, and $\Wind_4(f;B)\ne0$.  There is a terminating algorithm
+\[
+ \begin{aligned}
+ &\operatorname{extractOne}(f,B,\mathcal W,\eps),\\
+ &\mathcal W:\Wind_4(f;B)\ne0,\qquad \eps\in\Q_{>0}.
+ \end{aligned}
+\]
+which returns rational coordinates
+\[
+       x_-<x_+,
+       \qquad y_-<y_+,
+\]
+strictly inside $B$ such that:
+\begin{enumerate}[label=(\alph*)]
+\item the four full axis-parallel cut lines through these coordinates are safe within $B$;
+\item the central box $D=(x_-,x_+,y_-,y_+)$ has $\Wind_4(f;D)=4$;
+\item splitting $B$ along the four lines gives a finite $3\times3$ grid with clear boundaries, the central member being $D$;
+\item $\diamq(D)\le\eps^2$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Put $\rho=\rho(B)$, $r=r_{\mathrm{ext}}(B,\eps)$, and
+$\theta=\theta_{\mathrm{src}}(B,\eps)$.  Their positivity and all required
+rational budgets are given by \cref{lem:local-extraction-scale-budgets}.
+At each subdivision round, apply the safe-cut construction of
+\cref{lem:safe-central-third-cut} to the current $x$-coordinate interval with
+$H=E_x$, and to the $y$-coordinate interval with $H=E_y$.  Pairing the two
+$x$-interval children with the two $y$-interval children gives four rational
+child boxes, each of whose side widths is less than $2/3$ of the corresponding
+parent width.  Run this finite four-child recursion to its
+precomputed geometric depth and retain the first nonzero-winding child $C$ with
+$\diamq(C)\le\theta$.  By \cref{lem:protected-strip}, $C$ lies in the
+protected core of $B$.
+
+Let $a=a_C$ be its anchor and let
+\[
+             c=a-\frac{f(a)}{f'(a)}
+\]
+be the rational Newton center from \cref{lem:newton-center}.  The definition
+of $\theta$ and \cref{lem:local-extraction-scale-budgets,lem:newton-center}
+give $\Norm{c-a}\le r^2$, while the protected-core inequalities and
+$2r\le\rho$ keep the square of half-side $2r$ about $c$ strictly inside $B$.
+
+For $z$ in that square,
+\[
+ \Norm{z-c}\le8r^2,
+ \qquad
+ \Norm{z-a}\le2\bigl(\Norm{z-c}+\Norm{c-a}\bigr)\le18r^2.
+\]
+Put
+\[
+       \ell(z)=f(a)+f'(a)(z-a)=f'(a)(z-c).
+\]
+On any candidate rectangular boundary surrounding $c$ whose coordinate
+distance from $c$ is at least $r$ and at most $2r$,
+\[
+       \Norm{\ell(z)}=\Norm{f'(a)}\Norm{z-c}\ge\eta(B) r^2.
+\]
+The exact Taylor identity and the two corresponding radius budgets in
+\cref{lem:local-extraction-scale-budgets} give the finite dominance estimate
+\[
+ \Norm{f(z)-\ell(z)}
+    \le324L_2(B)r^4
+    \le\frac12\eta(B)r^2.
+\]
+Thus, for every such rectangular boundary enclosing $c$, the quantitative
+Rouché rule and \cref{prop:product,prop:coordinate-normalization} give
+$\Wind_4(f;E)=\Wind_4(\ell;E)=4$ for its enclosed box $E$.
+
+Finally run the bounded eliminant search of \cref{lem:safe-cut} in each of
+the four rational bands
+\[
+ [\Ree c-2r,\Ree c-r],\quad[\Ree c+r,\Ree c+2r],
+ \quad[\Imm c-2r,\Imm c-r],\quad[\Imm c+r,\Imm c+2r].
+\]
+The selected full cut lines are safe, and their central rectangle $D$
+surrounds $c$ while staying in the affine-dominance square.  Hence
+$\Wind_4(f;D)=4$, and the four lines produce the certified $3\times3$ grid.
+Both side lengths are at most $4r$, so
+$\diamq(D)\le32r^2\le\eps^2$.
+\end{proof}
+
+\leanref{RFAP.NewtonExtraction.extract}
+
+\section{Finite derivative--Taylor track separation}
+\label{sec:track-separation}
+
+This section turns coefficient bounds and squarefree certificates into
+separation certificates for RATs.  Separation is the input needed later for
+finite maximality.
+
+The local extractor can be called inside any nonzero-winding box.  To
+bound the length of every finite family of separated outputs in a bounded
+square, we first compute a scale on which the derivative term cannot be
+cancelled by both a quadratic Taylor error and two sufficiently small
+displayed residuals.  This is the same coefficient machinery already used
+by local extraction.
+
+Every observation considered in this section is a RAT, so its support record
+in \Defref{def:finite-observation-separation} is a proper rational box.
+Later refinements move the relevant endpoints inward, preserving the same
+displayed inequality and gap.  This witnessed finite relation is what
+\emph{distinct} means below.
+
+The underlying idea is uniqueness of a good linear approximation.  If two
+separated tracks both fitted inside one sufficiently small box, their
+rational anchors would be distinct by a witnessed gap, yet both polynomial
+values could be made arbitrarily small.  Taylor's identity would then say
+that the non-small derivative times the anchor difference is simultaneously
+large enough to detect that gap and small enough to be absorbed by the two
+residuals and the quadratic error.  The explicit scale $\upsilon_f$ is where
+those two conclusions become incompatible.
+
+\begin{lemma}[finite uniqueness and residual budgets]
+\label{lem:separation-budgets}
+On the coefficient isolation square $K_R$, put
+\[
+ \upsilon_f=
+ \frac{\eta(K_R)}{8L_2(f,K_R)}>0.
+\]
+For every displayed coordinate gap $h>0$, the rational quantities
+\[
+ \beta_h=\min\left\{\tau(K_R),
+        \frac{\eta(K_R)h^2}{32}\right\}>0,
+ \qquad
+ r_h=\min\left\{1,\frac{\beta_h}{L_1(f,K_R)}\right\}>0
+\]
+are computable.  Calling a winding-one RAT with request $r_h$ returns an
+anchor $u$ satisfying
+\[
+                         \Norm{f(u)}\le\beta_h.
+\]
+\end{lemma}
+
+\begin{proof}
+Positivity follows by finite rational comparison from the positive
+squarefree derivative margin and the positive Horner bounds.  The returned
+box has squared diagonal at most $r_h^2\le r_h$.  Applying the anchor
+residual estimate and the definition of $r_h$ gives
+$L_1(f,K_R)r_h^2\le\beta_h$.
+\end{proof}
+
+\leanref{RFAP.TrackSeparation.uniquenessDiagonalThreshold;
+RFAP.TrackSeparation.uniquenessDiagonalThreshold_pos;
+RFAP.TrackSeparation.pairResidualThreshold;
+RFAP.TrackSeparation.pairResidualThreshold_pos;
+RFAP.TrackSeparation.residualRefinementRadius;
+RFAP.TrackSeparation.refined_anchor_residual_le}
+
+\begin{theorem}[root-track separation]
+\label{thm:root-separation}
+The positive rational $\upsilon_f$ of
+\cref{lem:separation-budgets} has the following finite property.  Two
+separated winding-one RATs cannot both have current boxes contained in one
+rational box $C\subseteq K_R$ with
+$\diamq(C)<\upsilon_f$.
+\end{theorem}
+
+\begin{proof}
+Suppose two separated tracks have current boxes in such a $C$.  Their
+separation certificate gives a positive rational coordinate gap $h$.
+Request the residual radius $r_h$ of
+\cref{lem:separation-budgets} from both tracks, and call the returned anchors
+$u,v$.  Put $t=v-u$.  Separation and common-box membership give
+\[
+             0<h^2\le\Norm t\le\diamq(C)<\upsilon_f.
+\]
+The two residual requests give
+\[
+                       \Norm{f(u)},\Norm{f(v)}\le\beta_h,
+\]
+while the derivative margin gives
+\[
+             \eta(K_R)\le\Norm{f'(u)}.
+\]
+Write the exact finite Taylor identity as
+\[
+             f(v)-f(u)=f'(u)t+E,
+ \qquad
+             \Norm E\le L_2(f,K_R)\Norm t^2.
+\]
+The inequality $\Norm t<\upsilon_f$ bounds $8\Norm E$ by
+$\eta(K_R)\Norm t$.  The definition of $\beta_h$, the two residual bounds,
+and $h^2\le\Norm t$ likewise bound
+$8\Norm{f(v)-f(u)}$ by $\eta(K_R)\Norm t$.  Two applications of the finite
+two-term quadrance inequality would then force
+\[
+ 4\eta(K_R)\Norm t\le2\eta(K_R)\Norm t,
+\]
+contradicting the displayed positivity of both factors.  Thus the common
+box cannot exist.
+\end{proof}
+
+\leanref{RFAP.TrackSeparation.separated_tracks_not_supported_in_small_common_box}
+
+\begin{corollary}[finite packing bound]
+\label{cor:packing}
+There is a computable natural number $P_f$ such that no finite list of pairwise separated winding-one RATs supported in $K_R$ has length greater than $P_f$.
+\end{corollary}
+
+\begin{proof}
+Choose a rational mesh $s>0$ with $8s^2<\upsilon_f$ and subdivide the
+endpoint record for $[-R,R]^2$ into an explicit finite grid list of half-open
+cell records of side at most $s$.  Ask every member of a proposed finite list
+for a box of coordinate width below $s/4$, and assign it to the cell whose
+membership predicate accepts its rational anchor.  If two anchors receive
+the same cell, both refined boxes lie in the coordinatewise enlargement of
+that cell by $s/4$; this common rational box has squared diagonal below
+$\upsilon_f$, contradicting \cref{thm:root-separation}.  Finite pigeonhole
+induction therefore bounds the list length by the number of cells; take that
+number as $P_f$.
+\end{proof}
+
+\leanref{RFAP.FinitePacking.packingBound;
+RFAP.FinitePacking.finite_family_card_le_packingBound}
+
+\section{Nonnegativity and exact extraction of \texorpdfstring{$d$}{d} tracks}
+\label{sec:exact-isolation}
+
+This section combines the global winding budget, local extraction, and
+separation to construct exactly $d$ RATs, proves ownership and finite
+maximality, and relates small residuals to local and global refinement.
+
+At this point $\Wind_4$ is an additive integer, and every nonzero-winding box
+contains a finitely extractable winding-one subbox.  The separation
+theorem forces the remaining sign.
+
+The argument is a finite counting trap.  If a clear box had negative
+winding, extracting a winding-one box from any nonzero remainder and removing its
+contribution would leave the remainder negative, so the operation could be
+repeated any prescribed finite number of times.  Repeating it more than the
+finite packing bound would produce too many separated winding-one boxes.
+Negative winding is therefore impossible.  Once every local contribution is
+nonnegative, the global total $4d$ can be spent only as exactly $d$
+contributions of four; this is the accounting step that produces the initial
+tracks.
+
+\begin{theorem}[nonnegativity]
+\label{thm:nonnegative}
+Every clear rational box $B\subseteq K_R$ satisfies
+\[
+             \Wind_4(f;B)\ge0.
+\]
+The statement also holds for a finite disjoint list of clear boxes, with
+total winding defined by finite summation.
+\end{theorem}
+
+\begin{proof}
+Assume a finite list of rational-box records has negative total winding.
+Choose a member
+with nonzero winding and apply \cref{thm:extract-one} with request $1$.
+Remove the central winding-one box and replace the old member by the
+other eight grid boxes.  Additivity decreases the total by exactly four,
+so it remains negative and the operation may be repeated.
+
+Perform this finite loop exactly $P_f+1$ times.  It returns $P_f+1$ pairwise distinct winding-one boxes, each carrying the deterministic refinement routine of \cref{thm:extract-one}.  This contradicts the finite packing bound \cref{cor:packing}.  Therefore the original total could not be negative.
+\end{proof}
+
+\leanref{RFAP.GlobalNonnegativity.quadrupledBoxWinding_nonnegative}
+
+\begin{theorem}[exact finite isolation]
+\label{thm:isolation}
+Starting from $K_R$, a recursion on $d$ returns exactly $d$ pairwise separated clear rational boxes $B_1,\dots,B_d$ with
+\[
+       \Wind_4(f;B_j)=4.
+\]
+Every remaining grid box has winding zero.
+\end{theorem}
+
+\begin{proof}
+The initial total is $4d$ by \cref{thm:global-wind}.  If the current
+total is positive, some member has nonzero winding; apply
+\cref{thm:extract-one} with request $1$ and replace its parent by the eight
+complements.  By additivity the remaining total decreases by four.  By
+\cref{thm:nonnegative} it never becomes negative.  After exactly $d$
+iterations the remaining total is zero, and nonnegativity forces every
+remaining member to have winding zero.
+\end{proof}
+
+\leanref{RFAP.ExactIsolation.isolateLargeSquare}
+
+Operationally, a RAT is a certified zoom command: supply its current finite
+record and a requested scale, and it returns one smaller certified record.
+The bounded search may inspect several candidate boxes internally, but one
+request has one observable answer.  The word \emph{track} denotes the ability
+to repeat this interaction.  The zero/one/many distinction belongs to the
+enclosing isolation algorithm, which returns an exact terminal or a finite
+list of tracks.
+
+\begin{lemma}[total strict winding-one refinement]
+\label{lem:track-refinement}
+Let $B$ be a rational box carrying a certified winding-one state, with the
+displayed squarefree and axis-elimination certificates.  For every
+$\eps\in\Q_{>0}$ the local
+Newton-band extractor returns a rational box $D$ carrying the next certified
+state and satisfying
+\[
+ D\subset B,\qquad \Wind_4(f;D)=4,
+ \qquad \diamq(D)\le\eps^2.
+\]
+The same finite construction, stored as the state transition, can be called
+again on $D$.
+\end{lemma}
+
+\begin{proof}
+Apply \cref{thm:extract-one} to the current state and the requested
+$\eps$.  Its returned four line-clearance certificates, $\Wind_4$
+calculation, strict-containment inequalities, and diagonal estimate are
+exactly the fields of the next finite state.  Reapplying the same definition
+therefore gives a total request-driven refinement track.
+\end{proof}
+
+\leanref{RFAP.ShrinkingTrack.refineState_accurate}
+
+\paragraph{Output ownership.}
+Fix the output of \cref{thm:isolation}.  Its partition has output boxes
+$B_1,\ldots,B_d$ and zero-winding remainder cells.  Let $m_{\Pi}>0$ be the
+minimum of the finitely many displayed cell-clearance bounds, and define
+\[
+ \rho_{\rm own}:=min\left\{1,\frac{m_{\Pi}}{8L_1(f,K_f)}\right\}>0.
+\]
+For a competing RAT $T$ supported in the same coefficient isolation square,
+make the single call at this radius and put
+\[
+                 D_T:=\operatorname{box}(T(\rho_{\rm own})).
+\]
+An \emph{ownership certificate} for $T$ is an index
+$j\in\{1,\ldots,d\}$ and a proof of strict containment
+\[
+                              D_T\subset B_j.
+\]
+The deterministic selector scans the finite partition for the anchor of
+$D_T$ and proves that the whole box, not merely its anchor, lies strictly
+inside the selected cell.  A zero-winding remainder cell cannot be selected,
+so the scan returns an output index $j$.  We write
+$\operatorname{own}(T)=j$ and call the $j$th returned RAT the \emph{owner} of
+$T$.
+
+\begin{proof}[Proof of the polynomial part of \cref{thm:main}]
+If $d=1$, exact finite coefficient normalization and division compute the
+displayed Gaussian-rational zero and verify it by evaluation.  Suppose
+$d\ge2$.  Use \cref{thm:isolation} for the $d$ initial states and
+\cref{lem:track-refinement} for every accuracy call.  Let $q_B$ be the fixed
+rational anchor of a returned box.  The nonzero-winding argument in
+\cref{lem:newton-center} gives
+\[
+ \Norm{f(q_B)}\le L_1(f,A)\diamq(B).
+\]
+For an arbitrary displayed $z\in B$, \cref{eq:lip1} and the finite sum
+inequality give the uniform, deliberately looser estimate
+\[
+ \Norm{f(z)}
+ \le2\bigl(\Norm{f(z)-f(q_B)}+\Norm{f(q_B)}\bigr)
+ \le4L_1(f,A)\diamq(B).
+\]
+Equation \eqref{eq:projective-box-upper} proves the bound on Hermitian
+projective quadrance, and substitution of \eqref{eq:box-projective-exact} gives
+the opposite-corner Hermitian-projective-quadrance--residual formula in
+\cref{thm:main}.  If $q_{B'}$ is the anchor of a
+refining box, both anchors satisfy the old membership predicate, hence
+$\Norm{q_{B'}-q_B}\le\diamq(B)$.
+
+The isolation routine leaves a finite safe rectangular partition consisting
+of the $d$ output boxes and boxes with $\Wind_4=0$.  Let an additional
+winding-one RAT be given.  The positive lower bounds on the finitely many
+partition edges, together with the residual estimate just proved, give a
+finite refinement after which its box meets no partition edge; hence it lies
+in one partition member.  It cannot lie in a zero-winding member: safe cuts
+around its smaller winding-one box would make additivity and nonnegativity
+give total winding at least four there.  It therefore lies
+in an output box $B_j$.
+
+If it were separated from the output RAT in $B_j$, refine the two to disjoint
+boxes with a positive rational gap.  Safe-cut searches in that gap extend
+them to two disjoint members of a finite grid inside $B_j$.  Nonnegativity
+and additivity would give $\Wind_4(f;B_j)\ge8$, contradicting
+$\Wind_4(f;B_j)=4$.  Thus every pairwise separated family injects, by a
+finite cell assignment, into the $d$ output boxes.  Its length is at most
+$d$.
+\end{proof}
+
+\leanref{RFAP.Maximality.finite_family_card_le_natDegree;
+RFAP.BoxFTA.provePositive}
+
+The main theorem gives the easy direction: a sufficiently small
+winding-one box makes the residual at its anchor small.  The next result asks
+for a controlled converse.  Starting from a displayed sample with small
+residual, can we build a certified nearby track?  The answer must be local:
+we also need a protected box and its squarefree derivative margin, since the
+bare number $\Norm{f(q)}$ changes when $f$ is rescaled.  With that context,
+one rational Newton step proposes a center and the same Taylor--Rouch\'e
+calculation constructs the box around it.
+
+\begin{definition}[protected parent]
+\label{def:protected-parent}
+For a displayed polynomial $f$ and fixed ambient box $A$, a
+\emph{protected parent} is a proper rational box $B$, a refinement
+$B\subseteq A$, and a boundary-clearance certificate for $f$ on $B$.
+No winding value is part of this record.  A winding-one state supplies a
+protected parent by forgetting its winding certificate.
+\end{definition}
+
+\leanref{RFAP.ResidualWinding.ProtectedAmbient;
+RFAP.ResidualWinding.ProtectedAmbient.ofWindingOne}
+
+\begin{theorem}[local residual-to-Hermitian-projective-quadrance converse]
+\label{thm:residual-projective-converse}
+Let $f$ have degree at least two and carry a squarefree certificate, let $B$
+be a rational box carrying a certified winding-one state, and let $q\in\Qi$
+satisfy the strict interior predicate of $B$.  For every $\eps\in\Q_{>0}$ one can compute a
+positive rational $\Delta(f,B,q,\eps)$ with the following property.  If
+\[
+                    \Norm{f(q)}<\Delta(f,B,q,\eps),
+\]
+then exact evaluation either returns the finite certificate $f(q)=0$, or a
+finite Newton--Rouché construction returns a rational box $D$ and a RAT
+beginning at $D$ such that
+\[
+ D\subset B,\qquad \Wind_4(f;D)=4,
+ \qquad \diamq(D)\le32\eps^2,
+ \qquad \chi^2(q,z)\le18\eps^2\quad(z\in D).
+\]
+The output exposes the selected positive rational radius $r\le\eps$, the
+winding certificate $4$, the four strict-containment inequalities,
+and the stronger displayed estimate
+\[
+                   \Norm{z-q}\le18r^2\quad(z\in D).
+\]
+If only ordinary membership $q\in B$ is initially known, a second computable
+positive target first uses one quarter of the certified boundary residual
+clearance to prove strict membership and then gives the same conclusion.
+\end{theorem}
+
+\begin{proof}
+Let $C_2(f,B)>0$ denote the explicit finite Taylor coefficient used by the
+selected safe Newton band.  Compute $r$ as the minimum of
+\[
+ 1,\ \frac{\Ree q-x_-}{6},\ \frac{x_+-\Ree q}{6},\
+ \frac{\Imm q-y_-}{6},\ \frac{y_+-\Imm q}{6},\ \eps,
+ \frac{\tau(B)}{4L_1(f,B)},\ \frac{\eta(B)}{C_2(f,B)},
+\]
+and put
+\begin{equation}
+\label{eq:residual-projective-target}
+ \Delta(f,B,q,\eps)=
+ \min\{\,2L_1(f,B)r^2,\ \eta(B) r^2\,\}.
+\end{equation}
+Every entry is a displayed positive rational, so $r$ and $\Delta$ are
+positive.  The Bézout identity and the first residual budget give
+$\Norm{f'(q)}\ge\eta(B)>0$.  Thus the rational Newton point
+\[
+                        n=q-\frac{f(q)}{f'(q)}
+\]
+is defined, and exact norm multiplicativity gives
+\[
+             \Norm{n-q}=\frac{\Norm{f(q)}}{\Norm{f'(q)}}\le r^2.
+\]
+The four geometric entries keep the eliminant-safe band around $n$ strictly
+inside $B$.  The Taylor entry makes the nonlinear remainder subordinate to
+the affine factor $f'(q)(Z-n)$ on every selected side.  Finite Rouché transfer
+therefore gives $\Wind_4(f;D)=4$, and the standard refiner supplies the total
+RAT.
+
+Every band point is within two coordinate radii of $n$, while the Newton
+displacement puts each coordinate of $n$ within one radius of $q$.  Hence
+both coordinate differences from $q$ are at most $3r$, so
+\[
+             \Norm{z-q}\le(3r)^2+(3r)^2=18r^2\le18\eps^2.
+\]
+Equation~\eqref{eq:projective-box-upper} gives the Hermitian-projective
+quadrance conclusion.  For the
+ordinary-membership form, the minimum additionally includes one quarter of
+the finite boundary-clearance lower bound and replaces the four pointwise
+gaps by the computed uniform interior-strip radius.
+\end{proof}
+
+\leanref{RFAP.ResidualChordal.ofResidual;
+RFAP.ResidualChordal.observeOfResidual}
+
+The preceding theorem accepts a requested radius $\eps$ and tests whether the
+residual is small enough for it.  The next corollary runs that relation in the
+other numerical direction: starting from the residual $R$, it computes a
+rational radius whose square is within a chosen factor $\kappa>1$ of
+$R/\mu$.  The factor $\kappa$ is deliberate rational slack that replaces an
+exact square root; the finite dyadic bracket is not a new geometric object.
+
+\begin{corollary}[requested-factor rational residual bound]
+\label{cor:requested-residual-projective}
+Under the hypotheses of \cref{thm:residual-projective-converse}, put
+\[
+ \mu(f,B)=\min\{\eta(B),\,2L_1(f,B)\}>0
+\]
+and let $s=s(f,B,q)>0$ be the reference radius obtained from the geometric,
+derivative-threshold, and Taylor caps in that proof with the requested cap
+$\eps=1$.  For any displayed rational $\kappa>1$, define
+\[
+ \Lambda_\kappa(f,B,q)=
+ \min\left\{\mu(f,B),\frac{\mu(f,B)s^2}{\kappa}\right\}>0.
+\]
+If $0<R=\Norm{f(q)}<\Lambda_\kappa(f,B,q)$, a bounded dyadic scan followed
+by a precomputed finite number of exact rational comparisons computes a
+positive rational
+$\rho$ satisfying
+\[
+       \frac{R}{\mu(f,B)}<\rho^2
+       \le\frac{\kappa R}{\mu(f,B)}.
+\]
+The resulting strictly nested winding-one box $D$ and its RAT obey
+\[
+ \chi^2(q,z)\le\frac{18\kappa}{\mu(f,B)}R\quad(z\in D),
+ \qquad
+ \diamq(D)\le\frac{32\kappa}{\mu(f,B)}R.
+\]
+These estimates are local to the supplied winding-one state on $B$.
+\end{corollary}
+
+\begin{proof}
+Write $\mu=\mu(f,B)$ and put $x=R/\mu$.  Since
+$0<R<\Lambda_\kappa\le\mu$, the displayed
+rational $x$ lies strictly between zero and one.  Starting at $1$, repeatedly
+halve the rational radius.  An explicit natural depth computed from $x$ makes the
+final dyadic square no larger than $x$, so this is a bounded recursion rather
+than a square-root operation or an unbounded search.  It returns the last
+radius $r$ whose square is above $x$; one halving step gives
+\[
+                         x<r^2\le4x.
+\]
+
+Put
+\[
+              g=\min\left\{1,\frac{\kappa-1}{3}\right\}>0.
+\]
+The rational inequalities $g\le1$ and $3g\le\kappa-1$ give
+\[
+              (1+g)^2=1+2g+g^2\le1+3g\le\kappa.
+\]
+The dyadic bracket supplies the initial rational interval
+\[
+ \ell_0=\frac r2,\qquad u_0=r,\qquad
+ \ell_0^2\le x<u_0^2,\qquad u_0-\ell_0=\ell_0.
+\]
+Compute the natural number
+\[
+             N=\left\lceil\frac2g\right\rceil.
+\]
+The finite geometric-depth estimate of \cref{lem:reciprocal-search} gives
+$(2/3)^N\le g$, and hence $(1/2)^N\le g$.  Perform exactly $N$ rational
+bisections.  At each step compare $x$ with the square of the midpoint and
+retain the half with endpoints $\ell_j,u_j$ satisfying
+$\ell_j^2\le x<u_j^2$.  Thus
+\[
+ u_N-\ell_N
+   =2^{-N}(u_0-\ell_0)
+   =2^{-N}\ell_0
+   \le g\ell_N,
+\]
+where the last inequality also uses $\ell_0\le\ell_N$.  Consequently
+\[
+ u_N\le(1+g)\ell_N,
+ \qquad
+ x<u_N^2\le(1+g)^2\ell_N^2\le\kappa x.
+\]
+Taking $\rho=u_N$ proves the requested bracket.  Every recursion depth and
+every comparison has been computed from the displayed rationals before the
+finite recursion begins.
+
+The threshold makes $\kappa(R/\mu)<s^2$, so $\rho<s$.  Moreover
+$R<\mu\rho^2$, while $\mu\le\eta(B)$ and
+$\mu\le2L_1(f,B)$; hence both residual seed budgets in
+\cref{thm:residual-projective-converse} hold.  The same finite
+Newton--Rouch\'e construction therefore applies.  Composing its bounds
+$\chi^2(q,z)\le18\rho^2$ and $\diamq(D)\le32\rho^2$ with the requested
+bracket gives the two displayed estimates.
+\end{proof}
+
+\leanref{RFAP.DyadicBracket.selectWithin;
+RFAP.ResidualChordal.AdjustableLinearResidualChordalResult.chordalLinear}
+
+\begin{remark}[why the converse is local and normalized]
+A small value of $\Norm{f(q)}$ alone does not identify a track or even a
+relevant ambient box: multiplying $f$ by a nonzero Gaussian rational rescales
+the residual without changing its winding tracks.  The converse in
+\cref{thm:residual-projective-converse} therefore includes the displayed
+squarefree Bézout margins and a known containing winding state.
+\end{remark}
+
+The protected parent of \Defref{def:protected-parent} need not carry winding
+one: the Newton construction uses its quantitative boundary clearance and
+ambient refinement together with the already supplied squarefree and
+axis-elimination certificates.  This smaller interface permits a global
+finite classifier.
+
+The classifier removes the need for the caller to choose that parent.  If the
+sample lies outside the coefficient isolation square, leading-term dominance
+computes a positive lower bound on its residual, so the small-residual branch
+is impossible.  If it lies inside, the outer square itself supplies the
+protected parent; the resulting local track is then assigned to one of the
+already constructed global tracks.  The three output branches below are just
+the decidable outcomes of those two tests plus exact evaluation.
+
+\begin{theorem}[global displayed-residual classifier]
+\label{thm:global-residual-classifier}
+Let $f$ have degree $d\ge2$ and carry the finite squarefree certificate used
+by the box theorem.  Let $K_f=[-R,R]^2$ be its coefficient-computed
+isolation square, let $M_f>0$ be the leading--tail dominance margin of
+\Defref{def:leading-tail-margin}, and put
+\[
+ U=\Norm{\operatorname{lc}(f)}(2R^2)^d,
+ \qquad
+ \Omega(f)=\min\left\{M_f,\frac{M_f^2}{4U}\right\}>0.
+\]
+For every displayed $q\in\Qi$ and every $\eps\in\Q_{>0}$ one can compute a
+positive rational threshold $\Delta_{\rm glob}(f,q,\eps)$ and return exactly
+one of the following finite records:
+\begin{enumerate}
+\item the exact evaluation certificate $f(q)=0$;
+\item a winding-one box $D\subset K_f$, its total shrinking RAT, the estimates
+\[
+ \diamq(D)\le32\eps^2,
+ \qquad
+ \chi^2(q,z)\le18\eps^2\quad(z\in D),
+\]
+and a deterministic owner of this RAT among the $d$ tracks already returned
+by global isolation;
+\item the displayed inequality
+\[
+             \Delta_{\rm glob}(f,q,\eps)\le\Norm{f(q)},
+\]
+certifying failure of the explicit small-residual hypothesis.
+\end{enumerate}
+Inside $K_f$, the threshold is the uniform protected-parent target from
+\cref{thm:residual-projective-converse}; outside $K_f$, it is $\Omega(f)$.  In
+particular, no sample outside $K_f$ can enter the assigned-box branch with
+residual below the stated threshold.
+\end{theorem}
+
+\begin{proof}
+Whenever a displayed $q$ satisfies
+$R^2\le\Norm q\le2R^2$,
+Lemma~\ref{lem:leading-tail-annular-margin} gives
+\[
+ M_f\le \Norm{L_f(q)}-\Norm{T_f(q)}.
+\]
+For displayed Gaussian rationals $a,b$, a
+two-coordinate Cauchy identity gives the finite inequality
+\[
+ 0<m\le\Norm a-\Norm b
+ \quad\Longrightarrow\quad
+ \frac{m^2}{4\Norm a}\le\Norm{a+b}.
+\]
+On the annulus, $\Norm{L_f(q)}\le U$, so
+$M_f^2/(4U)\le\Norm{f(q)}$.  Beyond the annulus the leading estimate is at
+least twice the tail estimate.  The elementary bound
+\[
+ \frac{\Norm a}{2}-\Norm b\le\Norm{a+b}
+\]
+then gives $M_f\le\Norm{f(q)}$.  Failure of the closed-square membership
+predicate implies
+$R^2<\Norm q$ by one of four decidable coordinate comparisons, so the two
+cases prove $\Omega(f)\le\Norm{f(q)}$ for every displayed $q$ rejected by
+the membership predicate of $K_f$.
+
+For $q\in K_f$, use the boundary clearance of $K_f$ as a
+\texttt{ProtectedAmbient}.  A residual below the uniform target first proves
+strict interior membership, then the same Newton--Rouch\'e calculation builds
+$D$ and its track.  The track refines $K_f$.  The finite maximality assignment
+therefore refines it to the coefficient-computed partition scale and returns
+the selected output owner; a zero-winding remainder cell is excluded by
+additivity and nonnegativity.  Every branch is selected by exact rational
+comparisons.
+\end{proof}
+
+\leanref{RFAP.GlobalResidual.classify;
+RFAP.GlobalResidual.AssignedResult.owner}
+
+\section{Irreducibility and general polynomials}
+\label{sec:general-polynomials}
+
+This section constructs multiplicity presentations, applies the squarefree
+RAT construction to their factors, and transfers the resulting finite
+observations to the original polynomial.
+
+\begin{definition}[finite irreducibility certificate]
+\label{def:irreducibility-certificate}
+A \emph{finite irreducibility certificate} for a displayed polynomial
+$f\in\Qi[Z]$ records that $f$ is nonzero and has positive degree, together
+with the following proper-divisor rule.  For every displayed nonzero
+$h,k\in\Qi[Z]$ satisfying $f=hk$ and $\deg h<\deg f$, it certifies
+$\deg h=0$.
+\end{definition}
+
+\leanref{RFAP.Irreducible.IrreducibleCertificate}
+
+\begin{proposition}[irreducibility supplies squarefreeness]
+\label{prop:irreducible-squarefree}
+From a finite irreducibility certificate for $f$, the Euclidean algorithm
+constructs the squarefree certificate of
+\cref{def:squarefree-certificate}.  If $\deg f>1$, the same certificate
+excludes every displayed Gaussian-rational linear factor.
+\end{proposition}
+
+\begin{proof}
+Compute $g=\gcd(f,f')$ and the exact factorization $f=gh$.  The derivative
+calculation gives $\deg g\le\deg f'<\deg f$, so the proper-divisor rule makes
+$g$ constant.  Rescaling the computed Bézout cofactors gives
+$Uf+Vf'=1$.  If $\deg f>1$, a displayed linear factor would itself be a
+nonconstant proper divisor, contrary to the same rule.
+\end{proof}
+
+\leanref{RFAP.Irreducible.squarefreeOfIrreducible}
+
+For completeness, arbitrary polynomials can be reduced constructively.
+
+The purpose of this preprocessing is narrower than full factorization.  A
+repeated factor should describe one geometric site carrying a larger integer
+weight, not several indistinguishable tracks.  The algorithm therefore splits
+only until it has pairwise-coprime squarefree factors and records how often
+each occurs.  The box theorem is then run once per squarefree factor, while
+the multiplicity is transported as finite integer data.
+
+\begin{lemma}[squarefree certificate or smaller exact split]
+\label{lem:squarefree-or-split}
+Let $p\in\Qi[Z]$ be displayed, normalized, nonzero, and of positive degree.
+A finite Euclidean calculation returns exactly one of the following records:
+\begin{enumerate}[label=(\roman*)]
+\item a squarefree certificate for $p$ in the sense of
+\Defref{def:squarefree-certificate};
+\item displayed normalized nonzero polynomials $g,q$ of positive degree,
+each of degree strictly below $\deg p$, together with the identities
+\[
+                 p=gq,
+ \qquad
+                 \deg g+\deg q=\deg p.
+\]
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+Compute the extended Euclidean GCD of $p$ and $p'$.  Positive degree makes
+$p'$ nonzero and gives $\deg p'<\deg p$, while nonzeroness of $p$ makes the
+computed GCD $g$ nonzero.  Its degree is decidably either zero or positive.
+If $\deg g=0$, rescale the returned B\'ezout identity exactly as in the proof
+of Proposition~\ref{prop:irreducible-squarefree}; this gives the squarefree certificate
+of \Defref{def:squarefree-certificate}.
+
+If $\deg g>0$, exact Euclidean division returns the normalized cofactor $q$
+and the identity $p=gq$.  Since $g$ divides $p'$, one has
+$\deg g\le\deg p'<\deg p$.  Exact degree additivity gives
+$\deg g+\deg q=\deg p$; hence $q$ is also nonzero, normalized, of positive
+degree, and of degree strictly below $\deg p$.
+\end{proof}
+
+\leanref{RFAP.Squarefree.squarefreeOutcome;
+RFAP.Factorization.factor_natDegree_add;
+RFAP.Factorization.decomposeNormalized}
+
+\begin{lemma}[finite coprime multiplicity fold]
+\label{lem:coprime-multiplicity-fold}
+Let $P$ be a displayed normalized positive-degree polynomial, and suppose a
+nonempty finite list of normalized positive-degree squarefree occurrences
+has product $P$ and degree sum $\deg P$.  A terminating finite GCD
+fold converts that list into a finite squarefree-multiplicity presentation of
+$P$ in the sense of \Defref{def:squarefree-multiplicity-presentation}.
+In particular, the returned positive-degree basis is nonempty, its factors
+are pairwise coprime with displayed B\'ezout certificates, and its weighted
+product and degree identities recover those of the occurrence list.
+\end{lemma}
+
+\begin{proof}
+Insert the occurrences successively into an initially empty basis.  When a
+new occurrence is coprime to the current head, retain the head and recurse
+through the tail.  Otherwise compute their nonconstant GCD and replace the
+overlap by its common factor and the two exact cofactors.  Squarefreeness
+supplies the pairwise-coprimality certificates among those three parts and
+preserves coprimality with the unvisited tail.  Every recursive insertion
+consumes one entry of the displayed finite list.
+
+The insertion invariant records pairwise coprimality, the weighted product
+identity, and the weighted degree identity.  After the fold, remove only
+degree-zero basis parts and multiply their displayed values into one nonzero
+unit.  The input has positive degree, so the remaining positive-degree basis
+is nonempty.  These invariants are precisely the data required by
+\Defref{def:squarefree-multiplicity-presentation}.
+\end{proof}
+
+\leanref{RFAP.Multiplicity.insertPart;
+RFAP.Multiplicity.buildBasis;
+RFAP.Factorization.Decomposition.positiveMultiplicityProductIdentity;
+RFAP.Factorization.Decomposition.positiveMultiplicityEntries_pairwise;
+RFAP.Factorization.Decomposition.positiveMultiplicityEntries_nonempty;
+RFAP.Factorization.Decomposition.positiveMultiplicityDegree}
+
+\begin{proposition}[finite squarefree and multiplicity preprocessing]
+\label{prop:factor}
+There is a total coefficient algorithm which distinguishes the zero
+polynomial, a nonzero constant, and a positive-degree polynomial.  In the
+positive-degree case it returns a nonempty finite list of normalized,
+positive-degree, squarefree occurrences whose product is the
+normalized input and whose degrees sum to its degree.  It also returns the
+resulting finite squarefree-multiplicity presentation in the sense of
+\Defref{def:squarefree-multiplicity-presentation}.
+\end{proposition}
+
+\begin{proof}
+The normalized coefficient list decides whether the input is zero, a nonzero
+constant, or of positive degree.  In the positive-degree branch, repeatedly
+apply Lemma~\ref{lem:squarefree-or-split}.  Retain a returned squarefree factor;
+in the split branch recurse on the two strictly smaller natural degrees and
+append their occurrence lists.  Polynomial multiplication and degree
+additivity preserve the two stated invariants, and recursion
+terminates by the strict degree decrease.  Apply
+Lemma~\ref{lem:coprime-multiplicity-fold} to the resulting nonempty occurrence
+list to obtain the presentation of
+\Defref{def:squarefree-multiplicity-presentation}.
+\end{proof}
+
+\leanref{RFAP.Factorization.preprocess}
+
+Run the box theorem once for each positive-degree basis factor and attach its displayed multiplicity.  Repeated factors therefore do not create duplicate box machines.  This preprocessing is intentionally not claimed to be an irreducible factorization algorithm; no such algorithm is needed for the squarefree box theorem proved here.
+
+The next theorem has two complementary readings.  If the value of a finite
+product is very small, a bounded scan can exhibit at least one small factor.
+If a particular factor has already been selected and the product of the
+others has a positive lower bound, then smallness can be transferred back and
+forth with the selected factor, with its multiplicity appearing as an
+ordinary natural power.  No radical is needed to undo that power.
+
+\begin{theorem}[finite multiplicity residual transfer]
+\label{thm:multiplicity-residual}
+Write the computed positive multiplicity basis as
+\[
+             p(q)=u\prod_{j=1}^{s}h_j(q)^{m_j},
+ \qquad u\ne0,\quad m_j\in\N_{>0},
+\]
+where this is an equality of displayed Gaussian-rational evaluations.  Put
+$U_0=\Norm u>0$ and $N=\sum_jm_j$.  For every displayed
+$\delta\in\Q_{>0}$,
+\[
+             \Norm{p(q)}<U_0\delta^N
+\]
+constructively selects an index $j$ with
+$\Norm{h_j(q)}<\delta$.
+
+For a preselected entry $h=h_j$ of multiplicity $m=m_j$, expose the finite
+list split before and after that entry and let $c(q)$ be the displayed product
+of all the other positive factors.  If a displayed certificate gives
+\[
+       0<\beta\le U_0\Norm{c(q)}
+\]
+and a local residual theorem gives
+$0\le X\le\kappa\Norm{h(q)}$ with $0\le\kappa$, then
+\begin{equation}
+\label{eq:multiplicity-projective-power}
+ X^m\le
+ \left(\kappa\max\{1,\beta^{-1}\}\right)^m\Norm{p(q)}.
+\end{equation}
+In particular $X$ may be the affine Hermitian projective quadrance supplied
+by the requested-factor bound of
+\cref{cor:requested-residual-projective}, with its
+displayed coefficient used as $\kappa$ here.  The result uses the natural power $m$;
+it does not extract an $m$-th root or introduce a fractional exponent.
+\end{theorem}
+
+\begin{proof}
+Exact norm multiplicativity turns the basis identity into
+\[
+ \Norm{p(q)}=U_0\prod_j\Norm{h_j(q)}^{m_j}.
+\]
+A bounded scan tests the finitely many inequalities
+$\Norm{h_j(q)}<\delta$.  If every test failed, monotonicity of natural powers
+and finite products would give the reverse bound
+$U_0\delta^N\le\Norm{p(q)}$, a contradiction.  The scan therefore returns
+the first proof-bearing small factor.
+
+For the preselected entry, the exact list split gives
+\[
+ \Norm{p(q)}=U_0\Norm{c(q)}\Norm{h(q)}^m,
+ \qquad
+ \beta\Norm{h(q)}^m\le\Norm{p(q)}.
+\]
+Raise the local inequality to the positive natural power $m$.  Since
+$M=\max\{1,\beta^{-1}\}\ge1$ and $m>0$, one has
+$\beta^{-1}\le M\le M^m$.  Multiplying the preceding inequalities proves
+\eqref{eq:multiplicity-projective-power}.  All products and scans are structural
+recursions on displayed finite lists.
+\end{proof}
+
+\leanref{RFAP.MultiplicityResidual.selectSmallFactor;
+RFAP.MultiplicityResidual.chordalPow_le_integerPowerConstant_mul_sourceResidual}
+
+\section{A finite rational-function argument principle}
+\label{sec:rfap}
+
+This section combines a reduced quotient with multiplicity presentations to
+produce jointly separated signed sites and compute the rational-function
+action principle.
+
+Let $F,G\in\Qi[Z]$ be displayed dense polynomials and suppose that $G$ is
+nonzero.  The identically zero numerator is returned by a separate
+constructor.  In the remainder of this section $F$ is also nonzero.
+
+Conceptually, the construction performs three operations.  It first cancels
+the common polynomial factor, since a displayed quotient has no zero/pole
+distinction there.  It then applies the polynomial box theorem separately to
+the squarefree factors of the reduced numerator and denominator.  Finally it
+labels numerator sites positively, denominator sites negatively, and uses
+Bézout certificates to separate every pair across both sides.  The outer
+winding is consequently the positive degree total minus the negative degree
+total.
+
+\subsection{Executable cancellation}
+
+Run extended Euclid on the normalized pair.  Its finite output supplies
+displayed polynomials
+\[
+ H,\quad F_0,\quad G_0,\quad U,\quad V\in\Qi[Z]
+\]
+and the identities
+\begin{equation}
+\label{eq:rfap-reduction}
+ F=HF_0,\qquad G=HG_0,\qquad UF_0+VG_0=1.
+\end{equation}
+The Bézout identity is the finite certificate that the displayed reduced
+cofactors have no common nonconstant factor.
+Here $H$ and $G_0$ are nonzero, and $F_0$ is nonzero when $F$ is.  The same
+finite division records prove
+\begin{equation}
+\label{eq:rfap-degree-balance}
+ \deg H+\deg F_0=\deg F,\qquad
+ \deg H+\deg G_0=\deg G.
+\end{equation}
+At a displayed $z\in\Qi$ for which
+$G(z)\ne0$, cancellation gives the exact value identity
+\[
+       F(z)G(z)^{-1}=F_0(z)G_0(z)^{-1}.
+\]
+No value is assigned at a point where the denominator vanishes.
+
+On any rational boundary clear for both reduced cofactors, the generic
+winding of \cref{def:rational-function-winding}, realized explicitly in
+\cref{sec:winding-realization}, applies to $F_0/G_0$.  In particular,
+\cref{thm:rfap-quotient} computes its winding by subtracting the polynomial
+windings.  Cancellation therefore introduces no second, quotient-specific
+notion of winding.
+
+The coefficient bounds from \cref{lem:eval-bound} compute a positive radius
+for each nonzero polynomial beyond which its leading term dominates.  Take
+the maximum of the two radii.  The resulting finite symmetric square is
+clear for both reduced cofactors, so \cref{thm:global-wind,thm:rfap-quotient}
+give the following result, including constant cofactors.
+
+\begin{corollary}[outer reduced-degree winding]
+\label{cor:rfap-outer}
+There is one coefficient-computed positive rational $R$ such that
+\begin{equation}
+\label{eq:rfap-outer}
+ \Wind_4(F_0/G_0;K_R)=4(\deg F_0-\deg G_0).
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+Choose $R$ as the maximum of the two coefficient-computed dominance radii.
+Theorem~\ref{thm:global-wind} gives the two polynomial windings on $K_R$;
+Theorem~\ref{thm:rfap-quotient} subtracts them, giving
+\eqref{eq:rfap-outer}.
+\end{proof}
+
+\leanref{RFAP.RationalFunctionArgumentPrinciple.NonzeroReducedInput.outer_rationalWinding_eq_degreeDifference}
+
+\subsection{Signed multiplicity sites}
+
+Apply \cref{prop:factor} separately to the two reduced cofactors.  It returns
+nonzero units and pairwise-coprime squarefree positive-degree factors
+\begin{equation}
+\label{eq:rfap-weighted-factorization}
+ F_0=u_+\prod_{j=1}^{r}p_j^{m_j},\qquad
+ G_0=u_-\prod_{k=1}^{s}q_k^{n_k},
+\end{equation}
+with $m_j,n_k>0$ and
+\begin{equation}
+\label{eq:rfap-weighted-degrees}
+ \sum_{j=1}^{r}m_j\deg p_j=\deg F_0,
+ \qquad
+ \sum_{k=1}^{s}n_k\deg q_k=\deg G_0.
+\end{equation}
+Factors on the same side carry the finite pairwise Bézout certificates from
+the multiplicity construction.  Equation \eqref{eq:rfap-reduction} also
+gives a Bézout certificate between every $p_j$ and every $q_k$: exact finite
+factorization transports coprimality to displayed nonzero factors.
+
+Each squarefree factor is handled once.  A degree-one factor returns its
+explicit Gaussian-rational zero with an exact evaluation certificate.  It is
+the only branch in which a zero or pole point is returned.  A factor of
+degree at least two returns exactly its degree many shrinking winding-one
+tracks from \cref{thm:main}.  Thus the output is a finite family of
+\emph{sites}; a site is either an exact rational terminal or a box track.
+
+This is the finite rational-function analogue of a geometric zero or pole
+location.  The sign records whether the quotient turns in the numerator or
+denominator direction, the multiplicity $m$ records the contribution
+$\pm4m$, and the terminal/track alternative says how it is
+observed: exactly when linear and by repeatable boxes otherwise.
+
+The separation cases now require no additional definition.  An exact
+terminal $q=a+ib$ contributes the degenerate support record $(a,a,b,b)$,
+whereas a RAT contributes the proper box returned by a finite call.
+Substituting two degenerate records, one of each kind, or two proper boxes
+into the four inequalities of
+\Defref{def:finite-observation-separation} gives respectively the
+terminal/terminal, terminal/RAT, and RAT/RAT certificates.  Signs and
+multiplicities do not alter this geometric witness.
+
+Fix a numerator factor $p_j$ and one of its higher-degree tracks.  The
+Bézout evaluation bounds compute one positive rational refinement request
+small enough to protect the track simultaneously from
+\[
+ C_j=u_+\prod_{\ell\ne j}p_\ell^{m_\ell}
+ \quad\hbox{and}\quad G_0.
+\]
+On the returned box, $C_j$ and $G_0$ have positive boundary clearances and
+zero winding.  The finite power and product laws therefore give
+\[
+ \Wind_4(p_j^{m_j}C_j/G_0;B)=4m_j.
+\]
+The presentation gives $F_0=p_j^{m_j}C_j$.  The denominator calculation is
+symmetric and gives
+\[
+ \Wind_4(F_0/q_k^{n_k}D_k;B)=-4n_k,
+ \qquad
+ D_k=u_-\prod_{\ell\ne k}q_\ell^{n_\ell}.
+\]
+Joint separation is also quantitative and finite.  Tracks belonging to one
+squarefree factor are separated by its polynomial isolation output.  For two
+different factors, refine the first until its residual forces a positive
+Bézout lower bound for the second, and refine the second until its residual
+is below that bound.  Overlap would contradict the two rational inequalities.
+For an exact rational terminal and a track, the same lower bound excludes the
+displayed point from a finite refinement of the track.  Two exact terminals
+of coprime factors are unequal because substituting a common displayed point
+in their Bézout identity would give $1=0$.
+
+\begin{proof}[Proof of \Thmref{thm:rfap-general}]
+Cancellation, quotient winding, multiplicity preprocessing, local signed
+winding, and the two degree totals were proved above.  Enumerate every focused
+position in each finite multiplicity list.  Store the exact terminal or
+higher isolation result at that position, its internal separation and atomic
+ownership data, and all same-side separation witnesses.  Then enumerate the
+finite Cartesian product of numerator and denominator positions and apply
+the cross-factor Bézout construction just described.  Constants contribute
+empty site families.  Finally store \eqref{eq:rfap-outer} in the same result
+record; \cref{def:rational-function-winding} gives the normalized identity in
+\Thmref{thm:rfap-general}.  All iterations are over displayed finite lists or
+natural degrees.
+\end{proof}
+
+\leanref{RFAP.RationalSites.prove;
+RFAP.Paper.rationalFunctionArgumentPrinciple}
+
+The ownership sentence in \cref{thm:rfap-general} is deliberately atomic.
+It would be false to say that every arbitrary nonzero-winding box has exactly
+one site: a larger rational box may surround several zeros and poles.  The
+proved maximality statement concerns winding-one tracks for one squarefree
+factor.  The returned finite partition has zero-winding remainder cells for
+that factor, and every competing atomic track is assigned to one output cell.
+
+\begin{corollary}[squarefree signed specialization]
+\label{cor:rfap-squarefree}
+Suppose both nonzero reduced cofactors $F_0$ and $G_0$ are supplied with
+finite squarefree certificates.  The RFAP algorithm has exactly $\deg F_0$
+numerator sites and $\deg G_0$ denominator sites.  Constants contribute no
+site, degree-one cofactors contribute exact Gaussian-rational terminals, and
+higher cofactors contribute degree-indexed box tracks.  Every numerator
+track has winding $+4$, every denominator track has winding $-4$, the two
+families are jointly separated, and \eqref{eq:rfap-outer} holds.
+\end{corollary}
+
+\begin{proof}
+Apply the squarefree box theorem directly to each reduced cofactor instead
+of multiplicity preprocessing.  Protect each higher track from the opposite
+cofactor using their reduced Bézout certificate.  The opposite winding is
+zero, so \cref{thm:rfap-quotient} gives $4-0$ on a numerator track and
+$0-4$ on a denominator track.  The degree-one and constant branches, joint separation,
+atomic ownership, and outer winding use the constructions already described.
+\end{proof}
+
+\leanref{RFAP.RationalFunctionArgumentPrinciple.proveSquarefree;
+RFAP.Paper.squarefreeRationalFunctionArgumentPrinciple}
+
+\subsection{Two-way metric and residual calibration}
+
+The word here is \emph{residual}, not the meromorphic residue.  For displayed
+$P,Q$ and a displayed $q$ with $Q(q)\ne0$, put
+\begin{equation}
+\label{eq:quotient-residual}
+       \mathcal R_{P/Q}(q)=\Norm{P(q)/Q(q)}
+       =\frac{\Norm{P(q)}}{\Norm{Q(q)}}.
+\end{equation}
+
+There are again two directions.  Moving far enough down a numerator track
+makes this quotient residual uniformly small because the numerator becomes
+small while the protected denominator stays bounded away from zero.
+Conversely, a sufficiently small quotient residual makes the numerator
+residual small, because the denominator also has an explicit upper bound; the
+polynomial converse can then build a nearby numerator track.  At a denominator
+site the same statement is applied to the reciprocal, so its smallness is the
+finite certificate for the original quotient's displayed blow-up.
+
+\begin{definition}[local quotient context and protected state]
+\label{def:protected-quotient-state}
+For displayed coprime polynomials $P,Q$ with $\deg P>0$ and a fixed ambient
+box $A$, a \emph{local quotient context} consists of a RAT for $P$, a current
+winding-one state on that RAT, and a displayed Bézout certificate
+$UP+VQ=1$.  Finite refinement using this identity produces its
+\emph{protected state}.  The same coefficient calculations provide positive
+rationals
+\[
+  0<\eta_Q\le\Norm{Q(z)}\le M_Q
+\]
+for every displayed $z$ in that state or any refinement of it.  The lower
+bound is the Bézout protection margin and the upper bound is a Horner
+majorant on $A$.  At a denominator site, interchange $P$ and $Q$; the source
+track is then a track for $Q$ protected from $P$.
+\end{definition}
+
+\leanref{RFAP.RationalResidualChordal.LocalQuotientContext;
+RFAP.RationalResidualChordal.LocalQuotientContext.protectedState;
+RFAP.RationalResidualChordal.LocalQuotientContext.oppositeMargin;
+RFAP.RationalResidualChordal.LocalQuotientContext.oppositeMajorant}
+
+\begin{theorem}[two-way RFAP residual bounds]
+\label{thm:rfap-residual-bounds}
+Let $B$ be a rational box carrying any winding-one state for $P$ that refines
+the protected state inside the fixed ambient box $A$.
+\begin{enumerate}[label=(\roman*)]
+\item Every displayed $q\in B$ satisfies the forward estimate
+\begin{equation}
+\label{eq:rfap-forward-residual}
+ \mathcal R_{P/Q}(q)
+ \le \frac{4L_1(P,A)}{\eta_Q}\diamq(B).
+\end{equation}
+Thus a numerator track makes the reduced rational function small.  On a
+denominator track, with $P,Q$ interchanged, the same estimate makes the
+reciprocal rational function small.
+\item Assume $P$ is squarefree of degree at least two, $q$ satisfies the
+strict interior predicate of $B$, and $\eps>0$.  Let
+$\Delta(P,B,q,\eps)$ be the polynomial target from
+\cref{eq:residual-projective-target}.  The positive quotient target
+\begin{equation}
+\label{eq:rfap-converse-target}
+       \Delta_{P/Q}(B,q,\eps)=\frac{\Delta(P,B,q,\eps)}{M_Q}
+\end{equation}
+has the following constructive converse: if
+$\mathcal R_{P/Q}(q)<\Delta_{P/Q}(B,q,\eps)$, exact evaluation either returns
+$P(q)=0$, or constructs a winding-one box $D\subset B$, its total RAT, and
+\[
+ \diamq(D)\le32\eps^2,
+ \qquad \chi^2(q,z)\le18\eps^2\qquad(z\in D).
+\]
+\item For each $\eps>0$, a bounded rational refinement of the protected
+$P$-track constructs a state on a box $B_\eps$ on which
+\begin{equation}
+\label{eq:rfap-epsilon-residual}
+              \mathcal R_{P/Q}(q)<\eps^2
+              \qquad(q\in B_\eps).
+\end{equation}
+In the pole orientation, $P=G_0$ and $Q=F_0$.  Exact evaluation either
+returns the displayed pole certificate $G_0(q)=0$, or else
+\begin{equation}
+\label{eq:rfap-pole-blowup}
+              \Norm{F_0(q)/G_0(q)}\ge\frac{1}{\eps^2}.
+\end{equation}
+\end{enumerate}
+All constants and refinement requests are computed from displayed
+coefficients, boxes, and Bézout data.
+\end{theorem}
+
+\begin{proof}
+The polynomial estimate in \cref{thm:main} gives
+$\Norm{P(q)}\le4L_1(P,A)\diamq(B)$, while protection gives
+$\eta_Q\le\Norm{Q(q)}$; division proves
+\eqref{eq:rfap-forward-residual}.  Conversely,
+\eqref{eq:quotient-residual}, the upper bound $\Norm{Q(q)}\le M_Q$, and
+\eqref{eq:rfap-converse-target} give
+\[
+ \Norm{P(q)}
+ =\mathcal R_{P/Q}(q)\Norm{Q(q)}
+ <\frac{\Delta(P,B,q,\eps)}{M_Q}M_Q
+ =\Delta(P,B,q,\eps).
+\]
+Apply \cref{thm:residual-projective-converse}.
+
+For (iii), refine the $P$-track at the explicit uniform residual request with
+polynomial target $\eta_Q\eps^2$.  Every displayed point in the returned box
+has $\Norm{P(q)}<\eta_Q\eps^2$ and
+$\Norm{Q(q)}\ge\eta_Q$, proving
+\eqref{eq:rfap-epsilon-residual}.  If both displayed values are nonzero,
+exact norm multiplicativity gives
+\[
+ \mathcal R_{P/Q}(q)\mathcal R_{Q/P}(q)=1.
+\]
+Inverting the strict upper bound yields the weak lower bound
+\eqref{eq:rfap-pole-blowup}.  If $P(q)=0$, the algorithm reports that exact
+finite evaluation instead of assigning a value at the pole.
+\end{proof}
+
+\leanref{RFAP.RationalResidualChordal.LocalQuotientContext.quotientResidualSq_le_diagonal;
+RFAP.RationalResidualChordal.LocalQuotientContext.oppositeQuotientSq_ge_inv_epsilonSq}
+
+\begin{example}[coprime squarefree quotient]
+For $F(Z)=Z$ and $G(Z)=Z-1$, the identity
+\[
+             1=F(Z)-G(Z)
+\]
+is a finite coprimality certificate.  Both derivatives are the constant one.
+The two sites are therefore the exact displayed points $0$ and $1$, carrying
+the exact numerator-zero and denominator-zero evaluations respectively; the
+outer winding is $4-4=0$.  Their cross-separation witness is the rational
+coordinate gap $1$.
+\end{example}
+
+\begin{example}[repeated factor]
+Take $F(Z)=(Z-1)^2$, $G(Z)=1$, and the box
+$B=(-2,2,-2,2)$.  The finite product calculation gives
+\[
+       \Wind_4(F/G;B)
+       =\Wind_4(Z-1;B)+\Wind_4(Z-1;B)-\Wind_4(1;B)=8.
+\]
+This is proved from two explicit boundary-clearance certificates, the finite
+product formula, and \cref{thm:rfap-quotient}.  It demonstrates why
+cancellation alone does not imply the $\pm4$ specialization and why a
+repeated geometric site carries multiplicity two rather than being duplicated.
+\end{example}
+
+\section{Finite size of the RFAP-I calculation}
+\label{sec:rfap-one-calculation-size}
+
+This section bounds the finite arithmetic used to produce one requested
+refinement state.  In the glossary's terms, it covers coefficient clearing,
+the two eliminants and their B\'ezout data, the safe cuts, and every Sturm
+winding used by repeated subdivision.  The purpose is not an optimized
+complexity classification.  It is the more basic constructive assertion that
+the sizes of the intermediate displayed records, as well as the number of
+calculation clauses, are bounded before the calculation is run.
+
+For this purpose the executable route carries an ordinary rational as a
+coprime numerator and positive denominator.  Before addition it removes the
+gcd of the two denominators; before multiplication it cross-cancels; after
+each operation it performs a final constructive gcd reduction.  Gaussian
+rationals are pairs of these reduced records.  These canonical records, and
+the normalized polynomials, matrices, and chains built from them, are the
+active algebraic objects used in the proofs above.  Structural equality of
+canonical fractions is equivalent to the displayed cross-multiplication
+identity, while normalization returns an explicit certificate of that
+identity.  No erasure into a quotient-valued rational is part of the
+paper-facing proof route.
+
+This reduced-fraction layer is slightly more infrastructure than the
+headline RFAP-I theorem alone requires.  We have embedded it in the Lean
+development partly to enable the companion approximation work, where bounds
+on the numerators and denominators carried by actual calculations become
+mathematical output rather than merely an implementation concern.  Keeping
+the reduced records and their normalization certificates lets that later
+work reuse the RFAP-I algorithms through the same stable canonical algebraic
+interface, without assuming that a small rational value has a small
+unreduced representative.
+
+Write $\ell(n)=1+\lfloor\log_2 n\rfloor$ for $n>0$, with
+$\ell(0)=1$.  For a reduced rational record, its component magnitude is the
+maximum of the absolute numerator and denominator; for a Gaussian record it
+is the maximum over both coordinates.  Polynomial and matrix magnitudes are
+the corresponding maxima over their finite coefficient lists.  All uses of
+$\ell$ below are implemented by recursion on natural numbers, not by real
+logarithms.
+
+\begin{definition}[RFAP-I calculation budgets]
+\label{def:rfap-one-calculation-budgets}
+Fix a displayed polynomial $f$, a proper boundary-clear winding state on a
+rational box, its displayed vertical and horizontal elimination certificate,
+and a positive rational refinement request.  Let $r$ be the geometric depth
+computed from that request.
+
+The magnitude recurrence $M$ is the maximum of the following source
+recurrences:
+\begin{enumerate}
+\item the coefficient recurrence for the vertical separated-Sylvester matrix
+and its complete fraction-free Schur inverse;
+\item the same recurrence after the quarter turn used for the horizontal
+eliminant;
+\item the product denominator and cleared-coefficient envelope of the input
+coefficient list;
+\item the normalized safe-cut recurrence applied $r$ times to the four
+endpoints of the initial box;
+\item the normalized coefficient and candidate-evaluation envelope for the
+two displayed elimination polynomials; and
+\item the coefficient and endpoint-evaluation envelopes of all normalized
+Sturm chains used for the four child windings in those $r$ rounds.
+\end{enumerate}
+Put $B=\ell(M)$.  The step budget $T$ is the sum of the displayed
+coefficient-clearing count, the two finite Schur-recursion counts, the two
+bounded candidate scans and child-selection count in every round, and the
+field-operation budgets of those child windings.  Both $T$ and $B$ are
+primitive finite recurrences in the supplied records.
+\end{definition}
+
+\begin{theorem}[RFAP-I calculation-size certificate]
+\label{thm:rfap-one-calculation-size}
+For every input to \cref{def:rfap-one-calculation-budgets}, the computed
+numbers $T$ and $B$ have the following properties.
+\begin{enumerate}
+\item Coefficient clearing, both separated-Sylvester--Schur calculations,
+all safe-coordinate scans, and all subdivision windings fit their respective
+summands of $T$.
+\item Every coefficient of both normalized separated-Sylvester scalars and
+every polynomial entry of their scaled inverses has component width at most
+$B$.  In particular this covers the finite polynomial data from which the
+displayed B\'ezout cofactors are extracted.
+\item The common coefficient scale and both integral components of every
+cleared coefficient have width at most $B$.
+\item Every endpoint of the retained box after the requested refinement has
+width at most $B$.
+\item For every child box examined during refinement, every coefficient of
+every normalized signed-remainder-chain member and every normalized endpoint
+evaluation used by its four edge indices has width at most $B$.
+\end{enumerate}
+The normalized chains compute exactly the headline Cauchy indices, so the
+bounded execution produces the same windings and retained refinement state as
+the construction proved above.
+\end{theorem}
+
+\begin{proof}
+One normalized field operation has an explicit component recurrence.  Horner
+induction therefore bounds evaluation of a polynomial with bounded
+coefficients and length.  Long-division induction applies the same recurrence
+to every signed-remainder-chain member; its degree drops strictly at each
+recursive call.  Fraction-free Schur induction bounds the current matrix and
+then every entry of the recursively assembled scaled inverse.  These two
+inductions also retain coefficient-list bounds, so their evaluation envelopes
+are source-computed rather than maxima of completed traces.
+
+Each safe-coordinate search tests exactly $d_0+1$ candidates, where $d_0$ is
+the supplied eliminant degree bound.  The selected coordinate is one of those
+candidates, and its reduced numerator and denominator satisfy the same
+fixed operation envelope.  Induction on $r$ carries this bound through every
+retained child.  Summing the finite clause bounds gives $T$; inclusion in the
+nested maximum $M$ and monotonicity of $\ell$ give $B$.  Finally, the erasure
+theorems commute with polynomial arithmetic, long division, evaluation, and
+the Schur construction.  They identify the normalized execution with the
+coefficientwise identities and windings already used by the paper-facing
+theorems.
+\end{proof}
+
+\leanref{RFAP.NormalizedSturm.erase_canonical_signedRemainderChain;
+RFAP.NormalizedSturm.chainMember_resource;
+RFAP.NormalizedEliminant.erase_normalizedEliminant;
+RFAP.NormalizedBezoutResource.normalizedSeparatedData_within;
+RFAP.ClearingCalculationSize.scaledGaussianCoefficient_component_le;
+RFAP.IsolationCalculationSize.refineTo_box_within;
+RFAP.PaperCalculationSize.stageThreeStepBudget;
+RFAP.PaperCalculationSize.stageThreeBitBudget;
+RFAP.Paper.stageThreeResourceCertificate}
+
+The estimates deliberately prefer transparent uniform recurrences to tight
+ones.  Fraction-free subresultant estimates, a common subdivision grid, or a
+more detailed machine-cost model could improve them.  None is needed for the
+present conclusion: every named intermediate record on the requested RFAP-I
+path has a displayed finite width bound.
+
+\section{Exact cubic example: \texorpdfstring{$Z^3-(1+i)$}{Z cubed minus (1+i)}}
+
+This section traces one displayed polynomial through its squarefree
+certificate, coefficient isolation square, box winding, and winding-one
+boxes.
+
+Consider
+\[
+            f(Z)=Z^3-(1+i).
+\]
+Its normalized high-to-low coefficient list and derivative list are
+\[
+ [a_3,a_2,a_1,a_0]=[1,0,0,-(1+i)],\qquad
+ [f']=[3,0,0].
+\]
+It is Eisenstein in $\Zi[Z]$ at the Gaussian prime $1+i$: the two
+intermediate coefficients and the constant term are divisible by $1+i$,
+the constant term is not divisible by $(1+i)^2$, and the leading coefficient
+is not divisible by $1+i$.  Thus it is irreducible in the ordinary algebraic
+terminology.
+
+The box construction itself needs only an exact squarefree certificate.  Take
+the two polynomials
+\[
+ U(Z)=\frac{-1+i}{2}=-\frac1{1+i},\qquad
+ V(Z)=\frac{1-i}{6}Z=\frac{Z}{3(1+i)}.
+\]
+The coefficient of $Z^3$ in $Uf+Vf'$ and its constant coefficient are
+respectively
+\[
+ \frac{-1+i}{2}+3\frac{1-i}{6}=0,
+ \qquad
+ -\frac{-1+i}{2}(1+i)=1,
+\]
+while every other coefficient is zero.  Hence the displayed coefficientwise
+identity is $Uf+Vf'=1$.
+
+We next run the coefficient construction of
+\cref{def:coefficient-isolation-square}.  Since
+\[
+ C_f=3\bigl(\Norm{-(1+i)}+2\Norm0+4\Norm0\bigr)=6,
+ \qquad
+ R_f=\max\{1,6/\Norm1+1\}=7,
+\]
+the coefficient isolation square is $K_f=K_7=(-7,7,-7,7)$.  Its exact
+leading--tail margin is
+\[
+ M_f=(\Norm1\cdot7^2-C_f)(7^2)^{3-1}
+     =(49-6)49^2=103243>0.
+\]
+The single global application of \cref{thm:global-wind} therefore gives
+$\Wind_4(f;K_f)=12$.
+
+The coefficient polynomials actually passed to the eliminant and edge
+calculations are obtained by expanding
+\[
+ f(x+iy)=A_f(x,y)+iB_f(x,y),
+ \qquad
+ A_f=x^3-3xy^2-1,\quad B_f=3x^2y-y^3-1.
+\]
+For example, on a horizontal edge put
+$x(t)=\alpha+(\beta-\alpha)t$ and $y(t)=c$; the two input lists are the
+coefficients of
+\[
+ x(t)^3-3c^2x(t)-1,
+ \qquad
+ 3c x(t)^2-c^3-1.
+\]
+On a vertical edge one instead puts $x(t)=c$ and
+$y(t)=\alpha+(\beta-\alpha)t$, obtaining
+\[
+ c^3-3c y(t)^2-1,
+ \qquad
+ 3c^2y(t)-y(t)^3-1.
+\]
+The separated Schur--Sylvester recursion on these coefficient data constructs
+the two axis eliminants and computes the common finite degree bound
+$D_f=168$.
+
+The local coefficient bounds are equally explicit.  On $K_7$ the rational
+radius parameter in \cref{def:local-horner-bounds} is $R_{K_7}=98$, and the
+Horner triples are
+\[
+ (0,0,0),\ (2,0,0),\ (392,4,0),\ (76832,1568,8),\
+ (15059076,460992,4704).
+\]
+Consequently $L_1(f,K_7)=460992$ and $L_2(f,K_7)=4704$.  Applying the same
+finite evaluation scan to the displayed cofactors gives
+\[
+ M_U=1,\qquad M_V=\frac{196}{9},\qquad
+ \tau(K_7)=\frac1{16},\qquad \eta(K_7)=\frac9{3136}.
+\]
+Thus the principal numerical outputs of the global and local coefficient
+stages are explicit; the degree-$168$ eliminant lists themselves are produced
+by the stated finite recursion rather than typeset.
+
+A certificate-level execution of the safe subdivision records the following
+three dyadic winding-one boxes.  The edge columns display the four
+Cauchy--Sturm contributions in positive boundary order; their sum is four in
+every row.  Each contribution uses the factor-two convention fixed in
+\cref{def:index}.  This is where the direct edge calculations are informative;
+repeating them on $K_f$ would merely recompute the global winding already
+supplied by \cref{thm:global-wind}.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}cXlc@{}}
+\toprule
+track & rational box $[x_-,x_+]\times[y_-,y_+]$ & edge indices & $\Wind_4(f;B)$\\
+\midrule
+$1$ & $[138/128,140/128]\times[36/128,38/128]$ & $(0,2,0,2)$ & $4$\\
+$2$ & $[-102/128,-101/128]\times[101/128,102/128]$ & $(2,0,2,0)$ & $4$\\
+$3$ & $[-38/128,-36/128]\times[-140/128,-138/128]$ & $(0,2,0,2)$ & $4$\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+For one concrete view of the coefficient arithmetic behind the table,
+the bottom edge of the first box has
+$x(t)=(69+t)/64$ and $y(t)=9/32$.  After clearing the common positive
+denominator $64^3$, its two Cauchy--Sturm inputs are
+\[
+ A_e(t)=t^3+207t^2+13311t-703,
+ \qquad
+ B_e(t)=54t^2+7452t-10882.
+\]
+The finite signed-remainder calculation gives contribution zero, the first
+entry in that row.  The other eleven edge pairs are obtained by the same two
+substitution formulas above.
+
+Taking the rational centers gives
+\[
+ q_1=\frac{139+37i}{128},\qquad
+ q_2=\frac{-203+203i}{256},\qquad
+ q_3=\frac{-37-139i}{128}.
+\]
+Exact evaluation at these rational samples gives
+\begin{align*}
+ \Norm{f(q_1)}=\Norm{f(q_3)}
+   &=\frac{39952889}{549755813888}
+     \approx 7.27\mathbin{\times}10^{-5},\\
+ \Norm{f(q_2)}
+   &=\frac{537358761}{35184372088832}
+     \approx 1.53\mathbin{\times}10^{-5}.
+\end{align*}
+
+The first polynomial track admits the following entirely finite refinement trace.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}c>{\raggedright\arraybackslash}Xc@{}}
+\toprule
+state & winding-one box & $\diamq(B)$\\
+\midrule
+$0$ & $[69/64,35/32]\times[9/32,19/64]$
+    & $1/2048$\\
+$1$ & $[555/512,1111/1024]\times[297/1024,149/512]$
+    & $1/524288$\\
+$2$ & $[71055/65536,4441/4096]\times[19039/65536,595/2048]$
+    & $1/2147483648$\\
+\bottomrule
+\end{tabularx}
+\end{center}
+The edge-index certificates are respectively $(0,2,0,2)$,
+$(0,2,0,2)$, and $(2,0,0,2)$, so every row has winding four.  Their rational
+centers are nested approximants with residual norms
+\[
+ \begin{aligned}
+ \frac{39952889}{549755813888}
+   &\approx7.27\mathbin{\times}10^{-5},\\
+ \frac{8767783105145}{9223372036854775808}
+   &\approx9.51\mathbin{\times}10^{-7},\\
+ \frac{546115072853076822625}{633825300114114700748351602688}
+   &\approx8.62\mathbin{\times}10^{-10}.
+ \end{aligned}
+\]
+These are successive finite refinement states.
+
+\section{Conclusion}
+
+A squarefree linear polynomial has a directly computed exact
+Gaussian-rational zero.  In degree $d\ge2$, the polynomial theorem returns
+exactly $d$ separated interfaces that answer every finite refinement request.
+Each finite observation consists of rational boxes, rational witnesses, and
+Sturm/eliminant certificates.  The same
+squared-diagonal budget bounds the anchor's Hermitian projective quadrance
+and, up to the
+explicit factor $L_1(f,A)$, its polynomial residual quadrance.  The global
+count is four times the degree, local windings are four, and distinctness has a
+coefficient-computable separation radius.  Exact terminal outputs carry a
+Gaussian-rational evaluation certificate.
+
+The RFAP addendum preserves the same discipline.  It cancels a displayed
+quotient by finite Euclid, attaches signed multiplicities to exact rational
+terminals or independently shrinking tracks, separates numerator and
+denominator sites using finite B\'ezout margins, and computes the outer
+winding as four times the reduced degree difference.  Repeated factors remain
+one geometric site with a larger winding; the squarefree specialization has
+only $+4$ and $-4$ sites.
+
+Every requested approximation is produced in finite time by the total
+finite procedures proved above.  Moreover,
+\cref{thm:rfap-one-calculation-size} computes in advance a finite operation
+budget and component-width budget for the eliminant, clearing, Sturm,
+winding, safe-cut, and requested-refinement calculations that produce it.
+
+\appendix
+\section{Formalization and dependency audit}
+\label{sec:formalization-audit}
+
+Our use of Lean should not be read as unqualified approval of its language
+design.  Its small proof-checking kernel is valuable; its authoring language
+is often remarkably unpleasant.  Much of the surface feels accumulated
+rather than designed: dependent syntax, macros, tactic dialects, coercions,
+typeclass search, and elaboration heuristics overlap in ways that are ad hoc
+and difficult to predict.  A mathematically transparent step can produce
+source text whose meaning depends on an invisible elaboration path, and a
+failed step can produce diagnostics describing the elaborator rather than
+the mathematical obstruction.  The result is too often noisy,
+indecipherable, and unnecessarily ugly.  Although users can introduce local
+notation, they cannot turn the system as a whole into a language-neutral
+mathematical vernacular: core commands, library names, and diagnostics remain
+overwhelmingly English.  It is difficult to reconcile these choices with the
+mathematical tradition that good notation should expose structure with
+economy and beauty.  This is not merely an aesthetic complaint.  Obscure
+elaboration makes proofs harder to audit and makes unintended dependencies
+easier to miss.
+
+Mathlib presented the more consequential difficulty.  Its breadth is an
+extraordinary resource, but many convenient general-purpose routes carry
+\texttt{Classical.choice} into proofs of statements whose data and content
+are entirely finite.  An import by itself does not put choice into the axiom
+closure of a theorem.  The problem arises when an apparently elementary
+lemma, bundled structure, normalization routine, or synthesized instance
+uses a choice-bearing route, which then appears in \texttt{\#print axioms}
+for the paper-facing result.  For ordinary classical developments this may
+be harmless.  Here it would silently surrender exactly the claim under
+investigation.  A machine-checked theorem is not a choice-free theorem merely
+because the kernel accepts its proof term; its complete dependency closure
+must also be choice-free.
+
+We therefore audited actual proof dependencies and replaced the offending
+routes rather than accepting them as library overhead.  The project-owned
+lowercase \texttt{mathlib.*} modules provide explicit field laws,
+constructive fractions and Gaussian rationals, executable dense polynomial
+arithmetic and Euclid, finite bivariate and matrix calculations, and direct
+separated-Sylvester eliminant certificates.  Elsewhere we replaced generic order,
+inverse, normalization, and finite-cardinality arguments by direct sign
+proofs and structural recursion on displayed finite data.  Some of these
+local arguments prove facts that are elementary on paper; their length in
+Lean records how difficult the library made it to use those facts without an
+irrelevant selection principle.  The complete active Lean development is
+checked by a generated repository-wide axiom audit: it reports only
+\texttt{propext}, and reports neither \texttt{Classical.choice} nor
+\texttt{Quot.sound}.
+
+The earlier fraction implementation still exposed the axiom
+\texttt{Quot.sound}.  It did so only after an explicit cross-multiplication
+certificate had proved that two displayed representatives were equivalent.
+That is not a selection principle, but it still obscured the finite
+justification behind ambient quotient equality.  We therefore replaced
+quotient fractions by computably canonical reduced records.  Equivalence and
+normalization certificates remain first-class evidence, and equality of
+canonical forms is proved directly.  The same discipline required structural
+representations of the other finite objects and direct equations for several
+recursive algorithms.
+The inactive former implementation is kept only for historical comparison;
+no active paper declaration imports it.  The result answers the interface
+question constructively: whenever canonicalization is available, the kernel
+need not be asked to identify quotient classes at all.
+
+There is a broader library-design point.  Classical mathematics belongs in a
+general mathematical library, but unnecessary classical assumptions should
+not be baked into results that admit finite direct proofs.  When the same
+conclusion can be established without choice, removing choice is a genuine
+strengthening of the theorem, not a stylistic variant.  Constructive
+primitives should sit below optional classical conveniences, and axiom
+dependencies should be visible enough that users can preserve such a
+boundary without rebuilding basic algebra.  Replacing a gratuitous
+assumption by a proof that does not need it is an improvement that a
+foundational library should actively prefer.  We offer the local replacements
+in this development as evidence that this stronger organization is
+practical.
+
+\newpage
+\paragraph{Reproducibility.}
+The principal executable declarations in the \texttt{RFAP.Paper} facade are
+\begin{verbatim}
+RFAP.Paper.isolateByBoxes
+RFAP.Paper.isolateGeneralByBoxes
+RFAP.Paper.rationalFunctionArgumentPrinciple
+RFAP.Paper.squarefreeRationalFunctionArgumentPrinciple
+RFAP.Paper.stageThreeResourceCertificate
+\end{verbatim}
+From the root of the accompanying source archive, the complete reproducibility
+check is
+\begin{verbatim}
+ELAN_HOME="$PWD/.elan" .elan/bin/lake --wfail build
+scripts/check-paper-i-imports.sh
+scripts/check-paper-i-axioms.sh
+scripts/check-nanoda.sh
+\end{verbatim}
+The warning-fatal build checks the complete Lean development.  The two focused
+Paper-I scripts enforce the one-way import boundary and check that every public
+theorem has precisely the audited axiom closure \texttt{[propext]}.  The final
+repository-wide command independently checks the exported proof terms of every
+active source module while admitting only that same axiom.
+
+\small
+\begin{thebibliography}{9}
+\raggedright
+\bibitem{Ruitenburg}
+W. B. G. Ruitenburg,
+\emph{Constructing roots of polynomials over the complex numbers},
+in \emph{Computational Aspects of Lie Group Representations and Related
+Topics}, CWI Tract 84, 1991, 107--128;
+\url{https://ir.cwi.nl/pub/13205/13205D.pdf}.
+
+\bibitem{Richman}
+F. Richman,
+\emph{The fundamental theorem of algebra: a constructive development without
+choice},
+Pacific Journal of Mathematics 196 (2000), 213--230;
+\url{https://doi.org/10.2140/pjm.2000.196.213}.
+
+\bibitem{GeuversWiedijkZwanenburg}
+H. Geuvers, F. Wiedijk, and J. Zwanenburg,
+\emph{A constructive proof of the Fundamental Theorem of Algebra without
+using the rationals},
+in \emph{Types for Proofs and Programs: TYPES 2000}, Lecture Notes in
+Computer Science 2277, Springer, 2002, 96--111;
+\url{https://doi.org/10.1007/3-540-45842-5_7}.
+
+\bibitem{LiPaulson}
+W. Li and L. C. Paulson,
+\emph{Evaluating winding numbers and counting complex roots through Cauchy indices in Isabelle\slash HOL},
+Journal of Automated Reasoning 64 (2020), 331--360;
+\url{https://doi.org/10.1007/s10817-019-09521-3}; arXiv:1804.03922.
+
+\bibitem{Eisermann}
+M. Eisermann,
+\emph{The Fundamental Theorem of Algebra made effective: an elementary real-algebraic proof via Sturm chains},
+American Mathematical Monthly 119 (2012), 715--752;
+\url{https://doi.org/10.4169/amer.math.monthly.119.09.715};
+arXiv:0808.0097.
+
+\bibitem{PerrucciRoyQuantitative}
+D. Perrucci and M.-F. Roy,
+\emph{Quantitative fundamental theorem of algebra},
+Quarterly Journal of Mathematics 70 (2019), 1009--1037;
+\url{https://doi.org/10.1093/qmath/haz008}; arXiv:1803.04358.
+
+\bibitem{PerrucciRoyWinding}
+D. Perrucci and M.-F. Roy,
+\emph{Algebraic winding numbers},
+Journal of Algebra 659 (2024), 581--610;
+\url{https://doi.org/10.1016/j.jalgebra.2024.07.010}; arXiv:2305.08638.
+
+\bibitem{Wilf}
+H. S. Wilf,
+\emph{A global bisection algorithm for computing the zeros of polynomials in
+the complex plane},
+Journal of the ACM 25 (1978), no.~3, 415--420;
+\url{https://doi.org/10.1145/322077.322084}.
+
+\bibitem{Wildberger}
+N. J. Wildberger,
+\emph{One dimensional metrical geometry},
+arXiv:math/0701338, 2007;
+\url{https://arxiv.org/abs/math/0701338}.
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,1265 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs,longtable}
+
+\newcommand{\F}{\mathbb F}
+\newcommand{\SO}{\operatorname{SO}}
+\newcommand{\tr}{\operatorname{tr}}
+\setlength{\emergencystretch}{4em}
+
+\title{Corrections and Further Results for\\
+  \emph{Rational Rotations of Three Dimensional Euclidean Space}}
+
+\begin{document}
+\maketitle
+
+\section{Theorem 31: perpendicular directions and spread}
+
+\subsection{Problem}
+
+Definition 30 evaluates the spread using a non-null \(w\perp v\).  The proof
+justifies the existence of \(w\) by nondegeneracy of the plane perpendicular
+to a \emph{non-null} \(v\).  This does not cover the identity anchor \(v=0\)
+or a nonzero null anchor, including the one exhibited over \(\F_5\) in
+Example 27.
+
+\subsection{Suggested repair}
+
+For \(v=(t,r,s)\), consider
+\[
+ (-r,t,0),\qquad(-s,0,t),\qquad(0,-s,r).
+\]
+All three vectors are perpendicular to \(v\).  If any has nonzero quadrance,
+it supplies the required direction.  If all three are null, then
+\[
+ Q(-r,t,0)+Q(-s,0,t)-Q(0,-s,r)=2t^2=0.
+\]
+Since the characteristic is not two, \(t=0\).  The vector \((1,0,0)\) is
+then perpendicular to \(v\) and has quadrance one.
+
+\subsection{Recommended paper change}
+
+Replace the nondegenerate-plane sentence with this four-candidate argument.
+It is valid for zero, null, and non-null anchors and does not require a basis
+choice.
+
+\section{Theorem 40: the missing half-turn classification}
+
+\subsection{Problem}
+
+The proof says that a product of perpendicular reflections is the displayed
+half turn by a classification in Section 4.  That section defines the matrix
+and proves elementary properties, but contains no converse saying that an
+arbitrary rotation of half spread one is a displayed half turn.  The same
+paragraph invokes an orthogonal non-null basis without constructing it.
+
+\subsection{Suggested repair}
+
+If \(p(\rho)=1\), the matrix identities used in the paper give
+\[
+ \tr(\rho)=-1,\qquad
+ (\rho-\rho^T)^2=(1+\tr(\rho))(\rho+\rho^T-2I)=0.
+\]
+A direct calculation for an antisymmetric \(3\)-by-\(3\) matrix shows that
+square zero forces \(\rho-\rho^T=0\).  Hence
+\[
+ P=\frac{I+\rho}{2}
+\]
+is symmetric and idempotent, with trace one and zero adjugate.  At least one
+diagonal entry is nonzero.  A row \(v\) corresponding to such an entry
+satisfies
+\[
+ Q(v)\ne0,\qquad P=\frac{vv^T}{Q(v)}.
+\]
+It follows that
+\[
+ \rho=2P-I=\rho_{[v]}.
+\]
+
+For a non-null \(v_1\perp v\), put \(v_2=v\times v_1\).  Then
+\[
+ Q(v_2)=Q(v)Q(v_1)\ne0,
+\]
+and direct multiplication shows that the two corresponding reflection
+matrices satisfy \(\sigma_{v_1}\sigma_{v_2}=\rho\).
+
+\subsection{Recommended paper change}
+
+Insert the projector classification before Theorem 40 and replace the
+unsupported basis sentence by the displayed cross-product construction.
+
+\section{Theorem 46: incomplete dependent-case split}
+
+\subsection{Problem}
+
+The written proof treats independent \(v,u\), then identifies every remaining
+case with \(u=\lambda v\).  If \(v=0\) and \(u\ne0\), the pair is dependent
+but \(u\) is not a multiple of \(v\).  The omitted case is elementary because
+\(c(A_0)=I\), but it is not covered by the stated split.
+
+\subsection{Suggested repair}
+
+The case split is unnecessary.  Under
+\[
+ 1+Q(v)\ne0,\qquad 1+Q(u)\ne0,\qquad
+ 1-v\mathbin{\cdot}u\ne0,
+\]
+direct denominator-cleared calculation gives
+\[
+ c(A_v)c(A_u)=c(A_{v\otimes u}),\qquad
+ v\otimes u\equiv\frac{v+u-v\times u}{1-v\mathbin{\cdot}u}.
+\]
+The required domain condition for the output follows from
+\[
+ 1+Q(v\otimes u)=
+ \frac{(1+Q(v))(1+Q(u))}
+      {(1-v\mathbin{\cdot}u)^2}.
+\]
+This single calculation covers zero, dependent, independent, null, and
+anisotropic anchors.
+
+\subsection{Recommended paper change}
+
+Either add the missing case \(v=0,\ u\ne0\), or replace the case split with
+the denominator-cleared calculation above.
+
+\section{Corollary 49: missing cap-domain hypotheses}
+
+\subsection{Problem}
+
+The statement assumes only \(Q(a)xy\ne1\), although its left-hand side
+contains both \(c(xA_a)\) and \(c(yA_a)\).  Their necessary domain conditions
+are
+\[
+ 1+x^2Q(a)\ne0,\qquad 1+y^2Q(a)\ne0.
+\]
+These conditions are automatic over an ordered field, but not over every
+field in the paper's scope.
+
+For example, over \(\F_5\), take
+\[
+ a=(1,0,0),\qquad x=2,\qquad y=0.
+\]
+Then \(Q(a)xy=0\ne1\), while
+\[
+ 1+Q(xa)=1+4=0.
+\]
+Thus the first cap on the left-hand side is undefined despite the printed
+hypothesis being satisfied.
+
+\subsection{Suggested correction}
+
+Assume
+\[
+ 1+x^2Q(a)\ne0,\qquad
+ 1+y^2Q(a)\ne0,\qquad
+ 1-Q(a)xy\ne0.
+\]
+Then the intended conclusion is well-defined:
+\[
+ c(xA_a)c(yA_a)=c(zA_a),\qquad
+ z=\frac{x+y}{1-Q(a)xy}.
+\]
+The output domain follows from the same denominator identity used in
+Theorem 46.
+
+\subsection{Recommended paper change}
+
+Add the two input-cap conditions, or explicitly restrict the corollary to an
+ordered field where they are automatic.
+
+\section{Theorem 50: associativity without caps}
+
+\subsection{Problem}
+
+The statement assumes only that the four anchor products occurring in the
+two bracketings exist.  Its proof identifies them with
+\(c(A_v)c(A_u)c(A_w)\), silently requiring all three input caps to exist.
+That requirement does not follow from the hypotheses.
+
+Over \(\F_5\), let
+\[
+ v=(2,0,0),\qquad u=w=0.
+\]
+Then \(Q(v)=4=-1\), so \(c(A_v)\) is undefined, while every denominator in
+the two anchor-product bracketings is one.  Thus this is a gap in the proof,
+not a counterexample to the theorem's statement.
+
+\subsection{Suggested repair}
+
+Work before normalization with scalar-vector pairs:
+\[
+ (x,v)\otimes(y,u)\equiv
+ \bigl(xy-v\mathbin{\cdot}u,\;xu+yv-v\times u\bigr).
+\]
+Both coordinates of
+\[
+ ((x,v)\otimes(y,u))\otimes(z,w)
+ \quad\text{and}\quad
+ (x,v)\otimes((y,u)\otimes(z,w))
+\]
+agree by the usual dot- and cross-product identities.  This product is
+therefore associative without any cap-domain assumption.  Normalizing at
+the four partial products appearing in the statement yields Theorem 50 under
+exactly its printed hypotheses.
+
+\subsection{Recommended paper change}
+
+Replace the appeal to three input caps by the homogeneous calculation.  The
+statement itself need not be strengthened.
+
+\section{Lemma 59: a finite degree-plus-one proof}
+
+Lemma 59 itself does not require an infinite argument.  Suppose that
+\(g,h\in\mathbb Q[X_1,\ldots,X_n]\), that \(h\ne0\), and that \(g(a)=0\)
+at every rational point \(a\) for which \(h(a)\ne0\).  The paper multiplies
+the two polynomials and invokes all rational points.  The following finite
+simultaneous-nonvanishing argument proves the same statement.
+
+Regard \(g\) and \(h\) as polynomials in their last variable.  Select one
+nonzero coefficient polynomial from each.  Recursively choose values for the
+first \(n-1\) variables at which both selected coefficients are nonzero.
+After this specialization, the resulting one-variable polynomials \(G,H\)
+are nonzero.  Put \(P=GH\) and \(d=\deg P\).  It is enough to test the finite
+list
+\[
+ 0,1,\ldots,d.
+\]
+A nonzero polynomial of degree \(d\) cannot vanish at all \(d+1\) of these
+distinct rational values.  Hence one tested value makes \(P\), and therefore
+both \(G\) and \(H\), nonzero.  The recursion produces a displayed rational
+point at which the original \(g\) and \(h\) are simultaneously nonzero.
+This contradicts the hypothesis if \(g\ne0\), so \(g=0\).
+
+This proves the literal statement of Lemma 59 for every supplied finite
+number of variables.  It uses only coefficient scans, specialization, and the
+finite root bound.  Theorem 58 may still be proved more directly by checking
+its denominator-cleared coordinate identities, so it does not need the
+transfer lemma as an intermediate step.
+
+\subsection{Recommended paper change}
+
+Replace the appeal to the infinitude of \(\mathbb Q\) with the recursive
+degree-plus-one argument above.  The statement of Lemma 59 need not change.
+
+\clearpage
+\section{Finite formulations of the size claims}
+
+Theorem 62 describes the positive rational square classes as an infinite
+group, while Corollary 63 describes the unit-representative subgroup as
+having infinite index.  For formal verification we isolate the uniform
+finite content of these statements.  Given any positive integer \(N\), we
+construct \(N\) distinct square classes and \(N\) distinct kernel cosets.
+The integer \(N\) is arbitrary, but it is fixed before the calculation
+begins; every object used in the proof is then finite and explicit.  No
+completed collection, global enumeration, or choice principle is required.
+
+\medskip
+\noindent\textbf{Theorem (Finite form of Theorem 62).}
+For every positive integer \(N\), there are positive rationals
+\(c_1,\ldots,c_N\) and rational rotations
+\(\rho_1,\ldots,\rho_N\) such that
+\[
+ \chi(\rho_i)=[c_i]
+ \quad\text{and}\quad
+ [c_i]\ne[c_j]\quad\text{whenever }i\ne j.
+\]
+Moreover, a non-null proportion producing each \(\rho_i\) can be constructed
+explicitly.
+
+\smallskip
+\noindent\textbf{Proof.}
+Construct distinct primes \(p_1,\ldots,p_N\) by finite Euclid steps.  After
+\(p_1,\ldots,p_k\) have been found, put
+\[
+ m=1+p_1\cdots p_k
+\]
+and take \(p_{k+1}\) to be the least divisor of \(m\) greater than one.
+Bounded trial division finds this divisor, and its minimality makes it prime.
+It is different from every preceding prime.  Distinct primes represent
+distinct rational square classes: if \(p_i/p_j=(a/b)^2\), then
+\(p_i b^2=p_j a^2\), contrary to the parity of the exponent of \(p_i\) in
+the two sides.
+
+For each \(i\), the constructive four-square theorem gives integers
+\(x_i,t_i,r_i,s_i\) satisfying
+\[
+ x_i^2+t_i^2+r_i^2+s_i^2=p_i.
+\]
+Thus the proportion \((x_i:t_i,r_i,s_i)\) is non-null, has quadrance \(p_i\),
+and produces a rotation \(\rho_i\) satisfying
+\(\chi(\rho_i)=[p_i]\).  Taking \(c_i=p_i\) proves the result.
+\hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Corollary (Finite form of Corollary 63).}
+Let \(K=\ker\chi\), equivalently the subgroup of rotations admitting a
+rational proportion representative of quadrance one.  For every positive
+integer \(N\), there are rational rotations
+\(\rho_1,\ldots,\rho_N\) lying in \(N\) distinct cosets of \(K\).
+
+\smallskip
+\noindent\textbf{Proof.}
+Take the rotations supplied by the theorem.  If \(i\ne j\), then
+\[
+ \chi(\rho_i^{-1}\rho_j)=[c_i]^{-1}[c_j]\ne[1].
+\]
+By the obstruction criterion in Corollary 63, the relative rotation
+\(\rho_i^{-1}\rho_j\) has no rational proportion representative of quadrance
+one.  Thus it does not belong to \(K\), and \(\rho_i\) and \(\rho_j\) lie in
+distinct cosets.
+\hfill\(\blacksquare\)
+
+These are the forms used in the formal development.  They retain an
+arbitrarily large finite challenge while requiring only \(N\) Euclid steps
+and \(N\) finite four-square calculations.  In particular, the proof never
+forms a completed family of all primes, all square classes, or all kernel
+cosets.  This uniform finite construction is how the apparently infinite
+conclusions are formalised without any non-constructive argument.
+
+\clearpage
+\section{Conjecture 52 and Problem 68}
+
+\subsection{Counterexample}
+
+The printed family is
+\[
+ v\otimes u=
+ \frac{\alpha v+\beta u+\gamma(v\times u)}
+      {1+\delta(v\mathbin{\cdot}u)}.
+\]
+Take
+\[
+ \alpha=1,\qquad\beta=\gamma=\delta=0.
+\]
+Then
+\[
+ v\otimes u=v
+\]
+for all \(v,u\).  This is a total associative operation.  It cannot be a
+nonzero coefficient rescaling of either product proposed in the conjecture,
+because its coefficient of \(u\) is zero whereas theirs is nonzero.  Taking
+all four coefficients to be zero gives the constant-zero operation as a
+second counterexample.
+
+Consequently Conjecture 52, and hence Problem 68 as printed, has a negative
+answer.
+
+\subsection{A corrected classification}
+
+The counterexamples show that associativity alone does not distinguish the
+anchor products.  Retaining the homogeneous denominator constant and
+requiring the zero vector to be an identity gives an exact replacement for
+the printed conjecture.
+
+\medskip
+\noindent\textbf{Theorem (Unital associative coefficient products).}
+Let \(\alpha,\beta,\gamma,\epsilon,\delta\in\mathbb Q\), and define
+\begin{equation}
+ v\otimes u=
+ \frac{\alpha v+\beta u+\gamma(v\times u)}
+      {\epsilon+\delta(v\mathbin{\cdot}u)}
+\label{eq:unital-coefficient-product}
+\end{equation}
+whenever the denominator is nonzero.  The following conditions are
+equivalent:
+\begin{enumerate}
+\item[(i)] the operation defined by
+\eqref{eq:unital-coefficient-product} has the zero vector
+\(0=(0,0,0)\in\mathbb Q^3\) as a two-sided identity, and is associative
+whenever all four products occurring in the two bracketings are defined;
+\item[(ii)]
+\[
+ \epsilon\ne0,\qquad \alpha=\beta=\epsilon,
+ \qquad \epsilon\delta=-\gamma^2.
+\]
+\end{enumerate}
+
+\smallskip
+\noindent\textbf{Proof.}
+Suppose first that condition \emph{(i)} holds.  Substituting the zero vector into
+\eqref{eq:unital-coefficient-product}, the identities
+\(v\otimes0=v\) and \(0\otimes u=u\) force
+\(\epsilon\ne0\) and \(\alpha=\beta=\epsilon\).  Comparing one
+coordinate in the associativity equation
+\[
+ (xe_1\otimes xe_1)\otimes e_2
+   =xe_1\otimes(xe_1\otimes e_2)
+\]
+gives
+\[
+ (\epsilon\delta+\gamma^2)x^2=0.
+\]
+This calculation is valid whenever
+\(\epsilon+\delta x^2\ne0\).  At least one of \(x=1\) and \(x=2\)
+satisfies this condition: otherwise \(\epsilon+\delta=0\) and
+\(\epsilon+4\delta=0\), which would imply \(\epsilon=0\).  Taking
+such a nonzero \(x\) gives \(\epsilon\delta=-\gamma^2\).
+
+Conversely, assume the displayed coefficient conditions and put
+\(\lambda=\gamma/\epsilon\).  Dividing numerator and denominator by
+\(\epsilon\) gives
+\[
+ v\otimes u=
+ \frac{v+u+\lambda(v\times u)}
+      {1-\lambda^2(v\mathbin{\cdot}u)}.
+\]
+The zero vector is visibly a two-sided identity.  If \(\lambda=0\), this is
+ordinary vector addition.  If \(\lambda\ne0\), let
+\(D_\lambda(v)=\lambda v\).  Direct calculation gives
+\[
+ D_\lambda(v\otimes u)=
+ \frac{D_\lambda(v)+D_\lambda(u)
+       +D_\lambda(v)\times D_\lambda(u)}
+      {1-D_\lambda(v)\mathbin{\cdot}D_\lambda(u)}.
+\]
+Thus \(D_\lambda\) transports the product, including its domain of
+definition, to the opposite anchor product.  Associativity follows from that
+of the opposite anchor product and the invertibility of \(D_\lambda\).
+\hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Corollary (Normalized forms).}
+After normalizing \(\epsilon=1\), every unital associative member of the
+family has
+\[
+ \alpha=\beta=1,\qquad \delta=-\gamma^2.
+\]
+The case \(\gamma=0\) is vector addition.  Every case \(\gamma\ne0\) is an
+invertible coordinate dilation of the opposite anchor product.  If the cross
+coefficient is further normalized to \(\gamma=\pm1\), the two resulting
+operations are exactly the anchor product and its opposite.
+
+\smallskip
+\noindent\textbf{Proof.}
+Multiplying all five coefficients by the same nonzero scalar does not change
+the partial operation.  Scaling by \(\epsilon^{-1}\) gives the displayed
+normalization, and the theorem gives \(\delta=-\gamma^2\).  The final claims
+follow from the dilation in the proof, with \(\gamma=-1\) giving the anchor
+product and \(\gamma=1\) its opposite. \hfill\(\blacksquare\)
+
+\section{Further results prompted by the open problems}
+
+This section records only results actually established.  It does not list the
+parts of the open-ended questions for which no conclusion is claimed.
+
+\subsection{Problem 69: finite odd fields}
+
+Let \(F=\F_q\) be a finite field of odd order \(q\).  The counts requested in
+Problem 69 can be obtained from finite square tables and the projective
+rotation theorem, without appealing to a group-order formula.  We give the
+elementary counting statements first.
+
+We use the classical result that \(-1\) is a square in \(F\) precisely when
+\(q\equiv1\pmod4\), and is a nonsquare precisely when
+\(q\equiv3\pmod4\).
+
+\medskip
+\noindent\textbf{Lemma (Binary circle count).}
+For \(b\in F\), let
+\[
+ N(b)=\#\{(r,s)\in F^2:r^2+s^2=b\}.
+\]
+If \(-1\) is a square, then \(N(0)=2q-1\) and \(N(b)=q-1\) for
+\(b\ne0\).  If \(-1\) is a nonsquare, then \(N(0)=1\) and \(N(b)=q+1\)
+for \(b\ne0\).
+
+\smallskip
+\noindent\textbf{Proof.}
+If \(-1=i^2\), the invertible substitution
+\((r,s)\mapsto(r+is,r-is)\) identifies the equation with \(xy=b\).  There
+are \(2q-1\) pairs with \(xy=0\), and \(q-1\) with \(xy=b\ne0\).
+
+Suppose instead that \(-1\) is a nonsquare.  The equation at \(b=0\) has
+only the solution \((0,0)\).  For \(b\ne0\), the two sets
+\[
+ \{r^2:r\in F\},\qquad \{b-s^2:s\in F\}
+\]
+both have \((q+1)/2\) elements, and hence intersect.  Thus the projective
+conic \(r^2+s^2=bt^2\) has a point.  The lines through that point
+parametrize its points by the projective line, giving \(q+1\) points.  None
+lies at infinity, since \(r^2+s^2=0\) has no nonzero solution.  Therefore
+\(N(b)=q+1\). \hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Lemma (Ternary quadric count).}
+For \(a\in F\),
+\[
+ \#\{v\in F^3:Q(v)=a\}=
+ \begin{cases}
+ q^2,&a=0,\\
+ q^2+q,&-a\text{ is a nonzero square in }F,\\
+ q^2-q,&-a\text{ is a nonsquare in }F.
+ \end{cases}
+\]
+
+\smallskip
+\noindent\textbf{Proof.}
+Write \(\epsilon=1\) when \(-1\) is a square and \(\epsilon=-1\) otherwise.
+The binary-circle lemma says
+\[
+ N(0)=q+(q-1)\epsilon,
+ \qquad N(b)=q-\epsilon\quad(b\ne0).
+\]
+The required number is \(\sum_{t\in F}N(a-t^2)\).  If \(a=0\), exactly one
+summand has zero argument, and the sum is \(q^2\).  If \(a\ne0\) is a square,
+exactly two summands have zero argument, and the sum is \(q^2+q\epsilon\).
+If \(a\) is a nonsquare, no summand has zero argument, and the sum is
+\(q^2-q\epsilon\).  In the last two cases the sign is positive exactly when
+\(-a\) is a square. \hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Theorem (Rotations and half-spread fibers).}
+The rotation group and its half-spread fibers have orders
+\[
+ |\SO(3,\F_q)|=q(q^2-1),
+\]
+\[
+ \#\{\rho:p(\rho)=0\}=q^2,
+ \qquad
+ \#\{\rho:p(\rho)=1\}=q^2,
+\]
+and, for \(h\ne0,1\), on putting \(D=-h(1-h)\),
+\[
+ \#\{\rho:p(\rho)=h\}=
+ \begin{cases}
+ q^2+q,&D\text{ is a square in }F,\\
+ q^2-q,&D\text{ is a nonsquare in }F.
+ \end{cases}
+\]
+
+\smallskip
+\noindent\textbf{Proof.}
+By Theorem 58, rotations are the non-null proportions \((x:v)\).  In the
+affine chart \(x=1\), the excluded points satisfy \(Q(v)=-1\), and the
+preceding lemma counts \(q^2+q\) of them.  At infinity, the non-null vector
+lines number \(q^2\): among the \(q^3-1\) nonzero vectors, exactly \(q^2-1\)
+are null, and each line has \(q-1\) nonzero representatives.  Therefore
+\[
+ |\SO(3,\F_q)|=\bigl(q^3-(q^2+q)\bigr)+q^2=q^3-q.
+\]
+
+If \(h\ne1\), every rotation in the fiber has the unique affine form
+\(\rho(1:v)\), and the half-spread identity gives
+\[
+ p(\rho(1:v))=h
+ \quad\Longleftrightarrow\quad
+ Q(v)=\frac{h}{1-h}.
+\]
+For \(h=0\) the ternary quadric lemma gives \(q^2\).  For \(h\ne0,1\), the
+square class of \(-h/(1-h)\) is that of \(-h(1-h)=D\), giving the two middle
+fiber counts.  Finally, \(p=1\) consists exactly of the \(q^2\) non-null
+proportions at infinity. \hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Theorem (Parabolic rotations).}
+There are \(q^2-1\) nonidentity parabolic rotations.  They form one conjugacy
+class in \(\SO(3,\F_q)\), and a rotation belongs to the zero half-spread
+fiber precisely when its characteristic polynomial is \((X-1)^3\).
+
+\smallskip
+\noindent\textbf{Proof.}
+The affine description of the zero fiber is \(\rho(1:v)\) with \(Q(v)=0\).
+The vector \(v=0\) gives the identity, leaving \(q^2-1\) nonidentity
+parabolics.  Equivalently, the nonzero null vectors split into \(q+1\)
+projective directions with \(q-1\) nonzero scalar parameters over each.
+The characteristic polynomial from Theorem 29 becomes \((X-1)^3\) exactly
+when \(p=0\).
+
+For conjugacy, take two nonidentity parabolics and recover their unique
+nonzero affine null anchors.  The two anchors are joined by a product of two
+non-null reflections.  Conjugation by the resulting rotation transports the
+first anchor to the second, and equivariance of the cap then transports the
+first parabolic to the second. \hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Corollary (Excluded quadrics and quadrance classes).}
+The excluded affine norm quadric has \(q^2+q\) points and its projective
+closure has \((q+1)^2\) points.  The quadrance-class homomorphism is onto the
+two square classes, and each fiber has size
+\[
+ \frac{q(q^2-1)}2.
+\]
+
+\smallskip
+\noindent\textbf{Proof.}
+The affine count is the ternary quadric lemma at \(a=-1\).  The points at
+infinity are the \(q+1\) projective null directions, so the projective count
+is \(q^2+q+(q+1)=(q+1)^2\).  Every element of \(F\) is a sum of two squares,
+which supplies a non-null proportion in either prescribed square class.
+Multiplication by a fixed proportion of nonsquare quadrance exchanges the two
+fibers bijectively.  They therefore have equal size, and the rotation-count
+theorem gives the displayed value. \hfill\(\blacksquare\)
+
+\subsection{Problem 70: the unit-representative kernel}
+
+Problem 70 asks which subgroups of \(SO(3,\mathbb Q)\) are visible through
+\(\chi\), asks for a suitable sense in which its kernel is dense, and asks
+for both a description of the finitely generated subgroups of the kernel and
+the values of \(\chi\) on rotations of finite order.  The following results
+give the parts of that programme which we have obtained.
+
+\medskip
+\noindent\textbf{Theorem (The unit-representative kernel).}
+Let \(K\) be the rational rotations admitting a rational proportion \(P\)
+with \(N(P)=1\).  Then
+\[
+ K=\ker\chi .
+\]
+In particular, the definition of \(K\) is independent of the representative,
+and \(K\) is closed under products and inverses.
+
+\smallskip
+\noindent\textbf{Proof.}
+Replacing \(P\) by \(\lambda P\), for
+\(\lambda\in\mathbb Q^\times\), replaces its quadrance by
+\(\lambda^2N(P)\).  Hence the projective class of \(P\) has a unit
+representative exactly when \([N(P)]=[1]\), which is exactly the condition
+\(\chi(\rho)=[1]\) for the rotation \(\rho\) represented by \(P\).
+Multiplicativity of the quadrance gives
+\(N(P\otimes R)=N(P)N(R)\), while conjugation preserves the quadrance and
+represents the inverse rotation.  The asserted closure follows.
+\hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Corollary (Square-axis half turns).}
+Every half turn about an axis vector \(a\in\mathbb Q^3\) with nonzero square
+quadrance belongs to \(K\).
+
+\smallskip
+\noindent\textbf{Proof.}
+The half turn is represented by \((0:a)\), of quadrance \(Q(a)\).  If
+\(Q(a)=r^2\ne0\), then \(r^{-1}(0:a)\) has quadrance one.
+\hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Lemma (Finite signatures of positive square classes).}
+Write a positive rational in reduced form as \(c=m/n\), where
+\(m,n\in\mathbb Z_{>0}\).  Let \(S(c)\) be the finite set of primes occurring
+to odd exponent in \(mn\), and let
+\(\kappa(c)\) be their product.  Writing \(A\mathbin\triangle B\) for the
+symmetric difference \((A\setminus B)\cup(B\setminus A)\), we have
+\[
+ [c]=[\kappa(c)],\qquad
+ [c]=[d]\ \Longleftrightarrow\ S(c)=S(d),\qquad
+ S(cd)=S(c)\mathbin\triangle S(d).
+\]
+
+\smallskip
+\noindent\textbf{Proof.}
+Finite prime factorization gives \(mn=\kappa(c)s^2\) for an integer \(s\),
+and hence
+\[
+ c=\kappa(c)\left(\frac{s}{n}\right)^2.
+\]
+Equality of positive rational square classes is therefore equality of the
+parities of all prime exponents.  Under multiplication those parities add
+modulo two, which is symmetric difference of the two finite supports.
+\hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Theorem (Finite-word classification through \(\chi\)).}
+Let \(g_1,\ldots,g_m\) be supplied rational rotations.  There is a computable
+finite prime set \(S\), a vector \(s_i\in\mathbb F_2^S\) for each generator,
+and a finite-dimensional span
+\[
+ V=\langle s_1,\ldots,s_m\rangle\subseteq\mathbb F_2^S
+\]
+with the following properties.  Every supplied finite signed word \(w\) has
+an exactly computable rational rotation matrix and a vector
+\(\nu(w)\in V\); moreover
+\[
+\begin{aligned}
+ w\text{ represents an element of }K
+   &\Longleftrightarrow \nu(w)=0,\\
+ w_1\text{ and }w_2\text{ represent the same }K\text{-coset}
+   &\Longleftrightarrow \nu(w_1)=\nu(w_2).
+\end{aligned}
+\]
+If \(r\) is the rank computed by finite row reduction, then \(V\) has exactly
+\(2^r\) vectors, and an explicit finite word realizing each vector is
+produced.
+
+\smallskip
+\noindent\textbf{Proof.}
+Choose one rational proportion for each \(g_i\), take the union of the finite
+prime supports in the preceding lemma, and use its parity vectors \(s_i\).
+Evaluation of a word is finite proportion multiplication.  Concatenation
+gives addition in \(\mathbb F_2^S\), and reversing the word and conjugating
+its letters gives the inverse without changing its square-class vector.
+The preceding theorem identifies the zero vector with \(K\), and applying it
+to \(w_1w_2^{-1}\) gives the coset test.  Finite binary row reduction computes
+a basis of \(V\), proves the count \(2^r\), and retains a Boolean generator
+word for each vector.  Exact comparison of the nine rational matrix entries
+separately decides whether two words represent the same rotation.
+\hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Theorem (Finite-precision approximation by \(K\)).}
+For every rational rotation \(\rho\) and positive rational
+\(\varepsilon\), one can construct a rational rotation \(\eta\in K\) such
+that
+\[
+ \sum_{i,j=1}^3(\eta_{ij}-\rho_{ij})^2<\varepsilon.
+\]
+
+\smallskip
+\noindent\textbf{Proof.}
+Choose an oriented rational proportion \(P=(x:v)\) for \(\rho\), put
+\(n=N(P)>0\), and compute a sufficiently narrow finite rational
+square-root bracket for \(n\), with upper endpoint \(u\).  Set
+\[
+ A=u+x,\qquad
+ R=(A^2-Q(v):2Av),\qquad
+ D=A^2+Q(v),\qquad U=D^{-1}R.
+\]
+Direct expansion gives \(N(R)=D^2\), so \(N(U)=1\) and the rotation
+\(\eta\) represented by \(U\) lies in \(K\).  The exact error identity is
+\[
+ \sum_{i,j=1}^3(\eta_{ij}-\rho_{ij})^2
+ =\frac{8(u^2-n)^2Q(v)}{D^2n}
+ =8p(\eta^{-1}\rho).
+\]
+The bracket width is chosen by finite integer square-root refinement so that
+the displayed rational quantity is below \(\varepsilon\).  This constructs
+one certified answer for each finite precision request; it uses no real
+square root, sequence, limit, or completed topology.
+\hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Theorem (Finite-order values of \(\chi\)).}
+Suppose that a rational rotation \(\rho\) is supplied with an exact positive
+order \(n\), meaning that \(\rho^n=I\) and
+\(\rho^j\ne I\) for \(0<j<n\).  Then \(n\) and the corresponding half spread
+and quadrance class occur in the following table:
+\[
+\begin{array}{c|c|c}
+\text{exact order}&\text{half spread}&\chi(\rho)\\ \hline
+1&0&[1]\\
+2&1&[Q(a)]\text{, where }a\text{ is the axis}\\
+3&3/4&[1]\\
+4&1/2&[2]\\
+6&1/4&[3].
+\end{array}
+\]
+In particular, no other exact positive order occurs.
+
+\smallskip
+\noindent\textbf{Proof.}
+Put \(\tau=\tr(\rho)-1\) and define
+\[
+ L_0=2,\qquad L_1=\tau,\qquad
+ L_{k+2}=\tau L_{k+1}-L_k.
+\]
+The rational Cayley--Hamilton calculation gives
+\(\tr(\rho^k)=1+L_k\), so \(\rho^n=I\) gives \(L_n=2\).  Since
+\(L_n-2\) is monic in \(\tau\), clearing the denominator of the reduced
+rational \(\tau\) and applying B\'ezout forces that denominator to be one.
+The direct half-spread bounds give \(-2\leq\tau\leq2\).  Testing the five
+integer values and using the supplied minimality of \(n\) gives respectively
+the orders \(2,3,4,6,1\).  Finally
+\[
+ p=\frac{2-\tau}{4}
+\]
+and the proportion formula for \(\chi\) give the displayed classes; when
+\(p=1\), the representative is \((0:a)\), so its class is
+\([Q(a)]\). \hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{What has not been proved from Problem 70.}
+These results do not amount to the full subgroup classification requested in
+the problem.  In particular:
+\begin{enumerate}
+\item We have not classified all subgroups of \(SO(3,\mathbb Q)\) that might
+be meant by \emph{visible through \(\chi\)}, nor the full lattice of inverse
+images or intersections associated with \(\chi\).
+\item For a supplied finite generator list, we classify every supplied finite
+word and the complete finite \(\chi\)-image.  We have not classified the
+resulting subgroup internally: for example, we do not give its isomorphism
+type, defining relations, or a finite presentation.  Thus the request to
+describe its finitely generated subgroups remains open beyond the exact
+finite-query and quotient result above.
+\item The paper leaves \emph{dense in a suitable sense} unspecified.  We prove
+the stated finite squared-entrywise (equivalently, squared Frobenius)
+approximation theorem, but have not formalized a topological closure statement
+or identified this metric formulation with the particular classical topology
+intended by the author.
+\item The finite-order table determines \(\chi\) completely in orders
+\(1,3,4,\) and \(6\).  In order \(2\) it reduces the answer to the square
+class \([Q(a)]\) of the rational axis.  We have not classified globally which
+positive rational square classes occur as quadrances of rational axes; that
+would require the corresponding full rational three-square representability
+classification.
+\end{enumerate}
+
+\clearpage
+\subsection{Problem 71: arbitrary ternary forms}
+
+Problem 71 asks for the theory with the Euclidean quadrance replaced by a
+general nondegenerate ternary form, with particular attention to the rational
+Minkowski form and its null and parabolic phenomena.  The determinant of the
+displayed form cannot in general be omitted from the Euclidean formulas.
+
+\medskip
+\noindent\textbf{Theorem (Projective Clifford correspondence for a ternary
+form).}
+Let \(F\) be a field of characteristic different from two with decidable
+equality.  Let \(M\) be a symmetric nonsingular \(3\)-by-\(3\) matrix over
+\(F\), and put
+\[
+ B_M(u,v)=uMv^T,\qquad Q_M(u)=B_M(u,u),\qquad d=\det M,
+\]
+\[
+ C_M(u,v)=(u\mathbin\times v)\operatorname{adj}(M).
+\]
+For pairs \(P=(x:u)\), define
+\[
+\begin{split}
+ (x:u)\otimes_M(y:v)
+   &=
+ \bigl(xy-dB_M(u,v):xv+yu-C_M(u,v)\bigr),\\
+ N_M(x:u)&=x^2+dQ_M(u),\qquad
+ \overline{(x:u)}=(x:-u).
+\end{split}
+\]
+Then \(\otimes_M\) is associative,
+\[
+ N_M(P\otimes_M R)=N_M(P)N_M(R),
+ \qquad
+ P\otimes_M\bar P=\bar P\otimes_M P=(N_M(P):0).
+\]
+For \(N_M(P)\ne0\), the action
+\[
+ (0:w)\longmapsto
+ N_M(P)^{-1}\bigl(\bar P\otimes_M(0:w)\otimes_M P\bigr)
+\]
+is a member of \(SO(M,F)\).  Every member of \(SO(M,F)\) is obtained in this
+way, and two non-null pairs give the same member exactly when one is a
+nonzero scalar multiple of the other.
+
+\smallskip
+\noindent\textbf{Proof.}
+The adjugate identities for \(M\) give the determinant-weighted
+Binet--Cauchy and Lagrange identities for \(C_M\), together with the two
+vector triple-product identities.  Substitution of those finite coordinate
+identities into the displayed product proves associativity and norm
+multiplicativity; substituting \(v=-u\) gives the conjugation identities.
+The same calculation shows that the normalized conjugation action preserves
+\(B_M\) and has determinant one.  Rescaling \(P\) by
+\(\lambda\in F^\times\) multiplies both its action numerator and its norm by
+\(\lambda^2\), so the action is projectively well defined.
+
+For surjectivity, first select a non-null vector by testing the three
+coordinate vectors and their three pairwise sums.  The identity is the
+product of the half turn about this vector with itself.  Given a nonidentity
+\(\rho\), the same finite coordinate tests produce a non-null \(v\) for
+which \(v\rho-v\) is non-null.  Reflection in that displacement reduces
+\(\rho\) to an orientation-reversing isometry fixing \(v\).  A finite
+selection in \(v^\perp\), followed by reconstruction in an explicit
+orthogonal frame, proves that the reduced isometry is one further non-null
+reflection.  Thus \(\rho\) is a product of two non-null reflections, hence
+also of the corresponding two half turns.  Multiplying their pure pairs
+constructs \(P\).
+
+Finally, if two pairs have the same action, multiply one by the conjugate of
+the other.  The resulting pair acts trivially.  In characteristic different
+from two, the coordinate action formula forces its vector coordinate to
+vanish, so it is projectively scalar.  Cancelling the non-null factor gives
+the required nonzero scale between the original pairs.
+\hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Corollary (The form-relative Cayley chart).}
+For \(u\in F^3\) with \(1+dQ_M(u)\ne0\), the pair \((1:u)\) defines a
+rotation \(c_M(u)\) whose half spread is
+\[
+ p(u)=\frac{dQ_M(u)}{1+dQ_M(u)}.
+\]
+If \(u,v\) also satisfy
+\[
+ 1+dQ_M(v)\ne0,\qquad 1-dB_M(u,v)\ne0,
+\]
+then
+\[
+\begin{split}
+ u\otimes_M v
+   &=\frac{u+v-C_M(u,v)}{1-dB_M(u,v)},\\
+ c_M(u)c_M(v)&=c_M(u\otimes_M v),
+\end{split}
+\]
+and
+\[
+ 1+dQ_M(u\otimes_M v)
+ =
+ \frac{(1+dQ_M(u))(1+dQ_M(v))}
+      {(1-dB_M(u,v))^2}.
+\]
+For a rotation of half spread \(p\), the spread between any non-null
+direction perpendicular to its recovered projective axis and its image is
+\(4p(1-p)\).
+
+\smallskip
+\noindent\textbf{Proof.}
+The norm of \((1:u)\) is \(1+dQ_M(u)\), and the trace of its normalized
+conjugation action gives the displayed half-spread formula.  Multiplying
+\((1:u)\) and \((1:v)\) gives scalar coordinate
+\(1-dB_M(u,v)\) and vector coordinate
+\(u+v-C_M(u,v)\).  Dividing by the nonzero scalar proves the product formula
+and the cap-composition identity.  Norm multiplicativity, followed by the
+same division, gives the denominator identity.  The final spread formula is
+the direct bilinear evaluation of the conjugation action on a perpendicular
+non-null direction.
+\hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Theorem (The rational split model and its null conic).}
+For the rational Minkowski form
+\[
+ Q_M(t,r,s)=t^2+r^2-s^2,
+\]
+the map
+\[
+ \Phi(x:t,r,s)=
+ \begin{pmatrix}
+ x+t&r-s\\
+ r+s&x-t
+ \end{pmatrix}
+\]
+is a multiplicative bijection from the even Clifford algebra to
+\(\operatorname{Mat}_{2}(\mathbb Q)\), and
+\[
+ \det\Phi(P)=N_M(P).
+\]
+Moreover, every nonzero rational null direction has, up to a displayed
+nonzero scale, the form
+\[
+ u(\alpha,\beta)=
+ (\alpha^2-\beta^2,\,2\alpha\beta,\,\alpha^2+\beta^2),
+ \qquad(\alpha,\beta)\ne(0,0).
+\]
+
+\smallskip
+\noindent\textbf{Proof.}
+The inverse of \(\Phi\) is the finite coordinate map
+\[
+ \begin{pmatrix}a&b\\c&e\end{pmatrix}
+ \longmapsto
+ \left(\frac{a+e}{2}:
+   \frac{a-e}{2},\,\frac{b+c}{2},\,\frac{c-b}{2}\right).
+\]
+Direct multiplication proves that \(\Phi(P\otimes_M R)=\Phi(P)\Phi(R)\),
+and expansion of the \(2\)-by-\(2\) determinant gives \(N_M(P)\).
+
+The identity \(Q_M(u(\alpha,\beta))=0\) is immediate by expansion.  Conversely,
+let \(w=(t,r,s)\ne0\) satisfy \(Q_M(w)=0\).  If \(s+t=0\), then the null
+equation gives \(r=0\), and \(u(0,t)\) is a nonzero scalar multiple of
+\(w\).  If \(s+t\ne0\), then
+\[
+ u(s+t,r)=2(s+t)w.
+\]
+These two decidable cases give the asserted projective parametrization
+without extracting a square root.
+\hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Theorem (Rational parabolic normal form).}
+Fix a nonzero rational null vector \(u\), and let
+\(\rho_u(\lambda)\) be the Minkowski rotation represented by
+\((1:\lambda u)\).  Then
+\[
+\begin{split}
+ \rho_u(0)&=I,\\
+ \rho_u(\lambda+\mu)&=\rho_u(\lambda)\rho_u(\mu),\\
+ \rho_u(-\lambda)&=\rho_u(\lambda)^{-1},
+\end{split}
+\]
+and the map \(\lambda\mapsto\rho_u(\lambda)\) is injective.  Every member
+fixes \(u\), has characteristic polynomial \((X-1)^3\), and has zero
+handedness on every perpendicular transversal.
+
+Conversely, every nonidentity member \(\rho\in SO(M,\mathbb Q)\) with
+characteristic polynomial \((X-1)^3\) has the form
+\[
+ \rho=\rho_{u(\alpha,\beta)}(\lambda)
+\]
+for explicitly constructed \(\alpha,\beta,\lambda\in\mathbb Q\), with
+\((\alpha,\beta)\ne(0,0)\) and \(\lambda\ne0\).  Once the displayed nonzero
+axis vector is fixed, its parameter \(\lambda\) is unique.
+
+\smallskip
+\noindent\textbf{Proof.}
+Since \(Q_M(u)=0\) and \(C_M(u,u)=0\), direct multiplication gives
+\[
+ (1:\lambda u)\otimes_M(1:\mu u)=(1:(\lambda+\mu)u),
+ \qquad \overline{(1:\lambda u)}=(1:-\lambda u).
+\]
+This proves the three group laws.  If two resulting rotations agree,
+projective faithfulness makes their representatives scalar multiples.
+Their scalar coordinates are both one, so the scale is one; since \(u\ne0\),
+their parameters agree.  The conjugation formula evaluated at \(u\) proves
+that \(u\) is fixed.  Direct trace, principal-trace, and determinant
+calculations give \((X-1)^3\), while expansion of the handedness determinant
+gives zero.
+
+For the converse, evaluate the supplied characteristic-polynomial identity
+at \(X=1\) and \(X=-1\).  This gives trace three and hence half spread zero.
+Choose the projective Clifford preimage \(P=(x:v)\) from the first theorem.
+Its half-spread formula is
+\[
+ 0=\frac{-Q_M(v)}{N_M(P)},
+\]
+so \(Q_M(v)=0\).  Non-nullness of \(P\) then forces \(x\ne0\), while
+nonidentity forces \(v\ne0\).  Rescaling by \(x^{-1}\) gives
+\((1:x^{-1}v)\).  The null-conic theorem supplies
+\(\alpha,\beta\) and a nonzero scale relating \(x^{-1}v\) to
+\(u(\alpha,\beta)\); absorbing that scale into a nonzero \(\lambda\) gives
+the displayed normal form.  Uniqueness for a fixed axis is the injectivity
+already proved.
+\hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Corollary (Conjugacy of rational parabolics).}
+Any two nonidentity rational Minkowski rotations with characteristic
+polynomial \((X-1)^3\) are conjugate by a rational member of
+\(SO(M,\mathbb Q)\).
+
+\smallskip
+\noindent\textbf{Proof.}
+Apply the normal-form theorem to the two rotations.  For each parametrized
+null vector, an explicit invertible \(2\)-by-\(2\) change of basis carries
+its rank-one nilpotent matrix to
+\[
+ \begin{pmatrix}0&1\\0&0\end{pmatrix}.
+\]
+In these two bases the parabolics are upper unipotent.  The diagonal matrix
+\(\operatorname{diag}(\lambda,\mu)\) intertwines the two nonzero parameters
+\(\lambda\) and \(\mu\).  Multiplying the two basis changes and this diagonal
+matrix gives an invertible rational transporter.  Lifting it through
+\(\Phi^{-1}\) and taking its normalized Clifford action produces the required
+rational special-orthogonal conjugator.
+\hfill\(\blacksquare\)
+
+\subsection{Problem 72: projective point--plane duality}
+
+Problem 72 asks for a projective duality carrying metrical statements about
+points to statements about planes, and for its application to the rotation
+theorems of the paper.  Here a plane always means a plane through the origin.
+
+\medskip
+\noindent\textbf{Lemma (Representative point--plane polarity).}
+Represent a projective point by a nonzero row vector \(x\), and a projective
+plane by a nonzero row normal \(n\), in each case modulo multiplication by a
+nonzero scalar.  The assignments
+\[
+ [x]\longmapsto x^\perp,\qquad
+ n^\perp\longmapsto[n]
+\]
+are well defined and inverse to one another.  A point \([x]\) is incident
+with \(n^\perp\) exactly when
+\[
+ x\mathbin{\cdot}n=0,
+\]
+and this condition is independent of both displayed representatives.
+
+\smallskip
+\noindent\textbf{Proof.}
+The polar plane of \(x\) is defined by the equation
+\(z\mathbin{\cdot}x=0\), so replacing \(x\) by
+\(\lambda x\), with \(\lambda\ne0\), does not change that plane.
+Conversely, replacing a normal \(n\) by \(\mu n\), with \(\mu\ne0\), does
+not change either its plane or its projective point.  Both maps retain the
+same three displayed coordinates; their two composites are therefore
+literally the identity on representatives.  Finally,
+\[
+ (\lambda x)\mathbin{\cdot}(\mu n)
+   =\lambda\mu(x\mathbin{\cdot}n),
+\]
+and \(\lambda\mu\ne0\), proving the representative independence of
+incidence. \hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Theorem (Equivariance and incidence).}
+Let \(\rho\in SO(3,F)\).  In the row-vector convention define the actions on
+point and plane representatives by
+\[
+ x\longmapsto x\rho,\qquad n\longmapsto n\rho.
+\]
+These actions preserve nonzero representatives and projective equivalence,
+satisfy the identity, product, and inverse laws, and commute with the
+polarity:
+\[
+ (x\rho)^\perp=x^\perp\rho.
+\]
+Simultaneous rotation preserves incidence.
+
+\smallskip
+\noindent\textbf{Proof.}
+Since \(\rho\rho^T=I\), multiplication by \(\rho^T\) recovers \(x\) from
+\(x\rho\); hence a nonzero vector cannot be sent to zero.  Linearity gives
+\((\lambda x)\rho=\lambda(x\rho)\), so the action respects projective
+equivalence.  Associativity of matrix multiplication and
+\(\rho^{-1}=\rho^T\) give the action laws.  Finally orthogonality gives
+\[
+ (x\rho)\mathbin{\cdot}(n\rho)
+ =x\rho\rho^Tn^T
+ =x\mathbin{\cdot}n.
+\]
+Thus the image of the plane \(x^\perp\) has normal \(x\rho\), which proves
+equivariance, and the same identity proves incidence invariance.
+\hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Theorem (Projective quadrance is dual-plane spread).}
+Let \([x]\) and \([y]\) be projective points with
+\(Q(x)\ne0\) and \(Q(y)\ne0\).  Then
+\[
+ q([x],[y])
+ =1-\frac{(x\mathbin{\cdot}y)^2}{Q(x)Q(y)}
+ =s(x^\perp,y^\perp).
+\]
+The value is independent of the chosen point or plane representatives and is
+unchanged when both are acted on by the same rotation.
+
+\smallskip
+\noindent\textbf{Proof.}
+By definition, the spread of two planes is the spread of their normal
+vectors.  The polarity retains the coordinates \(x\) and \(y\), so its spread
+is exactly the middle expression.  Rescaling \(x\) by \(\lambda\ne0\)
+multiplies the numerator and the factor \(Q(x)\) in the denominator by
+\(\lambda^2\), and these factors cancel; the calculation for \(y\) is the
+same.  Rotation invariance follows from preservation of dot products and
+quadrances.  The hypotheses \(Q(x),Q(y)\ne0\) are essential: over finite or
+split fields, a nonzero representative may be null, in which case the
+displayed quotient is not defined. \hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Theorem (Constructive translation of rotation theorems).}
+Fix a rotation \(\rho\).  For every relation
+\(\mathcal R(x,x\rho)\) on a nonzero vector and its image, the statements
+\[
+ \mathcal R(x,x\rho)\text{ for every projective point }[x]
+\]
+and
+\[
+ \mathcal R(n,n\rho)\text{ for every projective plane }n^\perp
+\]
+are equivalent.  More generally, for every four-place relation
+\(\mathcal S(x,y,x\rho,y\rho)\), its universal point statement is equivalent
+to the corresponding universal statement about two plane normals.
+
+\smallskip
+\noindent\textbf{Proof.}
+Given the point statement, apply it to the projective point \([n]\) dual to
+an arbitrary plane \(n^\perp\).  The rotation-equivariance theorem identifies
+its image with the normal \(n\rho\) of the rotated plane.  This proves the
+plane statement.  The reverse implication applies the plane statement to
+the polar plane \(x^\perp\).  Since both polarity round trips are exact, the
+original point statement is recovered.  Applying the same argument to two
+representatives proves the four-place version. \hfill\(\blacksquare\)
+
+\medskip
+\noindent\textbf{Corollary (Plane forms of the principal rotation
+theorems).}
+The preceding translation gives the following dual statements.
+\begin{enumerate}
+\item A half turn fixes the plane whose non-null normal is its axis.  It also
+fixes projectively every plane whose normal is perpendicular to that axis,
+because such a normal is negated.
+\item If two non-null independent vectors define the reflection product of
+Theorem 19, the plane normal to their cross-product axis is fixed.
+\item A defined cap fixes the plane normal to its nonzero anchor.  Away from
+the half-turn chart, the recovered nonzero anchor of Theorem 35 is likewise
+the normal of a fixed plane.
+\item Let \(\rho\) have half spread \(p\).  Every non-null plane normal
+perpendicular to the canonical rotation axis satisfies
+\[
+ s(n^\perp,n^\perp\rho)=4p(1-p).
+\]
+In particular, the value is independent of the supplied admissible
+perpendicular normal.
+\end{enumerate}
+
+\smallskip
+\noindent\textbf{Proof.}
+For the first three clauses, use the corresponding vector equalities from
+Theorems 17, 19, 24, and 35 as equalities of plane normals; a sign change is
+a nonzero projective rescaling.  For the final clause, apply the
+quadrance--spread correspondence to Theorem 31 and use equivariance of the
+polarity.  The second spread polynomial in that theorem is
+\(4p(1-p)\). \hfill\(\blacksquare\)
+
+\section{Extent and boundary of the formal verification}
+
+The formal verification covers the theorem-level finite algebraic content of
+the paper, including its rational, projective, and finite-field
+specializations.  It also covers the additional results stated in this note:
+the corrected unital classification prompted by Problem 68, the finite-field
+counts and classifications of Problem 69, the finite-query results for
+Problem 70, the determinant-corrected ternary-form theory and rational
+Minkowski classification of Problem 71, and the point--plane duality of
+Problem 72.  Historical attribution, priority, novelty, and the unresolved
+bibliographical placeholders in the source are editorial matters rather than
+formal mathematical claims, and have not been verified.
+
+Several distinctions are important.  The statements of Theorems 31, 40, 46,
+and 50 are retained, but their printed proofs require the repairs given in
+this note.  Corollary 49 requires the two additional input-cap domain
+hypotheses displayed above, unless it is restricted to an ordered field where
+they hold automatically.  Conjecture 52 is false, so Problem 68 as printed
+has a negative answer; the unital homogeneous classification proved in
+Section 8.2 is a corrected replacement, not a verification of the original
+conjecture.
+Likewise, the general-form results of Problem 71 require the determinant
+factors displayed in Section 9.3.  These changes repair defective statements
+or formulas; they are not concessions made in order to obtain a formal proof.
+
+Other apparent changes are only changes of presentation.  Projective points,
+planes, proportions, square classes, and cosets are represented by displayed
+finite data together with explicit nonzero scale or equivalence witnesses.
+The resulting statements are equivalent to the corresponding projective
+ones; no conclusion is weakened by avoiding quotient objects.  Lemma 59 is
+proved with its literal conclusion for every supplied finite number of
+variables by the degree-plus-one argument of Section 6, and Theorem 58 is
+proved independently by its direct coordinate identities.
+
+The only source conclusions not repeated literally are those whose wording
+requires a completed infinite collection or topology.  Their verified finite
+content is as follows.
+\begin{itemize}
+\item For every supplied positive integer \(N\), the construction gives
+\(N\) pairwise inequivalent positive rational square classes, each with an
+explicit rotation preimage.  This replaces the infinitude sentence of
+Theorem 62.
+\item For every supplied positive integer \(N\), it gives \(N\) pairwise
+kernel-separated rational rotations.  This replaces the infinite-index
+sentence of Corollary 63 and its repetition in Section 13.4.
+\item For every supplied rational rotation and every positive rational
+squared-error bound, it constructs a unit-representable rational rotation
+strictly within that bound.  This is the precise finite approximation result
+proved in response to the density clause of Problem 70; no topological space,
+closure, or density theorem is asserted.
+\end{itemize}
+Thus arbitrary finite size and arbitrary finite precision are retained, but
+no completed carrier of all square classes, abstract quotient index, or
+topological closure is formed.
+
+Problems 69, 71, and 72 are solved in the finite senses stated in Sections
+9.1, 9.3, and 9.4.  Problem 70 is only partly answered.  For every supplied
+finite generator list and every supplied finite signed word, the rotation,
+its \(\chi\)-value, kernel membership, and kernel coset are decided exactly,
+and the complete finite \(\chi\)-image is constructed.  The finite-order
+possibilities are also classified, subject in order two to the quadrance
+class of the supplied rational axis.  What remains unproved is the internal
+classification of the generally non-finite generated subgroups---their
+isomorphism types, relations, or presentations---together with any broader
+interpretation of ``visible through \(\chi\)'', a topological closure theorem,
+and the global three-square classification needed to list all order-two axis
+classes.  These are exactly the limitations recorded at the end of Section
+9.2; no other finite algebraic result in this note is knowingly left
+unverified.
+
+\clearpage
+
+\end{document}

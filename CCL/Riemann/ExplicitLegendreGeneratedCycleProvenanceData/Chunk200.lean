@@ -1,0 +1,17 @@
+import CCL.Riemann.ExplicitLegendreGeneratedGeometryCertificateData.Chunk200
+
+/-!
+Shard-local row-order provenance for generated Legendre A-period geometry.
+-/
+
+namespace CCL.Riemann.ExplicitLegendreGeneratedCertificate
+
+open CCL.Riemann.GeneratedCycleProvenance
+
+theorem geometricShard200_positionTrace (token : Unit) :
+    (geometricShard200Summary token).range.run.positionTrace =
+      PositionTrace.consecutive 3200 16 := by
+  cases token
+  decide +revert
+
+end CCL.Riemann.ExplicitLegendreGeneratedCertificate

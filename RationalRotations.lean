@@ -1,0 +1,48 @@
+import RationalRotations.Anchors
+import RationalRotations.AnchorProducts
+import RationalRotations.Breakdowns
+import RationalRotations.Caps
+import RationalRotations.CoefficientProducts
+import RationalRotations.FieldBoundaryClaims
+import RationalRotations.FiniteFieldCounting
+import RationalRotations.FiniteFieldConjugacy
+import RationalRotations.FiniteGeneratedSubgroupExamples
+import RationalRotations.FiniteGeneratedSubgroups
+import RationalRotations.FiniteGeneratorProfileExamples
+import RationalRotations.FiniteGeneratorProfiles
+import RationalRotations.FiniteRotationProfiles
+import RationalRotations.FiniteRotationOrder
+import RationalRotations.FiniteRotationOrderExamples
+import RationalRotations.FiniteKernelApproximation
+import RationalRotations.FiniteKernelApproximationExamples
+import RationalRotations.FiniteKernelCosetPacks
+import RationalRotations.FiniteSquareClassPacks
+import RationalRotations.HalfSpreads
+import RationalRotations.Handedness
+import RationalRotations.IntroductoryExample
+import RationalRotations.MinkowskiClifford
+import RationalRotations.NullVectors
+import RationalRotations.OpenProblems
+import RationalRotations.PolynomialIdentity
+import RationalRotations.PrescribedAxes
+import RationalRotations.ProjectiveRotationTheorem
+import RationalRotations.PositiveSquareClassSignatureExamples
+import RationalRotations.PositiveSquareClassSignatures
+import RationalRotations.ProjectiveDuality
+import RationalRotations.QuaternionObstruction
+import RationalRotations.RationalParabolicConjugacy
+import RationalRotations.RationalParabolicConjugacyExamples
+import RationalRotations.RationalSurjectivity
+import RationalRotations.RayProportions
+import RationalRotations.Reflections
+import RationalRotations.RotationAnchors
+import RationalRotations.TernaryClifford
+import RationalRotations.TernaryCaps
+import RationalRotations.TernaryTheory
+
+/-!
+# Rational rotations of three-dimensional Euclidean space
+
+A constructive, finite-coordinate formalization of N. J. Wildberger's
+*Rational rotations of three dimensional Euclidean space*.
+-/

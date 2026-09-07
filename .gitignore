@@ -1,0 +1,22 @@
+/.elan/
+/.lake/
+/.venv/
+__pycache__/
+/.external/
+/docs/ccl/node_modules/
+/docs/ccl/dist/
+/docs/ccl/*.tsbuildinfo
+
+# AUCTeX and LaTeX intermediate files
+/.auctex-auto/
+_region_.tex
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+
+/known-projects
+/settings.toml

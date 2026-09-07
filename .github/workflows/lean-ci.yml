@@ -1,0 +1,68 @@
+name: Lean CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lean-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Build and audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Lean, restore caches, and build
+        uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: true
+          build-args: --wfail
+          test: false
+          lint: false
+          use-mathlib-cache: true
+
+      - name: Check Paper-I import boundary
+        run: ./scripts/check-paper-i-imports.sh
+
+      - name: Check combined CCL-1/CCL-2 import boundary
+        run: ./scripts/check-paper-ii-imports.sh
+
+      - name: Check repository-wide axiom closure
+        run: ./scripts/check-axioms.sh
+
+      - name: Check out matching Lean exporter
+        uses: actions/checkout@v4
+        with:
+          repository: leanprover/lean4export
+          ref: 86e4a339507466921dc8c5417c8cb1de1ce7df60
+          path: .external/lean4export
+
+      - name: Check out independent Rust checker
+        uses: actions/checkout@v4
+        with:
+          repository: ammkrn/nanoda_lib
+          ref: 418320295890faed83a96fd97907b12a3b6728c2
+          path: .external/nanoda
+
+      - name: Build independent-checker tools
+        run: |
+          cd .external/lean4export
+          lake build
+          cd ../nanoda
+          cargo build --release --locked
+
+      - name: Check all project declarations with nanoda
+        env:
+          LEAN4EXPORT_BIN: ${{ github.workspace }}/.external/lean4export/.lake/build/bin/lean4export
+          NANODA_BIN: ${{ github.workspace }}/.external/nanoda/target/release/nanoda_bin
+        run: ./scripts/check-nanoda.sh
