@@ -1,0 +1,271 @@
+--- a/Init/Data/ByteArray/Lemmas.lean
++++ b/Init/Data/ByteArray/Lemmas.lean
+@@ -30,28 +30,27 @@
+ @[simp]
+ theorem data_extract {a : ByteArray} {b e : Nat} :
+     (a.extract b e).data = a.data.extract b e := by
+-  simp [extract, copySlice]
+-  by_cases b ≤ e
+-  · rw [(by omega : b + (e - b) = e)]
+-  · rw [Array.extract_eq_empty_of_le (by omega), Array.extract_eq_empty_of_le (by omega)]
++  simp only [extract, copySlice, data_empty, Array.extract_empty, Array.empty_append,
++    Array.append_empty, -eq_self, -iff_self]
++  rcases Nat.le_total b e with h | h
++  · exact congrArg (fun k => a.data.extract b k) (Nat.add_sub_of_le h)
++  · rw [Nat.sub_eq_zero_of_le h, Nat.add_zero]
++    exact (Array.extract_empty_of_stop_le_start (Nat.le_refl b)).trans
++      (Array.extract_empty_of_stop_le_start h).symm
+ 
+ @[simp]
+ theorem extract_zero_size {b : ByteArray} : b.extract 0 b.size = b := by
+-  ext1
+-  simp
++  apply ByteArray.ext
++  rw [data_extract]
++  exact Array.extract_size
+ 
+ @[simp]
+ theorem extract_same {b : ByteArray} {i : Nat} : b.extract i i = ByteArray.empty := by
+-  ext1
+-  simp [Nat.min_le_left]
++  apply ByteArray.ext
++  exact data_extract.trans (Array.extract_empty_of_stop_le_start (Nat.le_refl i))
+ 
+ theorem fastAppend_eq_copySlice {a b : ByteArray} :
+   a.fastAppend b = b.copySlice 0 a a.size b.size false := rfl
+-
+-@[simp]
+-theorem _root_.List.toByteArray_append {l l' : List UInt8} :
+-    (l ++ l').toByteArray = l.toByteArray ++ l'.toByteArray := by
+-  simp [List.toByteArray_append']
+ 
+ @[simp]
+ theorem toList_data_append {l l' : ByteArray} :
+@@ -61,33 +60,53 @@
+ @[simp]
+ theorem data_append {l l' : ByteArray} :
+     (l ++ l').data = l.data ++ l'.data := by
+-  simp [← Array.toList_inj]
+-
+-@[simp]
+-theorem size_empty : ByteArray.empty.size = 0 := by
+-  simp [← ByteArray.size_data]
++  exact congrArg Array.mk (Array.toList_append (xs := l.data) (ys := l'.data)).symm
++
++@[simp]
++theorem size_empty : ByteArray.empty.size = 0 := rfl
+ 
+ @[simp]
+ theorem _root_.List.data_toByteArray {l : List UInt8} :
+     l.toByteArray.data = l.toArray := by
+-  rw [List.toByteArray]
+-  suffices ∀ a b, (List.toByteArray.loop a b).data = b.data ++ a.toArray by
+-    simpa using this l ByteArray.empty
+-  intro a b
+-  fun_induction List.toByteArray.loop a b with simp_all
++  have loopList : ∀ bytes accumulator,
++      (List.toByteArray.loop bytes accumulator).data.toList = accumulator.data.toList ++ bytes := by
++    intro bytes
++    induction bytes with
++    | nil =>
++      intro accumulator
++      exact (List.append_nil accumulator.data.toList).symm
++    | cons byte bytes ih =>
++      intro accumulator
++      change (List.toByteArray.loop bytes (accumulator.push byte)).data.toList =
++        accumulator.data.toList ++ byte :: bytes
++      exact (ih (accumulator.push byte)).trans
++        ((congrArg (fun values => values ++ bytes)
++          (Array.toList_push (xs := accumulator.data) (x := byte))).trans
++          (List.append_assoc accumulator.data.toList [byte] bytes))
++  change Array.mk ((List.toByteArray.loop l ByteArray.empty).data.toList) = Array.mk l
++  exact congrArg Array.mk ((loopList l ByteArray.empty).trans (List.nil_append l))
++
++@[simp]
++theorem _root_.List.toByteArray_append {l l' : List UInt8} :
++    (l ++ l').toByteArray = l.toByteArray ++ l'.toByteArray := by
++  apply ByteArray.ext
++  rw [List.data_toByteArray, data_append, List.data_toByteArray, List.data_toByteArray]
++  exact congrArg Array.mk (Array.toList_append (xs := l.toArray) (ys := l'.toArray)).symm
+ 
+ @[simp]
+ theorem _root_.List.size_toByteArray {l : List UInt8} :
+     l.toByteArray.size = l.length := by
+-  simp [← ByteArray.size_data]
++  change l.toByteArray.data.size = l.toArray.size
++  exact congrArg Array.size List.data_toByteArray
+ 
+ @[simp]
+ theorem _root_.List.toByteArray_nil : List.toByteArray [] = ByteArray.empty := rfl
+ 
+ @[simp]
+ theorem empty_append {b : ByteArray} : ByteArray.empty ++ b = b := by
+-  ext1
+-  simp
++  apply ByteArray.ext
++  rewrite [data_append]
++  exact Array.empty_append
+ 
+ @[simp]
+ theorem append_empty {b : ByteArray} : b ++ ByteArray.empty = b := by
+@@ -96,7 +115,9 @@
+ 
+ @[simp, grind =]
+ theorem size_append {a b : ByteArray} : (a ++ b).size = a.size + b.size := by
+-  simp [← size_data]
++  change (a ++ b).data.size = a.data.size + b.data.size
++  rewrite [data_append]
++  exact Array.size_append
+ 
+ @[simp]
+ theorem size_eq_zero_iff {a : ByteArray} : a.size = 0 ↔ a = ByteArray.empty := by
+@@ -114,29 +135,41 @@
+   rw [Array.getElem_append_left (by simpa)]; rfl
+ 
+ theorem getElem_append_right {i : Nat} {a b : ByteArray} {h : i < (a ++ b).size}
+-    (hle : a.size ≤ i) : (a ++ b)[i] = b[i - a.size]'(by simp_all; omega) := by
++    (hle : a.size ≤ i) : (a ++ b)[i] = b[i - a.size]'(by
++      rewrite [size_append] at h
++      exact Nat.sub_lt_left_of_lt_add hle h) := by
+   simp only [getElem_eq_getElem_data, data_append]
+   rw [Array.getElem_append_right (by simpa)]
+   simp; rfl
+ 
+ @[simp]
+ theorem _root_.List.getElem_toByteArray {l : List UInt8} {i : Nat} {h : i < l.toByteArray.size} :
+-    l.toByteArray[i]'h = l[i]'(by simp_all) := by
+-  simp [ByteArray.getElem_eq_getElem_data]
++    l.toByteArray[i]'h = l[i]'(List.size_toByteArray ▸ h) := by
++  exact getElem_congr_coll (i := i) (w := h) (List.data_toByteArray (l := l))
+ 
+ theorem _root_.List.getElem_eq_getElem_toByteArray {l : List UInt8} {i : Nat} {h : i < l.length} :
+-    l[i]'h = l.toByteArray[i]'(by simp_all) := by
+-  simp
++    l[i]'h = l.toByteArray[i]'(List.size_toByteArray.symm ▸ h) := by
++  exact (List.getElem_toByteArray (h := List.size_toByteArray.symm ▸ h)).symm
+ 
+ @[simp]
+ theorem size_extract {a : ByteArray} {b e : Nat} :
+     (a.extract b e).size = min e a.size - b := by
+-  simp [← size_data]
++  change (a.extract b e).data.size = min e a.data.size - b
++  rw [data_extract]
++  exact Array.size_extract
+ 
+ @[simp]
+ theorem extract_eq_empty_iff {b : ByteArray} {i j : Nat} : b.extract i j = ByteArray.empty ↔ min j b.size ≤ i := by
+-  rw [← size_eq_zero_iff, size_extract]
+-  omega
++  constructor
++  · intro h
++    have emptySize : (b.extract i j).size = 0 := congrArg ByteArray.size h
++    exact Nat.sub_eq_zero_iff_le.mp (size_extract.symm.trans emptySize)
++  · intro h
++    apply ByteArray.ext
++    refine data_extract.trans (Array.ext ?_ ?_)
++    · exact Array.size_extract.trans (Nat.sub_eq_zero_of_le h)
++    · intro index sourceBound emptyBound
++      exact False.elim (Nat.not_lt_zero index emptyBound)
+ 
+ @[simp]
+ theorem extract_add_left {b : ByteArray} {i j : Nat} : b.extract (i + j) i = ByteArray.empty := by
+@@ -172,24 +205,53 @@
+ theorem extract_eq_extract_append_extract {a : ByteArray} {i k : Nat} (j : Nat)
+     (hi : i ≤ j) (hk : j ≤ k) :
+     a.extract i k = a.extract i j ++ a.extract j k := by
+-  simp
+-  rw [Nat.min_eq_left hi, Nat.max_eq_right hk]
+-
+-theorem append_inj_left {xs₁ xs₂ ys₁ ys₂ : ByteArray} (h : xs₁ ++ ys₁ = xs₂ ++ ys₂) (hl : xs₁.size = xs₂.size) : xs₁ = xs₂ := by
+-  simp only [ByteArray.ext_iff, ← ByteArray.size_data, ByteArray.data_append] at *
+-  exact Array.append_inj_left h hl
++  apply ByteArray.ext
++  rw [data_extract, data_append, data_extract, data_extract]
++  have transport := Array.extract_append_extract (as := a.data) (i := i) (j := j) (k := k)
++  rw [Nat.min_eq_left hi, Nat.max_eq_right hk] at transport
++  exact transport.symm
++
+ 
+ theorem extract_append_eq_right {a b : ByteArray} {i j : Nat} (hi : i = a.size) (hj : j = a.size + b.size) :
+     (a ++ b).extract i j = b := by
+-  subst hi hj
+-  ext1
+-  simp [← size_data]
++  subst i
++  subst j
++  apply ByteArray.ext
++  rewrite [data_extract, data_append]
++  change (a.data ++ b.data).extract a.data.size (a.data.size + b.data.size) = b.data
++  apply Array.ext
++  · rewrite [Array.size_extract, Array.size_append, Nat.min_self, Nat.add_sub_cancel_left]
++    rfl
++  · intro k h₁ h₂
++    simp only [Array.getElem_extract, Array.getElem_append_right (Nat.le_add_right _ _), Nat.add_sub_cancel_left, -eq_self, -iff_self]
++    rfl
+ 
+ theorem extract_append_eq_left {a b : ByteArray} {i : Nat} (hi : i = a.size) :
+     (a ++ b).extract 0 i = a := by
+-  subst hi
+-  ext1
+-  simp
++  subst i
++  apply ByteArray.ext
++  rewrite [data_extract, data_append]
++  change (a.data ++ b.data).extract 0 a.data.size = a.data
++  apply Array.ext
++  · rewrite [Array.size_extract, Array.size_append, Nat.min_eq_left (Nat.le_add_right _ _), Nat.sub_zero]
++    rfl
++  · intro k h₁ h₂
++    simp only [Array.getElem_extract, Nat.zero_add, Array.getElem_append_left h₂, -eq_self, -iff_self]
++    rfl
++
++theorem append_inj_left {xs₁ xs₂ ys₁ ys₂ : ByteArray} (h : xs₁ ++ ys₁ = xs₂ ++ ys₂) (hl : xs₁.size = xs₂.size) : xs₁ = xs₂ := by
++  have he := congrArg (fun b => b.extract 0 xs₁.size) h
++  exact (extract_append_eq_left rfl).symm.trans (he.trans (extract_append_eq_left hl))
++
++/-- Equal concatenations with equal prefix sizes have equal suffixes. -/
++theorem append_inj_right {xs₁ xs₂ ys₁ ys₂ : ByteArray}
++    (h : xs₁ ++ ys₁ = xs₂ ++ ys₂) (hl : xs₁.size = xs₂.size) : ys₁ = ys₂ := by
++  have hs : xs₁.size + ys₁.size = xs₂.size + ys₂.size := by
++    have hs := congrArg ByteArray.size h
++    rewrite [size_append, size_append] at hs
++    exact hs
++  have he := congrArg (fun b => b.extract xs₁.size (xs₁.size + ys₁.size)) h
++  exact (extract_append_eq_right rfl rfl).symm.trans (he.trans (extract_append_eq_right hl hs))
+ 
+ theorem extract_append_size_left {a b : ByteArray} {i : Nat} :
+     (a ++ b).extract i a.size = a.extract i a.size := by
+@@ -213,8 +275,9 @@
+ 
+ theorem extract_extract {a : ByteArray} {i j k l : Nat} :
+     (a.extract i j).extract k l = a.extract (i + k) (min (i + l) j) := by
+-  ext1
+-  simp
++  apply ByteArray.ext
++  rw [data_extract, data_extract, data_extract]
++  exact Array.extract_extract
+ 
+ theorem getElem_extract_aux {xs : ByteArray} {start stop : Nat} (h : i < (xs.extract start stop).size) :
+     start + i < xs.size := by
+@@ -223,7 +286,8 @@
+ 
+ theorem getElem_extract {i : Nat} {b : ByteArray} {start stop : Nat}
+     (h) : (b.extract start stop)[i]'h = b[start + i]'(getElem_extract_aux h) := by
+-  simp [getElem_eq_getElem_data]; rfl
++  simp only [getElem_eq_getElem_data, data_extract, Array.getElem_extract, -eq_self, -iff_self]
++  rfl
+ 
+ theorem extract_eq_extract_left {a : ByteArray} {i i' j : Nat} :
+     a.extract i j = a.extract i' j ↔ min j a.size - i = min j a.size - i' := by
+@@ -257,8 +321,9 @@
+   simp [← List.toByteArray_append]; rfl
+ 
+ theorem append_assoc {a b c : ByteArray} : a ++ b ++ c = a ++ (b ++ c) := by
+-  ext1
+-  simp
++  apply ByteArray.ext
++  rewrite [data_append, data_append, data_append, data_append]
++  exact Array.append_assoc
+ 
+ @[simp]
+ theorem toList_empty : ByteArray.empty.toList = [] := by

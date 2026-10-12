@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "lean_version": "4.32.2",
+  "module": "Lake.Build.Module",
+  "source": "src/lean/lake/Lake/Build/Module.lean",
+  "source_sha256": "186a211523ea5e503af2811921adc47b5df3120eeadd8dbe719e2ba628c80169",
+  "patched_source_sha256": "88a9fef3d5bb7af08eafd49f5bbf32b1098e42b568e4e292d62f72928631affa",
+  "patch": "lake-export-info.patch",
+  "patch_sha256": "fb475d04dc94c6b7a364ef494a686d7ef6cfc5461c63612a436bd7ab041da00e",
+  "archive_member": "Module.c.o.export",
+  "archive_instance": 2,
+  "archive_member_count": 2,
+  "initializer": "initialize_Lake_Build_Module",
+  "native_inputs": {
+    "bin/lean": "e8baaa71855a616dc351028f3ad2200051b0671f423a1696a100e809302d5550",
+    "bin/leanc": "0f51753a7921fadb2813b24c9e9e3cfccf02bdb606b7a34feebd763c63754fcc",
+    "bin/clang": "9fcd5fc4baeea9c449bcc9ca4b9db7714465107669498b0056a853f22f5f4def",
+    "bin/llvm-ar": "697c4da3ff7080716bf591ddf38d02fb093f3173e12188ddd4243304228004ad",
+    "bin/lake": "60330ab6f07dce20f3fa9ebb08e8b984ea9549eac172afeb15d9d2227060e2b3",
+    "lib/lean/libLake.a": "21fd26d99365f93fd8137565a1f5523bfcc0f0104a7cb6483b85d5d1546fd2cc",
+    "lib/lean/libLake_shared.so": "e29bbb0c9e1b46fcff3a507bed00e44dec287dd510ee6586c4b61e3e40547579",
+    "lib/lean/libleanshared.so": "d7768b88d8162736da4305777cd6f147676038fd885bd8a265c958b0ecea00b4",
+    "lib/lean/libInit_shared.so": "2f96493ac9046f64ec7bcb78102a4c1e7cd9a7042487f246af45eda8a96667f5"
+  }
+}

@@ -1,0 +1,1068 @@
+--- a/Init/Data/String/Decode.lean
++++ b/Init/Data/String/Decode.lean
+@@ -30,29 +30,68 @@
+ /-! # `Char.utf8Size` -/
+ 
+ public theorem Char.utf8Size_eq_one_iff {c : Char} : c.utf8Size = 1 ↔ c.val ≤ 127 := by
+-  fun_cases utf8Size
+-  all_goals simp_all; assumption
++  change (if c.val.toNat ≤ 127 then 1 else if c.val.toNat ≤ 2047 then 2 else if c.val.toNat ≤ 65535 then 3 else 4) = 1 ↔ c.val.toNat ≤ 127
++  split
++  · exact ⟨fun _ => ‹c.val.toNat ≤ 127›, fun _ => rfl⟩
++  · split
++    · constructor
++      · intro h; cases h
++      · intro h; exact False.elim (‹¬c.val.toNat ≤ 127› h)
++    · split
++      · constructor
++        · intro h; cases h
++        · intro h; exact False.elim (‹¬c.val.toNat ≤ 127› h)
++      · constructor
++        · intro h; cases h
++        · intro h; exact False.elim (‹¬c.val.toNat ≤ 127› h)
+ 
+ public theorem Char.utf8Size_eq_two_iff {c : Char} : c.utf8Size = 2 ↔ 127 < c.val ∧ c.val ≤ 0x7ff := by
+-  fun_cases utf8Size with
+-  | case1 v _ => subst v; simp_all [← UInt32.not_le]
+-  | case2 v _ _ => subst v; simp_all
+-  | case3 v _ _ _ => subst v; simp_all [← UInt32.not_le]
+-  | case4 v _ _ _ => subst v; simp_all [← UInt32.not_le]
++  change (if c.val.toNat ≤ 127 then 1 else if c.val.toNat ≤ 2047 then 2 else if c.val.toNat ≤ 65535 then 3 else 4) = 2 ↔ 127 < c.val.toNat ∧ c.val.toNat ≤ 2047
++  split
++  · constructor
++    · intro h; cases h
++    · intro h; exact False.elim (Nat.not_lt_of_ge ‹c.val.toNat ≤ 127› h.1)
++  · split
++    · exact ⟨fun _ => ⟨Nat.lt_of_not_ge ‹¬c.val.toNat ≤ 127›, ‹c.val.toNat ≤ 2047›⟩, fun _ => rfl⟩
++    · split
++      · constructor
++        · intro h; cases h
++        · intro h; exact False.elim (‹¬c.val.toNat ≤ 2047› h.2)
++      · constructor
++        · intro h; cases h
++        · intro h; exact False.elim (‹¬c.val.toNat ≤ 2047› h.2)
+ 
+ public theorem Char.utf8Size_eq_three_iff {c : Char} : c.utf8Size = 3 ↔ 0x7ff < c.val ∧ c.val ≤ 0xffff := by
+-  fun_cases utf8Size with
+-  | case1 v _ => subst v; simp_all [UInt32.lt_iff_toNat_lt, UInt32.le_iff_toNat_le]; omega
+-  | case2 v _ _ => subst v; simp_all [UInt32.lt_iff_toNat_lt, UInt32.le_iff_toNat_le]; omega
+-  | case3 v _ _ _ => subst v; simp_all [← UInt32.not_le]
+-  | case4 v _ _ _ => subst v; simp_all [← UInt32.not_le]
++  change (if c.val.toNat ≤ 127 then 1 else if c.val.toNat ≤ 2047 then 2 else if c.val.toNat ≤ 65535 then 3 else 4) = 3 ↔ 2047 < c.val.toNat ∧ c.val.toNat ≤ 65535
++  split
++  · constructor
++    · intro h; cases h
++    · intro h; exact False.elim (Nat.not_lt_of_ge (Nat.le_trans ‹c.val.toNat ≤ 127› (by decide : 127 ≤ 2047)) h.1)
++  · split
++    · constructor
++      · intro h; cases h
++      · intro h; exact False.elim (Nat.not_lt_of_ge ‹c.val.toNat ≤ 2047› h.1)
++    · split
++      · exact ⟨fun _ => ⟨Nat.lt_of_not_ge ‹¬c.val.toNat ≤ 2047›, ‹c.val.toNat ≤ 65535›⟩, fun _ => rfl⟩
++      · constructor
++        · intro h; cases h
++        · intro h; exact False.elim (‹¬c.val.toNat ≤ 65535› h.2)
+ 
+ public theorem Char.utf8Size_eq_four_iff {c : Char} : c.utf8Size = 4 ↔ 0xffff < c.val := by
+-  fun_cases utf8Size with
+-  | case1 v _ => subst v; simp_all [UInt32.lt_iff_toNat_lt, UInt32.le_iff_toNat_le]; omega
+-  | case2 v _ _ => subst v; simp_all [UInt32.lt_iff_toNat_lt, UInt32.le_iff_toNat_le]; omega
+-  | case3 v _ _ _ => subst v; simp_all [← UInt32.not_le]
+-  | case4 v _ _ _ => subst v; simp_all [← UInt32.not_le]
++  change (if c.val.toNat ≤ 127 then 1 else if c.val.toNat ≤ 2047 then 2 else if c.val.toNat ≤ 65535 then 3 else 4) = 4 ↔ 65535 < c.val.toNat
++  split
++  · constructor
++    · intro h; cases h
++    · intro h; exact False.elim (Nat.not_lt_of_ge (Nat.le_trans ‹c.val.toNat ≤ 127› (by decide : 127 ≤ 65535)) h)
++  · split
++    · constructor
++      · intro h; cases h
++      · intro h; exact False.elim (Nat.not_lt_of_ge (Nat.le_trans ‹c.val.toNat ≤ 2047› (by decide : 2047 ≤ 65535)) h)
++    · split
++      · constructor
++        · intro h; cases h
++        · intro h; exact False.elim (Nat.not_lt_of_ge ‹c.val.toNat ≤ 65535› h)
++      · exact ⟨fun _ => Nat.lt_of_not_ge ‹¬c.val.toNat ≤ 65535›, fun _ => rfl⟩
+ 
+ public theorem Char.utf8Size_pos (c : Char) : 0 < c.utf8Size := by
+   repeat first | apply iteInduction (motive := (0 < ·)) <;> intros | decide
+@@ -62,7 +101,10 @@
+ 
+ public theorem Char.utf8Size_eq (c : Char) : c.utf8Size = 1 ∨ c.utf8Size = 2 ∨ c.utf8Size = 3 ∨ c.utf8Size = 4 := by
+   match c.utf8Size, c.utf8Size_pos, c.utf8Size_le_four with
+-  | 1, _, _ | 2, _, _ | 3, _, _ | 4, _, _ => simp
++  | 1, _, _ => exact Or.inl rfl
++  | 2, _, _ => exact Or.inr (Or.inl rfl)
++  | 3, _, _ => exact Or.inr (Or.inr (Or.inl rfl))
++  | 4, _, _ => exact Or.inr (Or.inr (Or.inr rfl))
+ 
+ theorem Char.toNat_le {c : Char} : c.toNat ≤ 0x10ffff := by
+   have := c.valid
+@@ -145,10 +187,29 @@
+             Nat.and_two_pow_sub_one_eq_mod _ 6, Nat.mod_mod_of_dvd c.val.toNat (by decide)]
+ 
+ @[simp] public theorem String.length_utf8EncodeChar (c : Char) : (utf8EncodeChar c).length = c.utf8Size := by
+-  simp [Char.utf8Size, utf8EncodeChar_eq_utf8EncodeCharFast, utf8EncodeCharFast]
+-  cases Decidable.em (c.val ≤ 0x7f) <;> simp [*]
+-  cases Decidable.em (c.val ≤ 0x7ff) <;> simp [*]
+-  cases Decidable.em (c.val ≤ 0xffff) <;> simp [*]
++  change (utf8EncodeChar c).length =
++    if c.val.toNat ≤ 127 then 1 else if c.val.toNat ≤ 2047 then 2
++      else if c.val.toNat ≤ 65535 then 3 else 4
++  unfold utf8EncodeChar
++  cases (inferInstance : Decidable (c.val.toNat ≤ 127)) with
++  | isTrue h₁ =>
++    rewrite [if_pos h₁, if_pos h₁]
++    rfl
++  | isFalse h₁ =>
++    rewrite [if_neg h₁, if_neg h₁]
++    cases (inferInstance : Decidable (c.val.toNat ≤ 2047)) with
++    | isTrue h₂ =>
++      rewrite [if_pos h₂, if_pos h₂]
++      rfl
++    | isFalse h₂ =>
++      rewrite [if_neg h₂, if_neg h₂]
++      cases (inferInstance : Decidable (c.val.toNat ≤ 65535)) with
++      | isTrue h₃ =>
++        rewrite [if_pos h₃, if_pos h₃]
++        rfl
++      | isFalse h₃ =>
++        rewrite [if_neg h₃, if_neg h₃]
++        rfl
+ 
+ public theorem String.utf8EncodeChar_eq_singleton {c : Char} : c.utf8Size = 1 →
+     String.utf8EncodeChar c = [c.val.toUInt8] := by
+@@ -267,10 +328,105 @@
+     .threeMore
+   else .invalid
+ 
++/-- Applies a checked 16-by-16 byte table to an arbitrary byte. -/
++private theorem byteTable (p : UInt8 → Prop)
++    (table : ∀ hi lo : Fin 16, p (UInt8.ofNat (hi.val * 16 + lo.val))) (b : UInt8) : p b := by
++  have hhi : b.toNat / 16 < 16 := by
++    apply Nat.lt_of_not_ge
++    intro hn
++    have hm := Nat.le_trans (Nat.mul_le_mul_right 16 hn) (Nat.div_mul_le_self b.toNat 16)
++    exact Nat.not_le_of_gt b.toNat_lt hm
++  let hi : Fin 16 := ⟨b.toNat / 16, hhi⟩
++  let lo : Fin 16 := ⟨b.toNat % 16, Nat.mod_lt _ (by decide)⟩
++  have hn : hi.val * 16 + lo.val = b.toNat := by
++    change b.toNat / 16 * 16 + b.toNat % 16 = b.toNat
++    rewrite [Nat.mul_comm, Nat.add_comm]
++    exact Nat.mod_add_div _ _
++  have hb : UInt8.ofNat (hi.val * 16 + lo.val) = b := by
++    rewrite [hn]
++    cases b with
++    | ofBitVec bv =>
++      cases bv with
++      | ofFin f => exact congrArg UInt8.ofBitVec (congrArg BitVec.ofFin (Fin.ext (Nat.mod_eq_of_lt f.isLt)))
++  exact hb ▸ table hi lo
++
++/-- The one-byte encoding has a leading zero bit. -/
++private theorem parseSmall {n : Nat} (hn : n < 128) : parseFirstByte (UInt8.ofNat n) = .done := by
++  letI : DecidableEq FirstByte := fun x y => by
++    cases x <;> cases y <;> first
++      | exact isTrue rfl
++      | exact isFalse (fun h => FirstByte.noConfusion h)
++  have scalar := byteTable (fun b => b.toNat < 128 → parseFirstByte b = .done) (by decide) (UInt8.ofNat n)
++  apply scalar
++  change n % 256 < 128
++  rewrite [Nat.mod_eq_of_lt (Nat.lt_trans hn (by decide : 128 < 256))]
++  exact hn
++
++/-- The encoded prefix selects the corresponding multibyte class. -/
++private theorem parseOne (n : Nat) : parseFirstByte (UInt8.ofNat (n % 32 + 192)) = .oneMore := by
++  letI : DecidableEq FirstByte := fun x y => by
++    cases x <;> cases y <;> first
++      | exact isTrue rfl
++      | exact isFalse (fun h => FirstByte.noConfusion h)
++  have scalar := byteTable (fun b => 192 ≤ b.toNat → b.toNat < 224 → parseFirstByte b = .oneMore)
++    (by decide) (UInt8.ofNat (n % 32 + 192))
++  have hl : 192 ≤ n % 32 + 192 := Nat.le_add_left 192 (n % 32)
++  have hu : n % 32 + 192 < 224 := Nat.add_lt_add_right (Nat.mod_lt n (by decide)) 192
++  have hsmall : n % 32 + 192 < 256 := Nat.lt_of_lt_of_le hu (by decide : 224 ≤ 256)
++  apply scalar
++  · change 192 ≤ (n % 32 + 192) % 256
++    rewrite [Nat.mod_eq_of_lt hsmall]
++    exact hl
++  · change (n % 32 + 192) % 256 < 224
++    rewrite [Nat.mod_eq_of_lt hsmall]
++    exact hu
++
++/-- The encoded prefix selects the corresponding multibyte class. -/
++private theorem parseTwo (n : Nat) : parseFirstByte (UInt8.ofNat (n % 16 + 224)) = .twoMore := by
++  letI : DecidableEq FirstByte := fun x y => by
++    cases x <;> cases y <;> first
++      | exact isTrue rfl
++      | exact isFalse (fun h => FirstByte.noConfusion h)
++  have scalar := byteTable (fun b => 224 ≤ b.toNat → b.toNat < 240 → parseFirstByte b = .twoMore)
++    (by decide) (UInt8.ofNat (n % 16 + 224))
++  have hl : 224 ≤ n % 16 + 224 := Nat.le_add_left 224 (n % 16)
++  have hu : n % 16 + 224 < 240 := Nat.add_lt_add_right (Nat.mod_lt n (by decide)) 224
++  have hsmall : n % 16 + 224 < 256 := Nat.lt_of_lt_of_le hu (by decide : 240 ≤ 256)
++  apply scalar
++  · change 224 ≤ (n % 16 + 224) % 256
++    rewrite [Nat.mod_eq_of_lt hsmall]
++    exact hl
++  · change (n % 16 + 224) % 256 < 240
++    rewrite [Nat.mod_eq_of_lt hsmall]
++    exact hu
++
++/-- The encoded prefix selects the corresponding multibyte class. -/
++private theorem parseThree (n : Nat) : parseFirstByte (UInt8.ofNat (n % 8 + 240)) = .threeMore := by
++  letI : DecidableEq FirstByte := fun x y => by
++    cases x <;> cases y <;> first
++      | exact isTrue rfl
++      | exact isFalse (fun h => FirstByte.noConfusion h)
++  have scalar := byteTable (fun b => 240 ≤ b.toNat → b.toNat < 248 → parseFirstByte b = .threeMore)
++    (by decide) (UInt8.ofNat (n % 8 + 240))
++  have hl : 240 ≤ n % 8 + 240 := Nat.le_add_left 240 (n % 8)
++  have hu : n % 8 + 240 < 248 := Nat.add_lt_add_right (Nat.mod_lt n (by decide)) 240
++  have hsmall : n % 8 + 240 < 256 := Nat.lt_of_lt_of_le hu (by decide : 248 ≤ 256)
++  apply scalar
++  · change 240 ≤ (n % 8 + 240) % 256
++    rewrite [Nat.mod_eq_of_lt hsmall]
++    exact hl
++  · change (n % 8 + 240) % 256 < 248
++    rewrite [Nat.mod_eq_of_lt hsmall]
++    exact hu
++
+ /-! ## `parseFirstByte` low-level API -/
+ 
+ theorem parseFirstByte_eq_done_iff : parseFirstByte b = .done ↔ b &&& 0x80 = 0 := by
+-  fun_cases parseFirstByte with simp_all
++  letI : DecidableEq FirstByte := fun x y => by
++    cases x <;> cases y <;> first
++      | exact isTrue rfl
++      | exact isFalse (fun h => FirstByte.noConfusion h)
++  exact byteTable (fun b => parseFirstByte b = .done ↔ b &&& 0x80 = 0) (by decide) b
+ 
+ theorem parseFirstByte_eq_oneMore_iff : parseFirstByte b = .oneMore ↔ b &&& 0xe0 = 0xc0 := by
+   suffices b &&& 0xe0 = 0xc0 → b &&& 0x80 ≠ 0 by fun_cases parseFirstByte with simp_all
+@@ -363,6 +519,21 @@
+ public def isInvalidContinuationByte (b : UInt8) : Bool :=
+   b &&& 0xc0 != 0x80
+ 
++/-- Every continuation-byte encoding has its two fixed leading bits. -/
++private theorem continuation (n : Nat) : isInvalidContinuationByte (UInt8.ofNat (n % 64 + 128)) = false := by
++  have scalar := byteTable (fun b => 128 ≤ b.toNat → b.toNat < 192 → isInvalidContinuationByte b = false)
++    (by decide) (UInt8.ofNat (n % 64 + 128))
++  have hl : 128 ≤ n % 64 + 128 := Nat.le_add_left 128 (n % 64)
++  have hu : n % 64 + 128 < 192 := Nat.add_lt_add_right (Nat.mod_lt n (by decide)) 128
++  have hsmall : n % 64 + 128 < 256 := Nat.lt_trans hu (by decide)
++  apply scalar
++  · change 128 ≤ (n % 64 + 128) % 256
++    rewrite [Nat.mod_eq_of_lt hsmall]
++    exact hl
++  · change (n % 64 + 128) % 256 < 192
++    rewrite [Nat.mod_eq_of_lt hsmall]
++    exact hu
++
+ theorem isInvalidContinuationByte_eq_false_iff {b : UInt8} :
+     isInvalidContinuationByte b = false ↔ b &&& 0xc0 = 0x80 := by
+   simp [isInvalidContinuationByte]
+@@ -379,94 +550,202 @@
+ 
+ theorem parseFirstByte_eq_invalid_of_isInvalidContinuationByte_eq_false {b : UInt8}
+     (hb : isInvalidContinuationByte b = false) : parseFirstByte b = .invalid := by
+-  replace hb := toBitVec_eq_of_isInvalidContinuationByte_eq_false hb
+-  match h : parseFirstByte b with
+-  | .done =>
+-    rw [toBitVec_eq_of_parseFirstByte_eq_done h] at hb
+-    have := congrArg (·[7]) hb
+-    try simp only at this -- TODO(kmill) remove after stage0 update
+-    rw [BitVec.getElem_append, BitVec.getElem_append] at this
+-    simp at this
+-  | .oneMore =>
+-    rw [toBitVec_eq_of_parseFirstByte_eq_oneMore h] at hb
+-    have := congrArg (·[6]) hb
+-    try simp only at this -- TODO(kmill) remove after stage0 update
+-    rw [BitVec.getElem_append, BitVec.getElem_append] at this
+-    simp at this
+-  | .twoMore =>
+-    rw [toBitVec_eq_of_parseFirstByte_eq_twoMore h] at hb
+-    have := congrArg (·[6]) hb
+-    try simp only at this -- TODO(kmill) remove after stage0 update
+-    rw [BitVec.getElem_append, BitVec.getElem_append] at this
+-    simp at this
+-  | .threeMore =>
+-    rw [toBitVec_eq_of_parseFirstByte_eq_threeMore h] at hb
+-    have := congrArg (·[6]) hb
+-    try simp only at this -- TODO(kmill) remove after stage0 update
+-    rw [BitVec.getElem_append, BitVec.getElem_append] at this
+-    simp at this
+-  | .invalid => rfl
++  letI : DecidableEq FirstByte := fun x y => by
++    cases x <;> cases y <;> first
++      | exact isTrue rfl
++      | exact isFalse (fun h => FirstByte.noConfusion h)
++  exact byteTable (fun b => isInvalidContinuationByte b = false → parseFirstByte b = .invalid)
++    (by decide) b hb
+ 
+ /-! # `parseFirstByte`, `isInvalidContinuationByte` and `utf8EncodeChar` -/
+ 
+ theorem parseFirstByte_utf8EncodeChar_eq_done {c : Char} (hc : c.utf8Size = 1) :
+-    parseFirstByte ((String.utf8EncodeChar c)[0]'(by simp [Char.utf8Size_pos])) = .done := by
+-  rw [parseFirstByte_eq_done_iff_toBitVec, String.toBitVec_getElem_utf8EncodeChar_zero_of_utf8Size_eq_one hc,
+-    BitVec.extractLsb'_append_eq_left]
++    parseFirstByte ((String.utf8EncodeChar c)[0]'(by rewrite [String.length_utf8EncodeChar]; exact c.utf8Size_pos)) = .done := by
++  have h₁ := Char.utf8Size_eq_one_iff.mp hc
++  change c.val.toNat ≤ 127 at h₁
++  have eq : String.utf8EncodeChar c = [UInt8.ofNat c.val.toNat] := by
++    unfold String.utf8EncodeChar
++    rewrite [if_pos h₁]
++    rfl
++  have result : ∀ h : 0 < (String.utf8EncodeChar c).length,
++      parseFirstByte ((String.utf8EncodeChar c)[0]'h) = FirstByte.done := by
++    rewrite [eq]
++    intro h
++    exact parseSmall (Nat.lt_succ_of_le h₁)
++  exact result _
+ 
+ theorem parseFirstByte_utf8EncodeChar_eq_oneMore {c : Char} (hc : c.utf8Size = 2) :
+-    parseFirstByte ((String.utf8EncodeChar c)[0]'(by simp [Char.utf8Size_pos])) = .oneMore := by
+-  rw [parseFirstByte_eq_oneMore_iff_toBitVec, String.toBitVec_getElem_utf8EncodeChar_zero_of_utf8Size_eq_two hc,
+-    BitVec.extractLsb'_append_eq_left]
++    parseFirstByte ((String.utf8EncodeChar c)[0]'(by rewrite [String.length_utf8EncodeChar]; exact c.utf8Size_pos)) = .oneMore := by
++  have hs := Char.utf8Size_eq_two_iff.mp hc
++  change 127 < c.val.toNat ∧ c.val.toNat ≤ 2047 at hs
++  have eq : String.utf8EncodeChar c = [UInt8.ofNat (c.val.toNat / 64 % 32 + 192), UInt8.ofNat (c.val.toNat % 64 + 128)] := by
++    unfold String.utf8EncodeChar
++    rewrite [if_neg (Nat.not_le_of_gt hs.1), if_pos hs.2]
++    rfl
++  have result : ∀ h : 0 < (String.utf8EncodeChar c).length,
++      parseFirstByte ((String.utf8EncodeChar c)[0]'h) = FirstByte.oneMore := by
++    rewrite [eq]
++    intro h
++    exact parseOne _
++  exact result _
+ 
+ theorem isInvalidContinuationByte_getElem_utf8EncodeChar_one_of_utf8Size_eq_two {c : Char} (hc : c.utf8Size = 2) :
+-    isInvalidContinuationByte ((String.utf8EncodeChar c)[1]'(by simp [String.length_utf8EncodeChar, hc])) = false := by
+-  rw [isInvalidContinuationByte_eq_false_iff_toBitVec, String.toBitVec_getElem_utf8EncodeChar_one_of_utf8Size_eq_two hc,
+-    BitVec.extractLsb'_append_eq_left]
++    isInvalidContinuationByte ((String.utf8EncodeChar c)[1]'(by rewrite [String.length_utf8EncodeChar, hc]; decide)) = false := by
++  have hs := Char.utf8Size_eq_two_iff.mp hc
++  change 127 < c.val.toNat ∧ c.val.toNat ≤ 2047 at hs
++  have eq : String.utf8EncodeChar c = [UInt8.ofNat (c.val.toNat / 64 % 32 + 192), UInt8.ofNat (c.val.toNat % 64 + 128)] := by
++    unfold String.utf8EncodeChar
++    rewrite [if_neg (Nat.not_le_of_gt hs.1), if_pos hs.2]
++    rfl
++  have result : ∀ h : 1 < (String.utf8EncodeChar c).length,
++      isInvalidContinuationByte ((String.utf8EncodeChar c)[1]'h) = false := by
++    rewrite [eq]
++    intro h
++    exact continuation _
++  exact result _
+ 
+ theorem parseFirstByte_utf8EncodeChar_eq_twoMore {c : Char} (hc : c.utf8Size = 3) :
+-    parseFirstByte ((String.utf8EncodeChar c)[0]'(by simp [Char.utf8Size_pos])) = .twoMore := by
+-  rw [parseFirstByte_eq_twoMore_iff_toBitVec, String.toBitVec_getElem_utf8EncodeChar_zero_of_utf8Size_eq_three hc,
+-    BitVec.extractLsb'_append_eq_left]
++    parseFirstByte ((String.utf8EncodeChar c)[0]'(by rewrite [String.length_utf8EncodeChar]; exact c.utf8Size_pos)) = .twoMore := by
++  have hs := Char.utf8Size_eq_three_iff.mp hc
++  change 2047 < c.val.toNat ∧ c.val.toNat ≤ 65535 at hs
++  have h₁ : ¬c.val.toNat ≤ 127 := Nat.not_le_of_gt (Nat.lt_of_le_of_lt (by decide : 127 ≤ 2047) hs.1)
++  have eq : String.utf8EncodeChar c = [UInt8.ofNat (c.val.toNat / 4096 % 16 + 224), UInt8.ofNat (c.val.toNat / 64 % 64 + 128), UInt8.ofNat (c.val.toNat % 64 + 128)] := by
++    unfold String.utf8EncodeChar
++    rewrite [if_neg h₁, if_neg (Nat.not_le_of_gt hs.1), if_pos hs.2]
++    rfl
++  have result : ∀ h : 0 < (String.utf8EncodeChar c).length,
++      parseFirstByte ((String.utf8EncodeChar c)[0]'h) = FirstByte.twoMore := by
++    rewrite [eq]
++    intro h
++    exact parseTwo _
++  exact result _
+ 
+ theorem isInvalidContinuationByte_getElem_utf8EncodeChar_one_of_utf8Size_eq_three {c : Char} (hc : c.utf8Size = 3) :
+-    isInvalidContinuationByte ((String.utf8EncodeChar c)[1]'(by simp [String.length_utf8EncodeChar, hc])) = false := by
+-  rw [isInvalidContinuationByte_eq_false_iff_toBitVec, String.toBitVec_getElem_utf8EncodeChar_one_of_utf8Size_eq_three hc,
+-    BitVec.extractLsb'_append_eq_left]
++    isInvalidContinuationByte ((String.utf8EncodeChar c)[1]'(by rewrite [String.length_utf8EncodeChar, hc]; decide)) = false := by
++  have hs := Char.utf8Size_eq_three_iff.mp hc
++  change 2047 < c.val.toNat ∧ c.val.toNat ≤ 65535 at hs
++  have h₁ : ¬c.val.toNat ≤ 127 := Nat.not_le_of_gt (Nat.lt_of_le_of_lt (by decide : 127 ≤ 2047) hs.1)
++  have eq : String.utf8EncodeChar c = [UInt8.ofNat (c.val.toNat / 4096 % 16 + 224), UInt8.ofNat (c.val.toNat / 64 % 64 + 128), UInt8.ofNat (c.val.toNat % 64 + 128)] := by
++    unfold String.utf8EncodeChar
++    rewrite [if_neg h₁, if_neg (Nat.not_le_of_gt hs.1), if_pos hs.2]
++    rfl
++  have result : ∀ h : 1 < (String.utf8EncodeChar c).length,
++      isInvalidContinuationByte ((String.utf8EncodeChar c)[1]'h) = false := by
++    rewrite [eq]
++    intro h
++    exact continuation _
++  exact result _
+ 
+ theorem isInvalidContinuationByte_getElem_utf8EncodeChar_two_of_utf8Size_eq_three {c : Char} (hc : c.utf8Size = 3) :
+-    isInvalidContinuationByte ((String.utf8EncodeChar c)[2]'(by simp [String.length_utf8EncodeChar, hc])) = false := by
+-  rw [isInvalidContinuationByte_eq_false_iff_toBitVec, String.toBitVec_getElem_utf8EncodeChar_two_of_utf8Size_eq_three hc,
+-    BitVec.extractLsb'_append_eq_left]
++    isInvalidContinuationByte ((String.utf8EncodeChar c)[2]'(by rewrite [String.length_utf8EncodeChar, hc]; decide)) = false := by
++  have hs := Char.utf8Size_eq_three_iff.mp hc
++  change 2047 < c.val.toNat ∧ c.val.toNat ≤ 65535 at hs
++  have h₁ : ¬c.val.toNat ≤ 127 := Nat.not_le_of_gt (Nat.lt_of_le_of_lt (by decide : 127 ≤ 2047) hs.1)
++  have eq : String.utf8EncodeChar c = [UInt8.ofNat (c.val.toNat / 4096 % 16 + 224), UInt8.ofNat (c.val.toNat / 64 % 64 + 128), UInt8.ofNat (c.val.toNat % 64 + 128)] := by
++    unfold String.utf8EncodeChar
++    rewrite [if_neg h₁, if_neg (Nat.not_le_of_gt hs.1), if_pos hs.2]
++    rfl
++  have result : ∀ h : 2 < (String.utf8EncodeChar c).length,
++      isInvalidContinuationByte ((String.utf8EncodeChar c)[2]'h) = false := by
++    rewrite [eq]
++    intro h
++    exact continuation _
++  exact result _
+ 
+ theorem parseFirstByte_utf8EncodeChar_eq_threeMore {c : Char} (hc : c.utf8Size = 4) :
+-    parseFirstByte ((String.utf8EncodeChar c)[0]'(by simp [Char.utf8Size_pos])) = .threeMore := by
+-  rw [parseFirstByte_eq_threeMore_iff_toBitVec, String.toBitVec_getElem_utf8EncodeChar_zero_of_utf8Size_eq_four hc,
+-    BitVec.extractLsb'_append_eq_left]
++    parseFirstByte ((String.utf8EncodeChar c)[0]'(by rewrite [String.length_utf8EncodeChar]; exact c.utf8Size_pos)) = .threeMore := by
++  have hs := Char.utf8Size_eq_four_iff.mp hc
++  change 65535 < c.val.toNat at hs
++  have h₁ : ¬c.val.toNat ≤ 127 := Nat.not_le_of_gt (Nat.lt_of_le_of_lt (by decide : 127 ≤ 65535) hs)
++  have h₂ : ¬c.val.toNat ≤ 2047 := Nat.not_le_of_gt (Nat.lt_of_le_of_lt (by decide : 2047 ≤ 65535) hs)
++  have eq : String.utf8EncodeChar c = [UInt8.ofNat (c.val.toNat / 262144 % 8 + 240), UInt8.ofNat (c.val.toNat / 4096 % 64 + 128), UInt8.ofNat (c.val.toNat / 64 % 64 + 128), UInt8.ofNat (c.val.toNat % 64 + 128)] := by
++    unfold String.utf8EncodeChar
++    rewrite [if_neg h₁, if_neg h₂, if_neg (Nat.not_le_of_gt hs)]
++    rfl
++  have result : ∀ h : 0 < (String.utf8EncodeChar c).length,
++      parseFirstByte ((String.utf8EncodeChar c)[0]'h) = FirstByte.threeMore := by
++    rewrite [eq]
++    intro h
++    exact parseThree _
++  exact result _
+ 
+ theorem isInvalidContinuationByte_getElem_utf8EncodeChar_one_of_utf8Size_eq_four {c : Char} (hc : c.utf8Size = 4) :
+-    isInvalidContinuationByte ((String.utf8EncodeChar c)[1]'(by simp [String.length_utf8EncodeChar, hc])) = false := by
+-  rw [isInvalidContinuationByte_eq_false_iff_toBitVec, String.toBitVec_getElem_utf8EncodeChar_one_of_utf8Size_eq_four hc,
+-    BitVec.extractLsb'_append_eq_left]
++    isInvalidContinuationByte ((String.utf8EncodeChar c)[1]'(by rewrite [String.length_utf8EncodeChar, hc]; decide)) = false := by
++  have hs := Char.utf8Size_eq_four_iff.mp hc
++  change 65535 < c.val.toNat at hs
++  have h₁ : ¬c.val.toNat ≤ 127 := Nat.not_le_of_gt (Nat.lt_of_le_of_lt (by decide : 127 ≤ 65535) hs)
++  have h₂ : ¬c.val.toNat ≤ 2047 := Nat.not_le_of_gt (Nat.lt_of_le_of_lt (by decide : 2047 ≤ 65535) hs)
++  have eq : String.utf8EncodeChar c = [UInt8.ofNat (c.val.toNat / 262144 % 8 + 240), UInt8.ofNat (c.val.toNat / 4096 % 64 + 128), UInt8.ofNat (c.val.toNat / 64 % 64 + 128), UInt8.ofNat (c.val.toNat % 64 + 128)] := by
++    unfold String.utf8EncodeChar
++    rewrite [if_neg h₁, if_neg h₂, if_neg (Nat.not_le_of_gt hs)]
++    rfl
++  have result : ∀ h : 1 < (String.utf8EncodeChar c).length,
++      isInvalidContinuationByte ((String.utf8EncodeChar c)[1]'h) = false := by
++    rewrite [eq]
++    intro h
++    exact continuation _
++  exact result _
+ 
+ theorem isInvalidContinuationByte_getElem_utf8EncodeChar_two_of_utf8Size_eq_four {c : Char} (hc : c.utf8Size = 4) :
+-    isInvalidContinuationByte ((String.utf8EncodeChar c)[2]'(by simp [String.length_utf8EncodeChar, hc])) = false := by
+-  rw [isInvalidContinuationByte_eq_false_iff_toBitVec, String.toBitVec_getElem_utf8EncodeChar_two_of_utf8Size_eq_four hc,
+-    BitVec.extractLsb'_append_eq_left]
++    isInvalidContinuationByte ((String.utf8EncodeChar c)[2]'(by rewrite [String.length_utf8EncodeChar, hc]; decide)) = false := by
++  have hs := Char.utf8Size_eq_four_iff.mp hc
++  change 65535 < c.val.toNat at hs
++  have h₁ : ¬c.val.toNat ≤ 127 := Nat.not_le_of_gt (Nat.lt_of_le_of_lt (by decide : 127 ≤ 65535) hs)
++  have h₂ : ¬c.val.toNat ≤ 2047 := Nat.not_le_of_gt (Nat.lt_of_le_of_lt (by decide : 2047 ≤ 65535) hs)
++  have eq : String.utf8EncodeChar c = [UInt8.ofNat (c.val.toNat / 262144 % 8 + 240), UInt8.ofNat (c.val.toNat / 4096 % 64 + 128), UInt8.ofNat (c.val.toNat / 64 % 64 + 128), UInt8.ofNat (c.val.toNat % 64 + 128)] := by
++    unfold String.utf8EncodeChar
++    rewrite [if_neg h₁, if_neg h₂, if_neg (Nat.not_le_of_gt hs)]
++    rfl
++  have result : ∀ h : 2 < (String.utf8EncodeChar c).length,
++      isInvalidContinuationByte ((String.utf8EncodeChar c)[2]'h) = false := by
++    rewrite [eq]
++    intro h
++    exact continuation _
++  exact result _
+ 
+ theorem isInvalidContinuationByte_getElem_utf8EncodeChar_three_of_utf8Size_eq_four {c : Char} (hc : c.utf8Size = 4) :
+-    isInvalidContinuationByte ((String.utf8EncodeChar c)[3]'(by simp [String.length_utf8EncodeChar, hc])) = false := by
+-  rw [isInvalidContinuationByte_eq_false_iff_toBitVec, String.toBitVec_getElem_utf8EncodeChar_three_of_utf8Size_eq_four hc,
+-    BitVec.extractLsb'_append_eq_left]
+-
+-/-! # `assemble₁` -/
++    isInvalidContinuationByte ((String.utf8EncodeChar c)[3]'(by rewrite [String.length_utf8EncodeChar, hc]; decide)) = false := by
++  have hs := Char.utf8Size_eq_four_iff.mp hc
++  change 65535 < c.val.toNat at hs
++  have h₁ : ¬c.val.toNat ≤ 127 := Nat.not_le_of_gt (Nat.lt_of_le_of_lt (by decide : 127 ≤ 65535) hs)
++  have h₂ : ¬c.val.toNat ≤ 2047 := Nat.not_le_of_gt (Nat.lt_of_le_of_lt (by decide : 2047 ≤ 65535) hs)
++  have eq : String.utf8EncodeChar c = [UInt8.ofNat (c.val.toNat / 262144 % 8 + 240), UInt8.ofNat (c.val.toNat / 4096 % 64 + 128), UInt8.ofNat (c.val.toNat / 64 % 64 + 128), UInt8.ofNat (c.val.toNat % 64 + 128)] := by
++    unfold String.utf8EncodeChar
++    rewrite [if_neg h₁, if_neg h₂, if_neg (Nat.not_le_of_gt hs)]
++    rfl
++  have result : ∀ h : 3 < (String.utf8EncodeChar c).length,
++      isInvalidContinuationByte ((String.utf8EncodeChar c)[3]'h) = false := by
++    rewrite [eq]
++    intro h
++    exact continuation _
++  exact result _
+ 
+ theorem helper₅ {w : UInt8} (h : parseFirstByte w = .done) : w < 128 := by
+-  simp only [UInt8.lt_iff_toBitVec_lt, UInt8.toBitVec_ofNat]
+-  rw [toBitVec_eq_of_parseFirstByte_eq_done h]
+-  simp only [Nat.reduceAdd, BitVec.lt_def, BitVec.toNat_ofNat, Nat.reducePow, Nat.reduceMod]
+-  rw [BitVec.toNat_append]
+-  simpa using Nat.mod_lt _ (by decide)
++  have check : ∀ a : Fin 16, ∀ b : Fin 16,
++      (UInt8.ofNat (a.val + 16 * b.val) &&& 0x80 == 0) = true →
++        UInt8.ofNat (a.val + 16 * b.val) < 128 := by decide
++  have hi : w.toNat / 16 < 16 := by
++    apply Nat.lt_of_not_ge
++    intro hn
++    exact Nat.not_le_of_gt w.toBitVec.isLt
++      (Nat.le_trans (Nat.mul_le_mul_right 16 hn) (Nat.div_mul_le_self w.toNat 16))
++  have hw : UInt8.ofNat (w.toNat % 16 + 16 * (w.toNat / 16)) = w := by
++    rw [Nat.mod_add_div]
++    cases w with
++    | ofBitVec b =>
++      cases b with
++      | ofFin b =>
++        apply congrArg UInt8.ofBitVec
++        apply congrArg BitVec.ofFin
++        apply Fin.ext
++        exact Nat.mod_eq_of_lt b.isLt
++  have scalar := hw ▸ check ⟨w.toNat % 16, Nat.mod_lt _ (by decide)⟩ ⟨w.toNat / 16, hi⟩
++  unfold parseFirstByte at h
++  split at h
++  · exact scalar ‹_ = true›
++  · split at h <;> try cases h
++    split at h <;> try cases h
++    split at h <;> cases h
+ 
+ @[inline, expose]
+ public def assemble₁ (w : UInt8) (h : parseFirstByte w = .done) : Option Char :=
+@@ -475,9 +754,10 @@
+   case done =>
+     have : w < 0x80 := helper₅ h
+     refine Or.inl ?_
+-    simp only [UInt8.lt_iff_toNat_lt, UInt8.reduceToNat] at this
+-    simp only [UInt8.toNat_toUInt32]
+-    omega
++    have hx : w.toNat < 128 := UInt8.lt_iff_toNat_lt.mp this
++    change w.toUInt32.toNat < 55296
++    rw [UInt8.toNat_toUInt32]
++    exact Nat.lt_trans hx (by decide : 128 < 55296)
+ 
+ theorem toBitVec_val_assemble₁ {w : UInt8} {h} {c : Char} : assemble₁ w h = some c → c.val.toBitVec = w.toBitVec.setWidth 32 := by
+   simp only [assemble₁, Option.some.injEq]
+@@ -485,13 +765,10 @@
+   rfl
+ 
+ theorem val_assemble₁_le {w : UInt8} {h} {c : Char} (h' : assemble₁ w h = some c) : c.val ≤ 127 := by
+-  have := toBitVec_val_assemble₁ h'
+-  have hx := helper₅ h
+-  simp only [UInt8.lt_iff_toNat_lt, UInt8.reduceToNat] at hx
+-  rw [UInt32.le_iff_toBitVec_le, this, BitVec.le_def]
+-  simp only [BitVec.toNat_setWidth, UInt8.toNat_toBitVec, Nat.reducePow, UInt8.toNat_mod_uInt32Size,
+-    UInt32.toBitVec_ofNat, BitVec.toNat_ofNat, Nat.reduceMod]
+-  omega
++  have hv : w.toUInt32 = c.val := congrArg Char.val (Option.some.inj h')
++  change c.val.toNat ≤ 127
++  rw [← hv, UInt8.toNat_toUInt32]
++  exact Nat.le_of_lt_succ (UInt8.lt_iff_toNat_lt.mp (helper₅ h))
+ 
+ theorem utf8Size_assemble₁ {w : UInt8} {c : Char} {h} (h : assemble₁ w h = some c) : c.utf8Size = 1 :=
+   Char.utf8Size_eq_one_iff.2 (val_assemble₁_le h)
+@@ -545,14 +822,19 @@
+     let b₀ : UInt8 := w &&& 0x1f
+     let b₁ := x &&& 0x3f
+     have hr : r = (b₀.toUInt32 <<< 6) ||| b₁.toUInt32 := rfl
+-    have hb₀ : b₀ < 0x20 := UInt8.and_lt_add_one (by decide)
+-    have hb₁ : b₁ < 0x40 := UInt8.and_lt_add_one (by decide)
+     refine Or.inl ?_
+-    simp only [UInt8.lt_iff_toNat_lt, UInt8.reduceToNat] at hb₀ hb₁
++    have hb₀ : b₀.toNat < 32 := by
++      simp only [b₀, UInt8.toNat_and, UInt8.reduceToNat, -eq_self, -iff_self]
++      exact Nat.and_lt_two_pow (n := 5) _ (by decide)
++    have hb₁ : b₁.toNat < 64 := by
++      simp only [b₁, UInt8.toNat_and, UInt8.reduceToNat, -eq_self, -iff_self]
++      exact Nat.and_lt_two_pow (n := 6) _ (by decide)
+     simp only [hr, UInt32.toNat_or, UInt32.toNat_shiftLeft, UInt8.toNat_toUInt32, UInt32.reduceToNat,
+-      Nat.reduceMod, Nat.reducePow]
+-    rw [Nat.shiftLeft_eq, Nat.mod_eq_of_lt (by omega), Nat.mul_comm, ← Nat.two_pow_add_eq_or_of_lt hb₁]
+-    omega
++      Nat.reduceMod, Nat.reducePow, -eq_self, -iff_self]
++    rw [Nat.shiftLeft_eq, Nat.mod_eq_of_lt (Nat.lt_trans (Nat.mul_lt_mul_of_pos_right hb₀ (by decide : 0 < 64)) (by decide : 32 * 64 < 4294967296))]
++    have hl : b₀.toNat * 64 < 2^11 := Nat.mul_lt_mul_of_pos_right hb₀ (by decide)
++    have hh : b₁.toNat < 2^11 := Nat.lt_trans hb₁ (by decide)
++    exact Nat.lt_trans (Nat.or_lt_two_pow hl hh) (by decide : 2^11 < 55296)
+ 
+ @[inline, expose]
+ public def verify₂ (w x : UInt8) : Bool :=
+@@ -590,18 +872,42 @@
+     simp [toBitVec_assemble₂Unchecked]
+ 
+ theorem le_val_assemble₂ {w x : UInt8} {c : Char} : assemble₂ w x = some c → 128 ≤ c.val := by
+-  rcases c with ⟨v, hv⟩
+   fun_cases assemble₂ with
+-  | case1 => simp
+-  | case2 => simp
++  | case1 => intro h; cases h
++  | case2 => intro h; cases h
+   | case3 hx r hr =>
+-    simp only [Option.some.injEq, Char.mk.injEq]
+-    rintro rfl
+-    exact UInt32.not_lt.1 hr
++    intro h
++    have hv : r = c.val := congrArg Char.val (Option.some.inj h)
++    change ¬r.toNat < 128 at hr
++    change 128 ≤ c.val.toNat
++    exact hv ▸ Nat.le_of_not_gt hr
+ 
+ theorem val_assemble₂_le {w x : UInt8} {c : Char} (h : assemble₂ w x = some c) : c.val ≤ 2047 := by
+-  rw [UInt32.le_iff_toBitVec_le, toBitVec_val_assemble₂ _ h, BitVec.le_def, BitVec.toNat_setWidth_of_le (by simp)]
+-  exact Nat.le_of_lt_succ (BitVec.toNat_lt_twoPow_of_le (Nat.le_refl _))
++  revert h
++  fun_cases assemble₂ with
++  | case1 => intro h; cases h
++  | case2 => intro h; cases h
++  | case3 hx r hr =>
++    intro h
++    have hv : r = c.val := congrArg Char.val (Option.some.inj h)
++    change c.val.toNat ≤ 2047
++    rw [← hv]
++    subst r
++    let b₀ : UInt8 := w &&& 0x1f
++    let b₁ : UInt8 := x &&& 0x3f
++    have hb₀ : b₀.toNat < 32 := by
++      simp only [b₀, UInt8.toNat_and, UInt8.reduceToNat, -eq_self, -iff_self]
++      exact Nat.and_lt_two_pow (n := 5) _ (by decide)
++    have hb₁ : b₁.toNat < 64 := by
++      simp only [b₁, UInt8.toNat_and, UInt8.reduceToNat, -eq_self, -iff_self]
++      exact Nat.and_lt_two_pow (n := 6) _ (by decide)
++    simp only [assemble₂Unchecked, UInt32.toNat_or, UInt32.toNat_shiftLeft, UInt8.toNat_toUInt32,
++      UInt32.reduceToNat, Nat.reduceMod, Nat.reducePow, -eq_self, -iff_self]
++    rw [Nat.shiftLeft_eq, Nat.mod_eq_of_lt
++      (Nat.lt_trans (Nat.mul_lt_mul_of_pos_right hb₀ (by decide : 0 < 64)) (by decide : 32 * 64 < 4294967296))]
++    have hl : b₀.toNat * 64 < 2^11 := Nat.mul_lt_mul_of_pos_right hb₀ (by decide)
++    have hh : b₁.toNat < 2^11 := Nat.lt_trans hb₁ (by decide)
++    exact Nat.le_of_lt_succ (Nat.or_lt_two_pow hl hh)
+ 
+ theorem utf8Size_assemble₂ {w x : UInt8} {c : Char} (h : assemble₂ w x = some c) : c.utf8Size = 2 :=
+   Char.utf8Size_eq_two_iff.2 ⟨le_val_assemble₂ h, val_assemble₂_le h⟩
+@@ -691,22 +997,34 @@
+     let b₀ : UInt8 := w &&& 0x0f
+     let b₁ := x &&& 0x3f
+     let b₂ := y &&& 0x3f
+-    have hb₀ : b₀ < 0x10 := UInt8.and_lt_add_one (by decide)
+-    have hb₁ : b₁ < 0x40 := UInt8.and_lt_add_one (by decide)
+-    have hb₂ : b₂ < 0x40 := UInt8.and_lt_add_one (by decide)
+     have hr' : r = (b₀.toUInt32 <<< 12) ||| (b₁.toUInt32 <<< 6) ||| b₂.toUInt32 := rfl
+-    simp only [UInt8.lt_iff_toNat_lt, UInt8.reduceToNat] at hb₀ hb₁ hb₂
+-    simp only [Decidable.not_and_iff_not_or_not, UInt32.not_le] at hr
+-    rcases hr with (hr|hr)
+-    · exact Or.inl hr
+-    · refine Or.inr ⟨hr, ?_⟩
++    have hb₀ : b₀.toNat < 16 := by
++      simp only [b₀, UInt8.toNat_and, UInt8.reduceToNat, -eq_self, -iff_self]
++      exact Nat.and_lt_two_pow (n := 4) _ (by decide)
++    have hb₁ : b₁.toNat < 64 := by
++      simp only [b₁, UInt8.toNat_and, UInt8.reduceToNat, -eq_self, -iff_self]
++      exact Nat.and_lt_two_pow (n := 6) _ (by decide)
++    have hb₂ : b₂.toNat < 64 := by
++      simp only [b₂, UInt8.toNat_and, UInt8.reduceToNat, -eq_self, -iff_self]
++      exact Nat.and_lt_two_pow (n := 6) _ (by decide)
++    change ¬(55296 ≤ r.toNat ∧ r.toNat ≤ 57343) at hr
++    cases (inferInstance : Decidable (r.toNat < 55296)) with
++    | isTrue low => exact Or.inl low
++    | isFalse low =>
++      have high : 57343 < r.toNat := Nat.lt_of_not_ge (fun upper => hr ⟨Nat.le_of_not_gt low, upper⟩)
++      refine Or.inr ⟨high, ?_⟩
+       subst r
+       simp only [hr', UInt32.toNat_or, UInt32.toNat_shiftLeft, UInt8.toNat_toUInt32, UInt32.reduceToNat,
+-        Nat.reduceMod, Nat.reducePow]
+-      rw [Nat.shiftLeft_eq, Nat.shiftLeft_eq, Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega),
+-        Nat.mul_comm _ (2 ^ _), Nat.mul_comm _ (2 ^ _), Nat.or_assoc, ← Nat.two_pow_add_eq_or_of_lt (b := b₂.toNat) hb₂,
+-          ← Nat.two_pow_add_eq_or_of_lt (by omega)]
+-      omega
++        Nat.reduceMod, Nat.reducePow, -eq_self, -iff_self]
++      rw [Nat.shiftLeft_eq, Nat.shiftLeft_eq,
++        Nat.mod_eq_of_lt (Nat.lt_trans (Nat.mul_lt_mul_of_pos_right hb₀ (by decide : 0 < 4096)) (by decide : 16 * 4096 < 4294967296)),
++        Nat.mod_eq_of_lt (Nat.lt_trans (Nat.mul_lt_mul_of_pos_right hb₁ (by decide : 0 < 64)) (by decide : 64 * 64 < 4294967296))]
++      have hl : b₀.toNat * 4096 < 2^16 := Nat.mul_lt_mul_of_pos_right hb₀ (by decide)
++      have hm : b₁.toNat * 64 < 2^16 := Nat.lt_trans
++        (Nat.mul_lt_mul_of_pos_right hb₁ (by decide : 0 < 64)) (by decide : 64 * 64 < 2^16)
++      have hh : b₂.toNat < 2^16 := Nat.lt_trans hb₂ (by decide)
++      exact Nat.lt_trans (Nat.or_lt_two_pow
++        (Nat.or_lt_two_pow hl hm) hh) (by decide : 2^16 < 1114112)
+ 
+ @[inline, expose]
+ public def verify₃ (w x y : UInt8) : Bool :=
+@@ -738,19 +1056,52 @@
+     simp [toBitVec_assemble₃Unchecked]
+ 
+ theorem le_val_assemble₃ {w x y : UInt8} {c : Char} : assemble₃ w x y = some c → 0x800 ≤ c.val := by
+-  rcases c with ⟨v, hv⟩
+   fun_cases assemble₃ with
+-  | case1 => simp
+-  | case2 => simp
+-  | case3 => simp
++  | case1 => intro h; cases h
++  | case2 => intro h; cases h
++  | case3 => intro h; cases h
+   | case4 hx r hr =>
+-    simp only [Option.some.injEq, Char.mk.injEq]
+-    rintro rfl
+-    exact UInt32.not_lt.1 hr
++    intro h
++    have hv : r = c.val := congrArg Char.val (Option.some.inj h)
++    change ¬r.toNat < 2048 at hr
++    change 2048 ≤ c.val.toNat
++    exact hv ▸ Nat.le_of_not_gt hr
+ 
+ theorem val_assemble₃_le {w x y : UInt8} {c : Char} (h : assemble₃ w x y = some c) : c.val ≤ 0xffff := by
+-  rw [UInt32.le_iff_toBitVec_le, toBitVec_val_assemble₃ _ h, BitVec.le_def, BitVec.toNat_setWidth_of_le (by simp)]
+-  exact Nat.le_of_lt_succ (BitVec.toNat_lt_twoPow_of_le (Nat.le_refl _))
++  revert h
++  fun_cases assemble₃ with
++  | case1 => intro h; cases h
++  | case2 => intro h; cases h
++  | case3 => intro h; cases h
++  | case4 hx r hr =>
++    intro h
++    have hv : r = c.val := congrArg Char.val (Option.some.inj h)
++    change c.val.toNat ≤ 65535
++    rw [← hv]
++    subst r
++    let b₀ : UInt8 := w &&& 0x0f
++    let b₁ : UInt8 := x &&& 0x3f
++    let b₂ : UInt8 := y &&& 0x3f
++    have hb₀ : b₀.toNat < 16 := by
++      simp only [b₀, UInt8.toNat_and, UInt8.reduceToNat, -eq_self, -iff_self]
++      exact Nat.and_lt_two_pow (n := 4) _ (by decide)
++    have hb₁ : b₁.toNat < 64 := by
++      simp only [b₁, UInt8.toNat_and, UInt8.reduceToNat, -eq_self, -iff_self]
++      exact Nat.and_lt_two_pow (n := 6) _ (by decide)
++    have hb₂ : b₂.toNat < 64 := by
++      simp only [b₂, UInt8.toNat_and, UInt8.reduceToNat, -eq_self, -iff_self]
++      exact Nat.and_lt_two_pow (n := 6) _ (by decide)
++    simp only [assemble₃Unchecked, UInt32.toNat_or, UInt32.toNat_shiftLeft, UInt8.toNat_toUInt32,
++      UInt32.reduceToNat, Nat.reduceMod, Nat.reducePow, -eq_self, -iff_self]
++    rw [Nat.shiftLeft_eq, Nat.shiftLeft_eq,
++      Nat.mod_eq_of_lt (Nat.lt_trans (Nat.mul_lt_mul_of_pos_right hb₀ (by decide : 0 < 4096)) (by decide : 16 * 4096 < 4294967296)),
++      Nat.mod_eq_of_lt (Nat.lt_trans (Nat.mul_lt_mul_of_pos_right hb₁ (by decide : 0 < 64)) (by decide : 64 * 64 < 4294967296))]
++    have hl : b₀.toNat * 4096 < 2^16 := Nat.mul_lt_mul_of_pos_right hb₀ (by decide)
++    have hm : b₁.toNat * 64 < 2^16 := Nat.lt_trans
++      (Nat.mul_lt_mul_of_pos_right hb₁ (by decide : 0 < 64)) (by decide : 64 * 64 < 2^16)
++    have hh : b₂.toNat < 2^16 := Nat.lt_trans hb₂ (by decide)
++    exact Nat.le_of_lt_succ (Nat.or_lt_two_pow
++      (Nat.or_lt_two_pow hl hm) hh)
+ 
+ theorem utf8Size_assemble₃ {w x y : UInt8} {c : Char} (h : assemble₃ w x y = some c) : c.utf8Size = 3 :=
+   Char.utf8Size_eq_three_iff.2 ⟨le_val_assemble₃ h, val_assemble₃_le h⟩
+@@ -853,8 +1204,9 @@
+       some ⟨r, ?threemore⟩
+ where finally
+   case threemore =>
+-    simp only [UInt32.not_lt, UInt32.le_iff_toNat_le, UInt32.reduceToNat] at h₁ h₂
+-    exact Or.inr ⟨by omega, by omega⟩
++    change ¬r.toNat < 65536 at h₁
++    change ¬1114111 < r.toNat at h₂
++    exact Or.inr ⟨Nat.lt_of_lt_of_le (by decide : 57343 < 65536) (Nat.le_of_not_gt h₁), Nat.lt_succ_of_le (Nat.le_of_not_gt h₂)⟩
+ 
+ @[inline, expose]
+ public def verify₄ (w x y z : UInt8) : Bool :=
+@@ -887,18 +1239,16 @@
+     simp [toBitVec_assemble₄Unchecked]
+ 
+ theorem le_val_assemble₄ {w x y z : UInt8} {c : Char} : assemble₄ w x y z = some c → 0xffff < c.val := by
+-  rcases c with ⟨v, hv⟩
+   fun_cases assemble₄ with
+-  | case1 => simp
+-  | case2 => simp
+-  | case3 => simp
++  | case1 => intro h; cases h
++  | case2 => intro h; cases h
++  | case3 => intro h; cases h
+   | case4 hx r hr =>
+-    simp only [Option.some.injEq, Char.mk.injEq]
+-    rintro rfl
+-    have := UInt32.not_lt.1 hr
+-    simp only [UInt32.le_iff_toNat_le, UInt32.reduceToNat] at this
+-    simp only [UInt32.lt_iff_toNat_lt, UInt32.reduceToNat, gt_iff_lt]
+-    omega
++    intro h
++    have hv : r = c.val := congrArg Char.val (Option.some.inj h)
++    change ¬r.toNat < 65536 at hr
++    change 65535 < c.val.toNat
++    exact hv ▸ Nat.le_of_not_gt hr
+ 
+ theorem utf8Size_assemble₄ {w x y z : UInt8} {c : Char} (h : assemble₄ w x y z = some c) : c.utf8Size = 4 :=
+   Char.utf8Size_eq_four_iff.2 (le_val_assemble₄ h)
+@@ -1007,21 +1357,21 @@
+ @[inline, expose]
+ public def ByteArray.utf8DecodeChar? (bytes : ByteArray) (i : Nat) : Option Char :=
+   if h₀ : i < bytes.size then
+-    match h : parseFirstByte bytes[i] with
++    match h : parseFirstByte (bytes[i]'h₀) with
+     | .invalid => none -- invalid first byte
+-    | .done => assemble₁ bytes[i] h
++    | .done => assemble₁ (bytes[i]'h₀) h
+     | .oneMore =>
+       if h₁ : i + 1 < bytes.size then
+-        assemble₂ bytes[i] bytes[i + 1]
++        assemble₂ (bytes[i]'h₀) (bytes[i + 1]'h₁)
+       else
+         none
+     | .twoMore =>
+       if h₁ : i + 2 < bytes.size then
+-        assemble₃ bytes[i] bytes[i + 1] bytes[i + 2]
++        assemble₃ (bytes[i]'h₀) (bytes[i + 1]'(Nat.lt_of_le_of_lt (Nat.le_add_right (i + 1) 1) h₁)) (bytes[i + 2]'h₁)
+       else none
+     | .threeMore =>
+       if h₁ : i + 3 < bytes.size then
+-        assemble₄ bytes[i] bytes[i + 1] bytes[i + 2] bytes[i + 3]
++        assemble₄ (bytes[i]'h₀) (bytes[i + 1]'(Nat.lt_of_le_of_lt (Nat.le_add_right (i + 1) 2) h₁)) (bytes[i + 2]'(Nat.lt_of_le_of_lt (Nat.le_add_right (i + 2) 1) h₁)) (bytes[i + 3]'h₁)
+       else none
+   else none
+ 
+@@ -1259,49 +1609,62 @@
+ 
+ public theorem ByteArray.utf8DecodeChar?_eq_utf8DecodeChar?_extract {b : ByteArray} {i : Nat} :
+     utf8DecodeChar? b i = utf8DecodeChar? (b.extract i b.size) 0 := by
+-  simp [utf8DecodeChar?]
+-  have h₁ : i < b.size ↔ 0 < b.size - i := by omega
+-  have h₂ : i + 1 < b.size ↔ 1 < b.size - i := by omega
+-  have h₃ : i + 2 < b.size ↔ 2 < b.size - i := by omega
+-  have h₄ : i + 3 < b.size ↔ 3 < b.size - i := by omega
+-  have h₅ : ∀ h, b[i]'h = (b.extract i b.size)[0]'(by simp; omega) := by simp [ByteArray.getElem_extract]
+-  have h₆ : ∀ h, b[i + 1]'h = (b.extract i b.size)[1]'(by simp; omega) := by simp [ByteArray.getElem_extract]
+-  have h₇ : ∀ h, b[i + 2]'h = (b.extract i b.size)[2]'(by simp; omega) := by simp [ByteArray.getElem_extract]
+-  have h₈ : ∀ h, b[i + 3]'h = (b.extract i b.size)[3]'(by simp; omega) := by simp [ByteArray.getElem_extract]
+-  have h₉ : (b.extract i b.size).size = b.size - i := by simp
+-  simp only [h₁]
+-  split
+-  · split
+-    all_goals (rename_i h h'; simp only [h₅] at h')
+-    · split <;> simp_all
+-    · split <;> rename_i h''
+-      all_goals try (simp [h'] at h''; done)
+-      simp [h₅]
+-    · symm
+-      split <;> rename_i h''
+-      all_goals try (simp [h'] at h''; done)
+-      simp [h₂, h₅, h₆]
+-    · symm
+-      split <;> rename_i h''
+-      all_goals try (simp [h'] at h''; done)
+-      simp [h₃, h₅, h₆, h₇]
+-    · symm
+-      split <;> rename_i h''
+-      all_goals try (simp [h'] at h''; done)
+-      simp [h₄, h₅, h₆, h₇, h₈]
+-  · rfl
++  have sizeEq : (b.extract i b.size).size = b.size - i := by
++    rw [ByteArray.size_extract, Nat.min_self]
++  have bound {k : Nat} (h : i + k < b.size) : k < (b.extract i b.size).size := by
++    rw [sizeEq]
++    exact Nat.lt_sub_of_add_lt (Nat.add_comm i k ▸ h)
++  have byte {k : Nat} {h : i + k < b.size} {h' : k < (b.extract i b.size).size} :
++      b[i + k]'h = (b.extract i b.size)[k]'h' :=
++    (ByteArray.getElem_extract (b := b) (start := i) (stop := b.size) h').symm
++  unfold utf8DecodeChar?
++  cases (inferInstance : Decidable (i < b.size)) with
++  | isFalse h =>
++    have zero : ¬0 < (b.extract i b.size).size := fun hx =>
++      h (Nat.lt_of_sub_pos (sizeEq ▸ hx))
++    rw [dif_neg h, dif_neg zero]
++  | isTrue h =>
++    have hz : 0 < (b.extract i b.size).size := bound h
++    rw [dif_pos h, dif_pos hz]
++    have first : b[i]'h = (b.extract i b.size)[0]'hz := byte (k := 0)
++    rw [← first]
++    split
++    · rfl
++    · rfl
++    · cases (inferInstance : Decidable (i + 1 < b.size)) with
++      | isTrue more => rw [dif_pos more, dif_pos (bound more), ← byte]
++      | isFalse more =>
++        have no : ¬1 < (b.extract i b.size).size := fun hx =>
++          more (Nat.add_comm 1 i ▸ Nat.add_lt_of_lt_sub (sizeEq ▸ hx))
++        rw [dif_neg more, dif_neg no]
++    · cases (inferInstance : Decidable (i + 2 < b.size)) with
++      | isTrue more =>
++        rw [dif_pos more, dif_pos (bound more), ← byte, ← byte]
++      | isFalse more =>
++        have no : ¬2 < (b.extract i b.size).size := fun hx =>
++          more (Nat.add_comm 2 i ▸ Nat.add_lt_of_lt_sub (sizeEq ▸ hx))
++        rw [dif_neg more, dif_neg no]
++    · cases (inferInstance : Decidable (i + 3 < b.size)) with
++      | isTrue more =>
++        rw [dif_pos more, dif_pos (bound more), ← byte, ← byte, ← byte]
++      | isFalse more =>
++        have no : ¬3 < (b.extract i b.size).size := fun hx =>
++          more (Nat.add_comm 3 i ▸ Nat.add_lt_of_lt_sub (sizeEq ▸ hx))
++        rw [dif_neg more, dif_neg no]
+ 
+ public theorem ByteArray.le_size_of_utf8DecodeChar?_eq_some {b : ByteArray} {i : Nat} {c : Char}
+     (h : utf8DecodeChar? b i = some c) : i + c.utf8Size ≤ b.size := by
+-  rw [utf8DecodeChar?_eq_utf8DecodeChar?_extract] at h
+-  obtain ⟨l, hl⟩ := exists_of_utf8DecodeChar?_eq_some h
+-  replace hl := congrArg ByteArray.size hl
+-  simp at hl
+-  have hi : i < b.size := by
+-    simp [utf8DecodeChar?] at h
+-    obtain ⟨h, -⟩ := h
+-    omega
+-  omega
++  revert h
++  fun_cases ByteArray.utf8DecodeChar? with
++  | case1 => intro h; cases h
++  | case2 => intro h; rw [utf8Size_assemble₁ h]; exact Nat.succ_le_of_lt ‹_›
++  | case3 => intro h; rw [utf8Size_assemble₂ h]; exact Nat.succ_le_of_lt ‹_›
++  | case4 => intro h; cases h
++  | case5 => intro h; rw [utf8Size_assemble₃ h]; exact Nat.succ_le_of_lt ‹_›
++  | case6 => intro h; cases h
++  | case7 => intro h; rw [utf8Size_assemble₄ h]; exact Nat.succ_le_of_lt ‹_›
++  | case8 => intro h; cases h
++  | case9 => intro h; cases h
+ 
+ public theorem ByteArray.lt_size_of_isSome_utf8DecodeChar? {b : ByteArray} {i : Nat} (h : (utf8DecodeChar? b i).isSome) :
+     i < b.size := by
+@@ -1415,34 +1778,64 @@
+ 
+ theorem isUTF8FirstByte_iff_parseFirstByte_ne_invalid {c : UInt8} :
+     c.IsUTF8FirstByte ↔ parseFirstByte c ≠ FirstByte.invalid := by
+-  fun_cases parseFirstByte with simp_all [IsUTF8FirstByte]
++  unfold parseFirstByte
++  split
++  · rename_i h₁
++    exact ⟨fun _ hn => (by cases hn), fun _ => Or.inl (eq_of_beq h₁)⟩
++  · rename_i h₁
++    split
++    · rename_i h₂
++      exact ⟨fun _ hn => (by cases hn), fun _ => Or.inr (Or.inl (eq_of_beq h₂))⟩
++    · rename_i h₂
++      split
++      · rename_i h₃
++        exact ⟨fun _ hn => (by cases hn), fun _ => Or.inr (Or.inr (Or.inl (eq_of_beq h₃)))⟩
++      · rename_i h₃
++        split
++        · rename_i h₄
++          exact ⟨fun _ hn => (by cases hn), fun _ => Or.inr (Or.inr (Or.inr (eq_of_beq h₄)))⟩
++        · rename_i h₄
++          constructor
++          · intro hp
++            rcases hp with hp | hp | hp | hp
++            · exact False.elim (h₁ (beq_iff_eq.mpr hp))
++            · exact False.elim (h₂ (beq_iff_eq.mpr hp))
++            · exact False.elim (h₃ (beq_iff_eq.mpr hp))
++            · exact False.elim (h₄ (beq_iff_eq.mpr hp))
++          · intro hn
++            exact False.elim (hn rfl)
+ 
+ @[simp]
+ public theorem isUTF8FirstByte_getElem_utf8EncodeChar {c : Char} {i : Nat} {hi : i < (String.utf8EncodeChar c).length} :
+     (String.utf8EncodeChar c)[i].IsUTF8FirstByte ↔ i = 0 := by
+   obtain (rfl|hi₀) := Nat.eq_zero_or_pos i
+-  · simp only [isUTF8FirstByte_iff_parseFirstByte_ne_invalid, iff_true]
+-    match h : c.utf8Size, c.utf8Size_pos, c.utf8Size_le_four with
+-    | 1, _, _ => simp [parseFirstByte_utf8EncodeChar_eq_done h]
+-    | 2, _, _ => simp [parseFirstByte_utf8EncodeChar_eq_oneMore h]
+-    | 3, _, _ => simp [parseFirstByte_utf8EncodeChar_eq_twoMore h]
+-    | 4, _, _ => simp [parseFirstByte_utf8EncodeChar_eq_threeMore h]
+-  · simp only [isUTF8FirstByte_iff_parseFirstByte_ne_invalid, ne_eq, Nat.ne_of_lt' hi₀, iff_false,
+-      Classical.not_not]
+-    apply parseFirstByte_eq_invalid_of_isInvalidContinuationByte_eq_false
+-    simp only [String.length_utf8EncodeChar] at hi
+-    match h : c.utf8Size, c.utf8Size_pos, c.utf8Size_le_four, i, hi₀, hi with
+-    | 1, _, _, 1, _, _ => contradiction
+-    | 2, _, _, 1, _, _ => simp [isInvalidContinuationByte_getElem_utf8EncodeChar_one_of_utf8Size_eq_two h]
+-    | 3, _, _, 1, _, _ => simp [isInvalidContinuationByte_getElem_utf8EncodeChar_one_of_utf8Size_eq_three h]
+-    | 3, _, _, 2, _, _ => simp [isInvalidContinuationByte_getElem_utf8EncodeChar_two_of_utf8Size_eq_three h]
+-    | 4, _, _, 1, _, _ => simp [isInvalidContinuationByte_getElem_utf8EncodeChar_one_of_utf8Size_eq_four h]
+-    | 4, _, _, 2, _, _ => simp [isInvalidContinuationByte_getElem_utf8EncodeChar_two_of_utf8Size_eq_four h]
+-    | 4, _, _, 3, _, _ => simp [isInvalidContinuationByte_getElem_utf8EncodeChar_three_of_utf8Size_eq_four h]
++  · have hb : ((String.utf8EncodeChar c)[0]'hi).IsUTF8FirstByte := by
++      apply isUTF8FirstByte_iff_parseFirstByte_ne_invalid.mpr
++      match h : c.utf8Size, c.utf8Size_pos, c.utf8Size_le_four with
++      | 1, _, _ => rw [parseFirstByte_utf8EncodeChar_eq_done h]; intro hn; cases hn
++      | 2, _, _ => rw [parseFirstByte_utf8EncodeChar_eq_oneMore h]; intro hn; cases hn
++      | 3, _, _ => rw [parseFirstByte_utf8EncodeChar_eq_twoMore h]; intro hn; cases hn
++      | 4, _, _ => rw [parseFirstByte_utf8EncodeChar_eq_threeMore h]; intro hn; cases hn
++    exact ⟨fun _ => rfl, fun _ => hb⟩
++  · have hn : ¬ ((String.utf8EncodeChar c)[i]'hi).IsUTF8FirstByte := by
++      intro hb
++      have hparse := isUTF8FirstByte_iff_parseFirstByte_ne_invalid.mp hb
++      apply hparse
++      apply parseFirstByte_eq_invalid_of_isInvalidContinuationByte_eq_false
++      rw [String.length_utf8EncodeChar] at hi
++      match h : c.utf8Size, c.utf8Size_pos, c.utf8Size_le_four, i, hi₀, hi with
++      | 1, _, _, 1, _, _ => contradiction
++      | 2, _, _, 1, _, _ => exact isInvalidContinuationByte_getElem_utf8EncodeChar_one_of_utf8Size_eq_two h
++      | 3, _, _, 1, _, _ => exact isInvalidContinuationByte_getElem_utf8EncodeChar_one_of_utf8Size_eq_three h
++      | 3, _, _, 2, _, _ => exact isInvalidContinuationByte_getElem_utf8EncodeChar_two_of_utf8Size_eq_three h
++      | 4, _, _, 1, _, _ => exact isInvalidContinuationByte_getElem_utf8EncodeChar_one_of_utf8Size_eq_four h
++      | 4, _, _, 2, _, _ => exact isInvalidContinuationByte_getElem_utf8EncodeChar_two_of_utf8Size_eq_four h
++      | 4, _, _, 3, _, _ => exact isInvalidContinuationByte_getElem_utf8EncodeChar_three_of_utf8Size_eq_four h
++    exact ⟨fun hb => (hn hb).elim, fun hi' => (Nat.ne_of_gt hi₀ hi').elim⟩
+ 
+ public theorem isUTF8FirstByte_getElem_zero_utf8EncodeChar {c : Char} :
+-    ((String.utf8EncodeChar c)[0]'(by simp [c.utf8Size_pos])).IsUTF8FirstByte := by
+-  simp
++    ((String.utf8EncodeChar c)[0]'(by rewrite [String.length_utf8EncodeChar]; exact c.utf8Size_pos)).IsUTF8FirstByte := by
++  exact isUTF8FirstByte_getElem_utf8EncodeChar.mpr rfl
+ 
+ @[expose, inline]
+ public def utf8ByteSize (c : UInt8) (_h : c.IsUTF8FirstByte) : Nat :=
+@@ -1467,24 +1860,39 @@
+ 
+ theorem utf8ByteSize_eq_utf8ByteSize_parseFirstByte {c : UInt8} {h : c.IsUTF8FirstByte} :
+     c.utf8ByteSize h = (parseFirstByte c).utf8ByteSize := by
+-  simp only [utf8ByteSize, FirstByte.utf8ByteSize, parseFirstByte, beq_iff_eq]
+-  split
+-  · simp
+-  · split
+-    · simp
+-    · split
+-      · simp
+-      · obtain (h|h|h|h) := h
+-        · contradiction
+-        · contradiction
+-        · contradiction
+-        · simp [h]
++  unfold utf8ByteSize parseFirstByte
++  cases (inferInstance : Decidable (c &&& 0x80 = 0)) with
++  | isTrue h₁ =>
++    rewrite [if_pos h₁, if_pos (beq_iff_eq.mpr h₁)]
++    rfl
++  | isFalse h₁ =>
++    rewrite [if_neg h₁, if_neg (fun hb => h₁ (eq_of_beq hb))]
++    cases (inferInstance : Decidable (c &&& 0xe0 = 0xc0)) with
++    | isTrue h₂ =>
++      rewrite [if_pos h₂, if_pos (beq_iff_eq.mpr h₂)]
++      rfl
++    | isFalse h₂ =>
++      rewrite [if_neg h₂, if_neg (fun hb => h₂ (eq_of_beq hb))]
++      cases (inferInstance : Decidable (c &&& 0xf0 = 0xe0)) with
++      | isTrue h₃ =>
++        rewrite [if_pos h₃, if_pos (beq_iff_eq.mpr h₃)]
++        rfl
++      | isFalse h₃ =>
++        rewrite [if_neg h₃, if_neg (fun hb => h₃ (eq_of_beq hb))]
++        have h₄ : c &&& 0xf8 = 0xf0 := by
++          rcases h with hx | hx | hx | hx
++          · exact False.elim (h₁ hx)
++          · exact False.elim (h₂ hx)
++          · exact False.elim (h₃ hx)
++          · exact hx
++        rewrite [if_pos (beq_iff_eq.mpr h₄)]
++        rfl
+ 
+ end UInt8
+ 
+ public theorem ByteArray.isUTF8FirstByte_getElem_zero_utf8EncodeChar_append {c : Char} {b : ByteArray} :
+     (((String.utf8EncodeChar c).toByteArray ++ b)[0]'(by simp; have := c.utf8Size_pos; omega)).IsUTF8FirstByte := by
+-  rw [ByteArray.getElem_append_left (by simp [c.utf8Size_pos]),
++  rw [ByteArray.getElem_append_left (by rewrite [List.size_toByteArray, String.length_utf8EncodeChar]; exact c.utf8Size_pos),
+     List.getElem_toByteArray, UInt8.isUTF8FirstByte_getElem_utf8EncodeChar]
+ 
+ public theorem ByteArray.isUTF8FirstByte_of_isSome_utf8DecodeChar? {b : ByteArray} {i : Nat}
+@@ -1502,8 +1910,8 @@
+   simp only [validateUTF8At_eq_isSome_utf8DecodeChar?]
+   exact isUTF8FirstByte_of_isSome_utf8DecodeChar?
+ 
+-theorem Char.utf8ByteSize_getElem_utf8EncodeChar {c : Char} :
+-    ((String.utf8EncodeChar c)[0]'(by simp [c.utf8Size_pos])).utf8ByteSize
++public theorem Char.utf8ByteSize_getElem_utf8EncodeChar {c : Char} :
++    ((String.utf8EncodeChar c)[0]'(by rewrite [String.length_utf8EncodeChar]; exact c.utf8Size_pos)).utf8ByteSize
+       UInt8.isUTF8FirstByte_getElem_zero_utf8EncodeChar = c.utf8Size := by
+   rw [UInt8.utf8ByteSize_eq_utf8ByteSize_parseFirstByte]
+   obtain (hc|hc|hc|hc) := c.utf8Size_eq

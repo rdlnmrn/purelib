@@ -1,0 +1,36 @@
+--- a/Init/Data/String/Iterate.lean
++++ b/Init/Data/String/Iterate.lean
+@@ -60,9 +60,9 @@
+     | .done => it.internalState.currPos = s.endPos
+   step := fun ⟨⟨currPos⟩⟩ =>
+     if h : currPos = s.endPos then
+-      pure (.deflate ⟨.done, by simp [h]⟩)
++      pure (.deflate ⟨.done, by exact h⟩)
+     else
+-      pure (.deflate ⟨.yield ⟨⟨currPos.next h⟩⟩ ⟨currPos, h⟩, by simp [h]⟩)
++      pure (.deflate ⟨.yield ⟨⟨currPos.next h⟩⟩ ⟨currPos, h⟩, by exact ⟨h, rfl, rfl⟩⟩)
+ 
+ private def finitenessRelation [Pure m] :
+     Std.Iterators.FinitenessRelation (PosIterator s) m where
+@@ -147,10 +147,10 @@
+     | .done => it.internalState.currPos = s.startPos
+   step := fun ⟨⟨currPos⟩⟩ =>
+     if h : currPos = s.startPos then
+-      pure (.deflate ⟨.done, by simp [h]⟩)
++      pure (.deflate ⟨.done, by exact h⟩)
+     else
+       let prevPos := currPos.prev h
+-      pure (.deflate ⟨.yield ⟨⟨prevPos⟩⟩ ⟨prevPos, by exact Pos.prev_ne_endPos⟩, by simp [h, prevPos]⟩)
++      pure (.deflate ⟨.yield ⟨⟨prevPos⟩⟩ ⟨prevPos, by exact Pos.prev_ne_endPos⟩, by exact ⟨h, rfl, rfl⟩⟩)
+ 
+ private def finitenessRelation [Pure m] :
+     Std.Iterators.FinitenessRelation (RevPosIterator s) m where
+@@ -224,7 +224,7 @@
+     if h : offset < s.rawEndPos then
+       pure (.deflate ⟨.yield ⟨s, offset.inc⟩ (s.getUTF8Byte offset h), by simp [h]⟩)
+     else
+-      pure (.deflate ⟨.done, by simp [h]⟩)
++      pure (.deflate ⟨.done, by exact h⟩)
+ 
+ private def finitenessRelation [Pure m] :
+     Std.Iterators.FinitenessRelation (ByteIterator) m where

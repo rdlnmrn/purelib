@@ -2,8 +2,8 @@
 set -euo pipefail
 
 repo_dir="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-lake_runner="$repo_dir/scripts/run-lake.sh"
-identifier_pattern="^[A-Za-z_][A-Za-z0-9_?']*(\\.[A-Za-z_][A-Za-z0-9_?']*)*$"
+# Lean prints private declaration names with a numeric private-prefix part.
+identifier_pattern="^[A-Za-z_][A-Za-z0-9_?']*(\\.([A-Za-z_][A-Za-z0-9_?']*|[0-9]+))*$"
 
 target="Quot.sound"
 mode="axiom"
@@ -42,28 +42,6 @@ for identifier in "$target" "$module" "$@"; do
   fi
 done
 
-trace_dir="$(mktemp -d "${TMPDIR:-/tmp}/ccl-axiom-trace.XXXXXX")"
-trace_source="$trace_dir/AxiomTraceRun.lean"
-cleanup() {
-  rm -f "$trace_source"
-  rmdir "$trace_dir"
-}
-trap cleanup EXIT
-
-{
-  printf '%s\n' 'import Lean.Util.CollectAxioms'
-  printf '%s\n' 'import Lean.Util.FoldConsts'
-  printf '%s\n' 'import Lean.Elab.Command'
-  printf 'import %s\n' "$module"
-  sed '/^import /d' "$repo_dir/scripts/AxiomTrace.lean"
-  printf '\n'
-  for declaration in "$@"; do
-    if [[ $mode == "use" ]]; then
-      printf '#trace_use %s in %s\n' "$target" "$declaration"
-    else
-      printf '#trace_axiom %s in %s\n' "$target" "$declaration"
-    fi
-  done
-} > "$trace_source"
-
-"$lake_runner" lean "$trace_source"
+# The pinned host reader inspects compiled metadata; no target code executes.
+exec "$repo_dir/scripts/run-lake.sh" env python3 "$repo_dir/scripts/project-module-data.py" trace \
+  --mode "$mode" --target "$target" "$module" "$@"

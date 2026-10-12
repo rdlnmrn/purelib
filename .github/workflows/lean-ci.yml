@@ -21,31 +21,36 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install Lean, restore caches, and build
+      # Restore only reusable artifacts, not profiling runs or old experiments.
+      # The fallback retains the same dependencies and checked Core epoch.
+      - name: Restore Lean and proof-check caches
+        id: lean-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .lake/packages
+            .lake/build
+            .lake/core-toolchain
+            .lake/builtin-lint
+            .lake/axiom-audit
+            .lake/nanoda-tools
+            .lake/nanoda-inputs
+            .lake/nanoda-native
+            .lake/nanoda-checked
+            .lake/kernel-replay-tests
+          key: checks-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'scripts/toolchain/**', 'scripts/lean_module_data/**') }}-${{ github.sha }}
+          restore-keys: |
+            checks-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'scripts/toolchain/**', 'scripts/lean_module_data/**') }}-
+
+      - name: Install Lean and fetch Mathlib artifacts
         uses: leanprover/lean-action@v1
         with:
           auto-config: false
-          build: true
-          build-args: --wfail
+          build: false
           test: false
           lint: false
+          use-github-cache: false
           use-mathlib-cache: true
-
-      - name: Check Paper-I import boundary
-        run: ./scripts/check-paper-i-imports.sh
-
-      - name: Check combined CCL-1/CCL-2 import boundary
-        run: ./scripts/check-paper-ii-imports.sh
-
-      - name: Check repository-wide axiom closure
-        run: ./scripts/check-axioms.sh
-
-      - name: Check out matching Lean exporter
-        uses: actions/checkout@v4
-        with:
-          repository: leanprover/lean4export
-          ref: 86e4a339507466921dc8c5417c8cb1de1ce7df60
-          path: .external/lean4export
 
       - name: Check out independent Rust checker
         uses: actions/checkout@v4
@@ -54,15 +59,46 @@ jobs:
           ref: 418320295890faed83a96fd97907b12a3b6728c2
           path: .external/nanoda
 
-      - name: Build independent-checker tools
-        run: |
-          cd .external/lean4export
-          lake build
-          cd ../nanoda
-          cargo build --release --locked
+      - name: Restore Rust compiler and checker caches
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .external/nanoda -> target
+          cache-workspace-crates: true
+          key: nanoda-418320295890faed83a96fd97907b12a3b6728c2
 
-      - name: Check all project declarations with nanoda
+      - name: Build independent Rust checker
+        working-directory: .external/nanoda
+        run: cargo build --release --locked
+
+      - name: Run all completion checks
         env:
-          LEAN4EXPORT_BIN: ${{ github.workspace }}/.external/lean4export/.lake/build/bin/lean4export
           NANODA_BIN: ${{ github.workspace }}/.external/nanoda/target/release/nanoda_bin
-        run: ./scripts/check-nanoda.sh
+        run: ./scripts/check-all.sh
+
+      # Save after the full checks populate their own validated checkpoints.
+      # Never lock an incomplete run into the immutable key for this revision.
+      - name: Save Lean and proof-check caches
+        if: success() && steps.lean-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .lake/packages
+            .lake/build
+            .lake/core-toolchain
+            .lake/builtin-lint
+            .lake/axiom-audit
+            .lake/nanoda-tools
+            .lake/nanoda-inputs
+            .lake/nanoda-native
+            .lake/nanoda-checked
+            .lake/kernel-replay-tests
+          key: ${{ steps.lean-cache.outputs.cache-primary-key }}
+
+      - name: Retain completion logs and timings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: completion-checks
+          path: .lake/completion-checks/
+          include-hidden-files: true
+          if-no-files-found: ignore

@@ -1,0 +1,146 @@
+module
+
+import Purelib.Curves.Hyperelliptic.Branches.BranchGridPaths
+public import Purelib.Curves.Hyperelliptic.Branches.FramedBranchCellBankReplay
+public import Purelib.Curves.Hyperelliptic.Charts.Infinity
+public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.BoundaryArea
+public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.DifferentialTransport
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.EndpointComparison
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Endpoints
+public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.ModelAgreement
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Owners
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PrimitiveComparison
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalModels
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcCoarsening
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartJunctions
+public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ConjugateArcReadback
+public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ConjugateRibbonFamily
+public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.EndpointCharts
+public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.JoinedParentEnergy
+public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisAllowance
+public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisIncoming
+public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourceConcatenation
+public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.PrimitiveSamples
+public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularRefinement
+public import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageCharts
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocalCurve
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.PreparedExteriorReciprocal
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.PreparedReciprocalAreaRequests
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.PreparedReciprocalPrimitiveGlue
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.PreparedReciprocalPrimitives
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.PreparedReciprocalSamples
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalCollarTransport
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPrimitiveRibbon
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRootNames
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRootOwners
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalSideArea
+import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives
+import Purelib.Curves.Hyperelliptic.Differentials.PreparedModels
+public import Purelib.Curves.Hyperelliptic.Integration.Surface.PolarizedSurfaceGap
+import Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.Excision
+import Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.AreaRequests
+import Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.FineAreaRequests
+import Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison
+public import Purelib.Curves.Hyperelliptic.Meshes.Newton.Basis.EndpointComponents
+public import Purelib.Curves.Hyperelliptic.Meshes.Newton.Basis.RemainingAcquisition
+public import Purelib.Curves.Hyperelliptic.Meshes.Newton.Basis.RootPerimeterEnergy
+public import Purelib.Curves.Hyperelliptic.Meshes.Newton.Complement.LocalBilinear
+public import Purelib.Curves.Hyperelliptic.Meshes.Newton.ConjugateTerminalExteriorBound
+public import Purelib.Curves.Hyperelliptic.Meshes.Newton.CurvePhysicalPeriodComparison
+public import Purelib.Curves.Hyperelliptic.Meshes.Newton.OddCanonicalSurfaceEnergy
+public import Purelib.Curves.Hyperelliptic.Meshes.Newton.OriginalPairedHoleAggregate
+public import Purelib.Curves.Hyperelliptic.Meshes.Newton.PairedBoundaryCorrection
+public import Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.ContactAccuracy
+public import Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PieceContactAccuracy
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedStemTransport
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrimitiveReferences
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchRootNegation
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CenteredHoleCutPairing
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ContactPeriodRequests
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.BoundaryWord
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChordJumps
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveReferences
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordNormalForm
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordRequests
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DyadicConjugateTraceRequest
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DyadicPairedTraceRequest
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.AcquiredCanonicalEnergy
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IntervalRuns
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentComparison
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRootJoining
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootSourceEnergy
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BasisRegularEnergy
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapComparison
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartComparison
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateParentPolygons
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedCapEndpoints
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedCapPaths
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RequestedEnergy
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceComparison
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.WeightedPeriodTrace
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContinuedComparison
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveComparison
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveNegation
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.QueryNegation
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.RootComparison
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SharedNegation
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.TransportNegation
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ZeroPeriods
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedArea
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.StemAggregate
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.ConjugatePerimeterRequest
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.SideAreaRequest
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonCenteredPerimeters
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPaidPerimeters
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPerimeterArea
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPeriodArea
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormIntersection
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormPeriodArea
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormPeriods
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalizedCutPeriods
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleClosedValues
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.ReferenceIntersections
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.TraceContacts
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.TraceGeometryBound
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.TracePreparation
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalHoleChordTransport
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPairedTraceRequest
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RamifiedChartComparison
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ReciprocalAreaComparison
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularPeriodControl
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RetracedBridgeCancellation
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBoundaryArea
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.OddAccuracy
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.ResidualComparison
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourUpperShears
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TriangleSheetCancellation
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.WeightedBoundaryRequests
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas
+public import Purelib.Curves.Hyperelliptic.Periods.MixedOrderedBilinear
+public import Purelib.Curves.Hyperelliptic.Periods.Normalization.CurveOrderedDeterminantRequest
+public import Purelib.Curves.Hyperelliptic.Periods.Normalization.ZeroTail
+
+/-!
+# Hyperelliptic curve constructions
+
+Public subject entry point for the existing hyperelliptic curve constructions.
+-/

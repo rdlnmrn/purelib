@@ -1,0 +1,187 @@
+--- a/Init/WF.lean
++++ b/Init/WF.lean
+@@ -527,3 +527,184 @@
+ -/
+ @[wf_preprocess] theorem ite_eq_dite [Decidable P] :
+     ite P a b = (dite P (fun h => binderNameHint h () a) (fun h => binderNameHint h () b)) := rfl
++
++
++end
++
++namespace WellFounded.Nat
++
++universe u v
++
++variable {Alpha : Sort u} {motive : Alpha → Sort v}
++variable (measure : Alpha → Nat)
++variable (step : (value : Alpha) →
++  ((next : Alpha) → InvImage (· < ·) measure next value → motive next) → motive value)
++
++/-- A recursion step respects equality of the individual recursive results.
++
++The continuations retain the original measure bounds. Their pointwise agreement
++must suffice to identify the step's result without identifying the functions.
++-/
++@[expose] public def StepCongruence : Prop :=
++  ∀ value (left right : (next : Alpha) →
++      InvImage (· < ·) measure next value → motive next),
++    (∀ next bound, left next bound = right next bound) →
++      step value left = step value right
++
++/-- Two sufficient fuel amounts produce equal original natural-recursion results.
++
++Both fuels exceed the original measure. Structural induction uses the step's
++pointwise congruence to compare recursive results with their retained bounds.
++-/
++private theorem fuelAgreement (congruent : StepCongruence measure step)
++    (value : Alpha) (leftFuel rightFuel : Nat)
++    (leftBound : measure value < leftFuel) (rightBound : measure value < rightFuel) :
++    WellFounded.Nat.fix.go measure step leftFuel value leftBound =
++      WellFounded.Nat.fix.go measure step rightFuel value rightBound := by
++  induction leftFuel generalizing value rightFuel with
++  | zero => exact False.elim (Nat.not_succ_le_zero (measure value) leftBound)
++  | succ leftFuel ih =>
++      cases rightFuel with
++      | zero => exact False.elim (Nat.not_succ_le_zero (measure value) rightBound)
++      | succ rightFuel =>
++          apply congruent value
++          intro next bound
++          exact ih next rightFuel _ _
++
++/-- Natural well-founded recursion unfolds when its step respects pointwise results.
++
++This equation concerns the original executable `WellFounded.Nat.fix`, its
++measure, motive and step. The congruence certificate replaces any need to equate
++the recursive continuation functions.
++-/
++public theorem fix_eq_of_stepCongruence (congruent : StepCongruence measure step)
++    (value : Alpha) :
++    WellFounded.Nat.fix measure step value =
++      step value (fun next _ => WellFounded.Nat.fix measure step next) := by
++  let continuation : (next : Alpha) →
++      InvImage (· < ·) measure next value → motive next :=
++    fun next bound => WellFounded.Nat.fix.go measure step (measure value) next
++      (Nat.lt_of_lt_of_le bound (Nat.le_refl (measure value)))
++  have unfoldStep : WellFounded.Nat.fix measure step value = step value continuation := by
++    exact (fuelAgreement measure step congruent value
++      (WellFounded.Nat.eager (measure value + 1)) (measure value + 1)
++      (WellFounded.Nat.eager_eq _ ▸ Nat.lt_add_one _) (Nat.lt_add_one _)).trans rfl
++  apply Eq.trans unfoldStep
++  apply congruent value
++  intro next bound
++  exact fuelAgreement measure step congruent next (measure value)
++    (WellFounded.Nat.eager (measure next + 1))
++    (show measure next < measure value from bound)
++    (WellFounded.Nat.eager_eq _ ▸ Nat.lt_add_one _)
++
++end WellFounded.Nat
++
++namespace WellFounded.Nat
++
++universe familyU familyV familyW
++variable {Parameters : Sort familyU} {Index : Sort familyV} {Result : Sort familyW}
++variable (measure : Index → Nat)
++variable (step : (state : PSigma (fun _ : Parameters => Index)) →
++  ((next : PSigma (fun _ : Parameters => Index)) →
++    InvImage (· < ·) (fun value : PSigma (fun _ : Parameters => Index) => PSigma.casesOn (motive := fun _ => Nat) value (fun (_ : Parameters) (index : Index) => measure index)) next state → Result) → Result)
++
++/-- A conditional shared by every parameter can select the whole result family. -/
++public theorem dite_family_eq {condition : Prop} [decision : Decidable condition]
++    (whenTrue : condition → Parameters → Result)
++    (whenFalse : ¬condition → Parameters → Result) :
++    (fun parameter => dite condition
++      (fun retained => whenTrue retained parameter)
++      (fun retained => whenFalse retained parameter)) =
++    dite condition whenTrue whenFalse := by
++  cases decision with
++  | isFalse _ => rfl
++  | isTrue _ => rfl
++
++/-- Equal retained branches identify conditional results of any sort. -/
++public theorem dite_eq_by_branches {condition : Prop} [decision : Decidable condition]
++    (leftTrue rightTrue : condition → Result)
++    (leftFalse rightFalse : ¬condition → Result)
++    (trueEqual : ∀ retained, leftTrue retained = rightTrue retained)
++    (falseEqual : ∀ retained, leftFalse retained = rightFalse retained) :
++    dite condition leftTrue leftFalse = dite condition rightTrue rightFalse := by
++  cases decision with
++  | isFalse retained => exact falseEqual retained
++  | isTrue retained => exact trueEqual retained
++
++/-- A recursion step respects equality of whole parameterized result families. -/
++@[expose] public def FamilyStepCongruence : Prop :=
++  ∀ index (left right : (next : PSigma (fun _ : Parameters => Index)) →
++      PSigma.casesOn (motive := fun _ => Nat) next (fun (_ : Parameters) (index : Index) => measure index) < measure index → Result),
++    (∀ (nextIndex : Index) (bound : measure nextIndex < measure index),
++      (fun parameter => left ⟨parameter, nextIndex⟩ bound) =
++        (fun parameter => right ⟨parameter, nextIndex⟩ bound)) →
++    (fun parameter => step ⟨parameter, index⟩ left) =
++      (fun parameter => step ⟨parameter, index⟩ right)
++
++/-- Sufficient fuel identifies whole families of original recursion results. -/
++private theorem fuelFamilyAgreement (congruent : FamilyStepCongruence measure step)
++    (index : Index) (leftFuel rightFuel : Nat)
++    (leftBound : measure index < leftFuel) (rightBound : measure index < rightFuel) :
++    (fun parameter : Parameters =>
++      WellFounded.Nat.fix.go (fun value : PSigma (fun _ : Parameters => Index) => PSigma.casesOn (motive := fun _ => Nat) value (fun (_ : Parameters) (index : Index) => measure index)) step leftFuel
++        ⟨parameter, index⟩ leftBound) =
++    (fun parameter : Parameters =>
++      WellFounded.Nat.fix.go (fun value : PSigma (fun _ : Parameters => Index) => PSigma.casesOn (motive := fun _ => Nat) value (fun (_ : Parameters) (index : Index) => measure index)) step rightFuel
++        ⟨parameter, index⟩ rightBound) := by
++  induction leftFuel generalizing index rightFuel with
++  | zero => exact False.elim (Nat.not_succ_le_zero (measure index) leftBound)
++  | succ leftFuel ih =>
++      cases rightFuel with
++      | zero => exact False.elim (Nat.not_succ_le_zero (measure index) rightBound)
++      | succ rightFuel =>
++          exact congruent index
++            (fun next bound => WellFounded.Nat.fix.go
++              (fun value : PSigma (fun _ : Parameters => Index) => PSigma.casesOn (motive := fun _ => Nat) value (fun (_ : Parameters) (index : Index) => measure index)) step leftFuel next
++              (Nat.lt_of_lt_of_le bound (Nat.le_of_lt_add_one leftBound)))
++            (fun next bound => WellFounded.Nat.fix.go
++              (fun value : PSigma (fun _ : Parameters => Index) => PSigma.casesOn (motive := fun _ => Nat) value (fun (_ : Parameters) (index : Index) => measure index)) step rightFuel next
++              (Nat.lt_of_lt_of_le bound (Nat.le_of_lt_add_one rightBound)))
++            (fun nextIndex bound => ih nextIndex rightFuel
++              (Nat.lt_of_lt_of_le bound (Nat.le_of_lt_add_one leftBound))
++              (Nat.lt_of_lt_of_le bound (Nat.le_of_lt_add_one rightBound)))
++
++/-- Original natural recursion unfolds as a whole family under family congruence. -/
++private theorem fixFamilyEquation (congruent : FamilyStepCongruence measure step)
++    (index : Index) :
++    (fun parameter : Parameters =>
++      WellFounded.Nat.fix (fun value : PSigma (fun _ : Parameters => Index) => PSigma.casesOn (motive := fun _ => Nat) value (fun (_ : Parameters) (index : Index) => measure index)) step ⟨parameter, index⟩) =
++    (fun parameter : Parameters =>
++      step ⟨parameter, index⟩ (fun next _ =>
++        WellFounded.Nat.fix (fun value : PSigma (fun _ : Parameters => Index) => PSigma.casesOn (motive := fun _ => Nat) value (fun (_ : Parameters) (index : Index) => measure index)) step next)) := by
++  have unfoldFamily :
++      (fun parameter : Parameters =>
++        WellFounded.Nat.fix (fun value : PSigma (fun _ : Parameters => Index) => PSigma.casesOn (motive := fun _ => Nat) value (fun (_ : Parameters) (index : Index) => measure index)) step ⟨parameter, index⟩) =
++      (fun parameter : Parameters =>
++        step ⟨parameter, index⟩ (fun next bound =>
++          WellFounded.Nat.fix.go (fun value : PSigma (fun _ : Parameters => Index) => PSigma.casesOn (motive := fun _ => Nat) value (fun (_ : Parameters) (index : Index) => measure index)) step (measure index) next
++            (Nat.lt_of_lt_of_le bound (Nat.le_refl (measure index))))) :=
++    (fuelFamilyAgreement measure step congruent index
++      (WellFounded.Nat.eager (measure index + 1)) (measure index + 1)
++      (WellFounded.Nat.eager_eq _ ▸ Nat.lt_add_one _) (Nat.lt_add_one _)).trans rfl
++  apply Eq.trans unfoldFamily
++  exact congruent index
++    (fun next bound => WellFounded.Nat.fix.go
++      (fun value : PSigma (fun _ : Parameters => Index) => PSigma.casesOn (motive := fun _ => Nat) value (fun (_ : Parameters) (index : Index) => measure index)) step (measure index) next
++      (Nat.lt_of_lt_of_le bound (Nat.le_refl (measure index))))
++    (fun next _ => WellFounded.Nat.fix
++      (fun value : PSigma (fun _ : Parameters => Index) => PSigma.casesOn (motive := fun _ => Nat) value (fun (_ : Parameters) (index : Index) => measure index)) step next)
++    (fun nextIndex bound => fuelFamilyAgreement measure step congruent nextIndex (measure index)
++      (WellFounded.Nat.eager (measure nextIndex + 1)) bound
++      (WellFounded.Nat.eager_eq _ ▸ Nat.lt_add_one _))
++
++/-- Original product-state recursion unfolds when whole result families suffice. -/
++public theorem fix_eq_of_familyStepCongruence
++    (congruent : FamilyStepCongruence measure step) (state : PSigma (fun _ : Parameters => Index)) :
++    WellFounded.Nat.fix (fun value : PSigma (fun _ : Parameters => Index) => PSigma.casesOn (motive := fun _ => Nat) value (fun (_ : Parameters) (index : Index) => measure index)) step state =
++      step state (fun next _ =>
++        WellFounded.Nat.fix (fun value : PSigma (fun _ : Parameters => Index) => PSigma.casesOn (motive := fun _ => Nat) value (fun (_ : Parameters) (index : Index) => measure index)) step next) := by
++  cases state with
++  | mk parameter index =>
++      exact congrFun (fixFamilyEquation measure step congruent index) parameter
++
++end WellFounded.Nat

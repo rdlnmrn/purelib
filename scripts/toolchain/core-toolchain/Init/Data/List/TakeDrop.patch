@@ -1,0 +1,13 @@
+--- a/Init/Data/List/TakeDrop.lean
++++ b/Init/Data/List/TakeDrop.lean
+@@ -61,8 +61,8 @@
+     length (drop (i + 1) (x :: l)) = length l - i := length_drop (i := i) (l := l)
+     _ = succ (length l) - succ i := (Nat.succ_sub_succ_eq_sub (length l) i).symm
+ 
+-theorem drop_of_length_le {l : List α} (h : l.length ≤ i) : l.drop i = [] :=
+-  length_eq_zero_iff.1 (length_drop .. ▸ Nat.sub_eq_zero_of_le h)
++theorem drop_of_length_le {l : List α} (h : l.length ≤ i) : l.drop i = [] := by
++  induction l generalizing i with | nil => cases i <;> rfl | cons a l ih => cases i with | zero => exact False.elim (Nat.not_succ_le_zero _ h) | succ i => exact ih (Nat.le_of_succ_le_succ h)
+ 
+ theorem length_lt_of_drop_ne_nil {l : List α} {i} (h : drop i l ≠ []) : i < l.length :=
+   gt_of_not_le (mt drop_of_length_le h)

@@ -1,0 +1,176 @@
+--- a/Init/Data/Nat/Basic.lean
++++ b/Init/Data/Nat/Basic.lean
+@@ -176,8 +176,8 @@
+ 
+ protected theorem add_left_cancel {n m k : Nat} : n + m = n + k → m = k := by
+   induction n with
+-  | zero => simp
+-  | succ n ih => simp [succ_add, succ.injEq]; intro h; apply ih h
++  | zero => intro h; exact (Nat.zero_add m).symm.trans (h.trans (Nat.zero_add k))
++  | succ n ih => intro h; rw [Nat.succ_add, Nat.succ_add] at h; exact ih (Nat.succ.inj h)
+ 
+ protected theorem add_right_cancel {n m k : Nat} (h : n + m = k + m) : n = k := by
+   rw [Nat.add_comm n m, Nat.add_comm k m] at h
+@@ -227,9 +227,11 @@
+   right_id := Nat.mul_one
+ 
+ protected theorem left_distrib (n m k : Nat) : n * (m + k) = n * m + n * k := by
+-  induction n with
+-  | zero      => repeat rw [Nat.zero_mul]
+-  | succ n ih => simp [succ_mul, ih]; rw [Nat.add_assoc, Nat.add_assoc (n*m)]; apply congrArg; apply Nat.add_left_comm
++  induction k with
++  | zero => exact rfl
++  | succ k ih =>
++    rewrite [Nat.add_succ, Nat.mul_succ, ih, Nat.mul_succ]
++    exact Nat.add_assoc _ _ _
+ 
+ protected theorem right_distrib (n m k : Nat) : (n + m) * k = n * k + m * k := by
+   rw [Nat.mul_comm, Nat.left_distrib]; simp [Nat.mul_comm]
+@@ -242,7 +244,9 @@
+ 
+ protected theorem mul_assoc : ∀ (n m k : Nat), (n * m) * k = n * (m * k)
+   | _, _, 0      => rfl
+-  | n, m, succ k => by simp [mul_succ, Nat.mul_assoc n m k, Nat.left_distrib]
++  | n, m, succ k => by
++    rewrite [mul_succ, mul_succ, Nat.mul_assoc n m k, Nat.left_distrib]
++    rfl
+ instance : Std.Associative (α := Nat) (· * ·) := ⟨Nat.mul_assoc⟩
+ 
+ protected theorem mul_left_comm (n m k : Nat) : n * (m * k) = m * (n * k) := by
+@@ -293,8 +297,8 @@
+ 
+ theorem sub_add_eq (a b c : Nat) : a - (b + c) = a - b - c := by
+   induction c with
+-  | zero => simp
+-  | succ c ih => simp only [Nat.add_succ, Nat.sub_succ, ih]
++  | zero => rewrite [Nat.add_zero, Nat.sub_zero]; rfl
++  | succ c ih => rewrite [Nat.add_succ, Nat.sub_succ, ih]; rfl
+ 
+ protected theorem lt_of_lt_of_eq {n m k : Nat} : n < m → m = k → n < k :=
+   fun h₁ h₂ => h₂ ▸ h₁
+@@ -740,7 +744,7 @@
+ @[simp] protected theorem zero_ne_one : 0 ≠ (1 : Nat) :=
+   fun h => Nat.noConfusion h
+ 
+-theorem succ_ne_zero (n : Nat) : succ n ≠ 0 := by simp
++theorem succ_ne_zero (n : Nat) : succ n ≠ 0 := by intro h; cases h
+ 
+ instance instNeZeroSucc {n : Nat} : NeZero (n + 1) := ⟨succ_ne_zero n⟩
+ 
+@@ -955,14 +959,14 @@
+   | succ i => rw [Nat.sub_succ, Nat.succ_sub_succ]; apply Nat.pred_le
+ 
+ theorem zero_lt_sub_of_lt (h : i < a) : 0 < a - i := by
+-  induction a with
+-  | zero => contradiction
+-  | succ a ih =>
+-    match Nat.eq_or_lt_of_le h with
+-    | Or.inl h => injection h with h; subst h; rw [Nat.add_sub_self_left]; decide
+-    | Or.inr h =>
+-      have : 0 < a - i := ih (Nat.lt_of_succ_lt_succ h)
+-      exact Nat.lt_of_lt_of_le this (Nat.sub_le_succ_sub _ _)
++  induction i generalizing a with
++  | zero => exact h
++  | succ i ih =>
++    cases a with
++    | zero => exact (Nat.not_lt_zero _ h).elim
++    | succ a =>
++      rewrite [Nat.succ_sub_succ]
++      exact ih (Nat.lt_of_succ_lt_succ h)
+ 
+ theorem sub_succ_lt_self (a i : Nat) (h : i < a) : a - (i + 1) < a - i := by
+   rw [Nat.add_succ, Nat.sub_succ]
+@@ -973,17 +977,19 @@
+ 
+ theorem sub_ne_zero_of_lt : {a b : Nat} → a < b → b - a ≠ 0
+   | 0, 0, h      => absurd h (Nat.lt_irrefl 0)
+-  | 0, succ b, _ => by simp only [Nat.sub_zero, ne_eq, not_false_eq_true, Nat.succ_ne_zero]
++  | 0, succ b, _ => Nat.sub_zero (succ b) ▸ Nat.succ_ne_zero b
+   | succ a, 0, h => absurd h (Nat.not_lt_zero a.succ)
+   | succ a, succ b, h => by rw [Nat.succ_sub_succ]; exact sub_ne_zero_of_lt (Nat.lt_of_succ_lt_succ h)
+ 
+ theorem add_sub_of_le {a b : Nat} (h : a ≤ b) : a + (b - a) = b := by
+-  induction a with
+-  | zero => simp
++  induction a generalizing b with
++  | zero => exact (Nat.zero_add (b - 0)).trans (Nat.sub_zero b)
+   | succ a ih =>
+-    have hne : b - a ≠ 0 := Nat.sub_ne_zero_of_lt h
+-    have : a ≤ b := Nat.le_of_succ_le h
+-    rw [sub_succ, Nat.succ_add, ← Nat.add_succ, Nat.succ_pred hne, ih this]
++    cases b with
++    | zero => exact False.elim (Nat.not_succ_le_zero a h)
++    | succ b =>
++      rw [Nat.succ_sub_succ, Nat.succ_add]
++      exact congrArg Nat.succ (ih (Nat.le_of_succ_le_succ h))
+ 
+ theorem sub_one_cancel : ∀ {a b : Nat}, 0 < a → 0 < b → a - 1 = b - 1 → a = b
+   | _+1, _+1, _, _ => congrArg _
+@@ -993,8 +999,8 @@
+ 
+ protected theorem add_sub_add_right (n k m : Nat) : (n + k) - (m + k) = n - m := by
+   induction k with
+-  | zero => simp
+-  | succ k ih => simp [← Nat.add_assoc, succ_sub_succ_eq_sub, ih]
++  | zero => rfl
++  | succ k ih => rw [Nat.add_succ, Nat.add_succ, Nat.succ_sub_succ]; exact ih
+ 
+ protected theorem add_sub_add_left (k n m : Nat) : (k + n) - (k + m) = n - m := by
+   rw [Nat.add_comm k n, Nat.add_comm k m, Nat.add_sub_add_right]
+@@ -1055,8 +1061,12 @@
+   rw [Nat.add_sub_add_left, Nat.zero_sub]
+ 
+ @[simp] protected theorem sub_eq_zero_of_le {n m : Nat} (h : n ≤ m) : n - m = 0 := by
+-  match le.dest h with
+-  | ⟨k, hk⟩ => rw [← hk, Nat.sub_self_add]
++  induction m generalizing n with
++  | zero => exact Nat.eq_zero_of_le_zero h
++  | succ m ih =>
++    cases n with
++    | zero => exact Nat.zero_sub _
++    | succ n => exact (Nat.succ_sub_succ n m).trans (ih (Nat.le_of_succ_le_succ h))
+ 
+ theorem sub_le_of_le_add {a b c : Nat} (h : a ≤ c + b) : a - b ≤ c := by
+   match le.dest h, Nat.le_total a b with
+@@ -1074,13 +1084,13 @@
+   | ⟨d, hd⟩ =>
+     apply @le.intro _ _ d
+     rw [Nat.eq_add_of_sub_eq hle hd.symm]
+-    simp [Nat.add_comm, Nat.add_left_comm]
++    exact Nat.add_right_comm a b d
+ 
+ theorem le_sub_of_add_le {a b c : Nat} (h : a + b ≤ c) : a ≤ c - b := by
+   match le.dest h with
+   | ⟨d, hd⟩ =>
+     apply @le.intro _ _ d
+-    have hd : a + d + b = c := by simp [← hd, Nat.add_comm, Nat.add_left_comm]
++    have hd : a + d + b = c := (Nat.add_right_comm a d b).trans hd
+     have hd := Nat.sub_eq_of_eq_add hd.symm
+     exact hd.symm
+ 
+@@ -1092,11 +1102,11 @@
+     rw [Nat.sub_eq_zero_of_le (Nat.le_of_lt hgt)] at h
+     exact h
+   have : a.succ + b ≤ c := add_le_of_le_sub hle h
+-  simp [Nat.succ_add] at this
+-  exact this
++  change (a + b).succ ≤ c
++  exact Nat.succ_add a b ▸ this
+ 
+ theorem lt_sub_of_add_lt {a b c : Nat} (h : a + b < c) : a < c - b :=
+-  have : a.succ + b ≤ c := by simp [Nat.succ_add]; exact h
++  have : a.succ + b ≤ c := (Nat.succ_add a b).symm ▸ h
+   le_sub_of_add_le this
+ 
+ theorem sub.elim {motive : Nat → Prop}
+@@ -1117,8 +1127,8 @@
+ 
+ protected theorem sub_sub (n m k : Nat) : n - m - k = n - (m + k) := by
+   induction k with
+-  | zero => simp
+-  | succ k ih => rw [Nat.add_succ, Nat.sub_succ, Nat.add_succ, Nat.sub_succ, ih]
++  | zero => rfl
++  | succ k ih => exact congrArg Nat.pred ih
+ 
+ protected theorem sub_le_sub_left (h : n ≤ m) (k : Nat) : k - m ≤ k - n :=
+   match m, le.dest h with

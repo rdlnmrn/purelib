@@ -1,0 +1,32 @@
+--- a/Init/Data/Int/Order.lean
++++ b/Init/Data/Int/Order.lean
+@@ -40,16 +40,26 @@
+ theorem lt_iff_add_one_le {a b : Int} : a < b ↔ a + 1 ≤ b := .rfl
+ 
+ theorem le.intro_sub {a b : Int} (n : Nat) (h : b - a = n) : a ≤ b := by
+-  simp [le_def, h]; constructor
++  change NonNeg (b - a)
++  rewrite [h]
++  exact NonNeg.mk n
+ 
+ theorem le.intro {a b : Int} (n : Nat) (h : a + n = b) : a ≤ b :=
+-  le.intro_sub n <| by rw [← h, Int.add_comm]; simp [Int.sub_eq_add_neg, Int.add_assoc, Int.add_right_neg]
++  le.intro_sub n <| by
++    rewrite [← h, Int.add_comm]
++    simp only [Int.sub_eq_add_neg, Int.add_assoc, Int.add_right_neg, Int.add_zero,
++      -eq_self, -iff_self]
++    rfl
+ 
+ theorem le.dest_sub {a b : Int} (h : a ≤ b) : ∃ n : Nat, b - a = n := nonneg_def.1 h
+ 
+ theorem le.dest {a b : Int} (h : a ≤ b) : ∃ n : Nat, a + n = b :=
+   let ⟨n, h₁⟩ := le.dest_sub h
+-  ⟨n, by rw [← h₁, Int.add_comm]; simp [Int.sub_eq_add_neg, Int.add_assoc, Int.add_left_neg]⟩
++  ⟨n, by
++    rewrite [← h₁, Int.add_comm]
++    simp only [Int.sub_eq_add_neg, Int.add_assoc, Int.add_left_neg, Int.add_zero,
++      -eq_self, -iff_self]
++    rfl⟩
+ 
+ protected theorem le_total (a b : Int) : a ≤ b ∨ b ≤ a :=
+   (nonneg_or_nonneg_neg (b - a)).imp_right fun H => by

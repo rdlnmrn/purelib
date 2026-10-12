@@ -1,0 +1,58 @@
+--- a/Init/Data/Nat/MinMax.lean
++++ b/Init/Data/Nat/MinMax.lean
+@@ -18,11 +18,14 @@
+ 
+ protected theorem min_eq_min (a : Nat) : Nat.min a b = min a b := rfl
+ 
+-@[simp] protected theorem zero_min (a : Nat) : min 0 a = 0 := by
+-  simp [Nat.min_def]
++@[simp] protected theorem zero_min (a : Nat) : min 0 a = 0 :=
++  if_pos (Nat.zero_le a)
+ 
+ @[simp] protected theorem min_zero (a : Nat) : min a 0 = 0 := by
+-  simp [Nat.min_def]
++  change (if a ≤ 0 then a else 0) = 0
++  split
++  · exact Nat.eq_zero_of_le_zero ‹_›
++  · rfl
+ 
+ @[simp] protected theorem add_min_add_right (a b c : Nat) : min (a + c) (b + c) = min a b + c := by
+   rw [Nat.min_def, Nat.min_def]
+@@ -30,9 +33,10 @@
+   split <;> simp
+ 
+ @[simp] protected theorem add_min_add_left (a b c : Nat) : min (a + b) (a + c) = a + min b c := by
+-  rw [Nat.min_def, Nat.min_def]
+-  simp only [Nat.add_le_add_iff_left]
+-  split <;> simp
++  change (if a + b ≤ a + c then a + b else a + c) = a + (if b ≤ c then b else c)
++  cases (inferInstance : Decidable (b ≤ c)) with
++  | isTrue h => rw [if_pos h, if_pos (Nat.add_le_add_left h a)]
++  | isFalse h => rw [if_neg h, if_neg (fun hc => h (Nat.le_of_add_le_add_left hc))]
+ 
+ @[simp] protected theorem mul_min_mul_right (a b c : Nat) : min (a * c) (b * c) = min a b * c := by
+   by_cases h : 0 < c
+@@ -47,14 +51,18 @@
+   rw [Nat.mul_comm a, Nat.mul_comm a, Nat.mul_min_mul_right, Nat.mul_comm]
+ 
+ protected theorem min_comm (a b : Nat) : min a b = min b a := by
+-  match Nat.lt_trichotomy a b with
+-  | .inl h => simp [Nat.min_def, h, Nat.le_of_lt, Nat.not_le_of_lt]
+-  | .inr (.inl h) => simp [Nat.min_def, h]
+-  | .inr (.inr h) => simp [Nat.min_def, h, Nat.le_of_lt, Nat.not_le_of_lt]
++  by_cases hab : a ≤ b
++  · by_cases hba : b ≤ a
++    · have same := Nat.le_antisymm hab hba; subst b; rfl
++    · exact (if_pos hab).trans (if_neg hba).symm
++  · exact (if_neg hab).trans (if_pos (Nat.le_of_not_ge hab)).symm
+ instance : Std.Commutative (α := Nat) min := ⟨Nat.min_comm⟩
+ 
+ protected theorem min_le_right (a b : Nat) : min a b ≤ b := by
+-  by_cases (a ≤ b) <;> simp [Nat.min_def, *]
++  change (if a ≤ b then a else b) ≤ b
++  split
++  · exact ‹a ≤ b›
++  · exact Nat.le_refl b
+ protected theorem min_le_left (a b : Nat) : min a b ≤ a :=
+   Nat.min_comm .. ▸ Nat.min_le_right ..
+ 

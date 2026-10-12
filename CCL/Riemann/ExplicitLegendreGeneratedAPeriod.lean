@@ -1,1 +1,0 @@
-import CCL.Riemann.ExplicitLegendreGeneratedAPeriodSharp

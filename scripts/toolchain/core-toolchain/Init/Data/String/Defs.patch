@@ -1,0 +1,156 @@
+--- a/Init/Data/String/Defs.lean
++++ b/Init/Data/String/Defs.lean
+@@ -23,15 +23,27 @@
+ public section
+ 
+ @[simp]
+-theorem List.utf8Encode_nil : List.utf8Encode [] = ByteArray.empty := by simp [utf8Encode]
++theorem List.utf8Encode_nil : List.utf8Encode [] = ByteArray.empty := rfl
+ 
+ theorem List.utf8Encode_singleton {c : Char} : [c].utf8Encode = (String.utf8EncodeChar c).toByteArray := by
+-  simp [utf8Encode]
++  exact congrArg List.toByteArray (List.append_nil (String.utf8EncodeChar c))
+ 
+ @[simp]
+ theorem List.utf8Encode_append {l l' : List Char} :
+     (l ++ l').utf8Encode = l.utf8Encode ++ l'.utf8Encode := by
+-  simp [utf8Encode]
++  have flatMap_append_direct (a b : List Char) :
++      (a ++ b).flatMap String.utf8EncodeChar =
++        a.flatMap String.utf8EncodeChar ++ b.flatMap String.utf8EncodeChar := by
++    induction a with
++    | nil => rfl
++    | cons c tail ih =>
++      change String.utf8EncodeChar c ++ (tail ++ b).flatMap String.utf8EncodeChar =
++        (String.utf8EncodeChar c ++ tail.flatMap String.utf8EncodeChar) ++
++          b.flatMap String.utf8EncodeChar
++      exact (congrArg (fun bytes => String.utf8EncodeChar c ++ bytes) ih).trans
++        (List.append_assoc _ _ _).symm
++  exact (congrArg List.toByteArray (flatMap_append_direct l l')).trans
++    List.toByteArray_append
+ 
+ theorem List.utf8Encode_cons {c : Char} {l : List Char} : (c :: l).utf8Encode = [c].utf8Encode ++ l.utf8Encode := by
+   rw [← singleton_append, List.utf8Encode_append]
+@@ -49,17 +61,17 @@
+ 
+ @[simp]
+ theorem ByteArray.isValidUTF8_empty : IsValidUTF8 ByteArray.empty :=
+-  .intro [] (by simp)
++  .intro [] rfl
+ 
+ theorem Char.isValidUTF8_toByteArray_utf8EncodeChar {c : Char} :
+     ByteArray.IsValidUTF8 (String.utf8EncodeChar c).toByteArray :=
+-  .intro [c] (by simp [List.utf8Encode_singleton])
++  .intro [c] List.utf8Encode_singleton.symm
+ 
+ theorem ByteArray.IsValidUTF8.append {b b' : ByteArray} (h : IsValidUTF8 b) (h' : IsValidUTF8 b') :
+     IsValidUTF8 (b ++ b') := by
+   rcases h with ⟨m, rfl⟩
+   rcases h' with ⟨m', rfl⟩
+-  exact .intro (m ++ m') (by simp)
++  exact .intro (m ++ m') List.utf8Encode_append.symm
+ 
+ /--
+ Decodes an array of bytes that encode a string as [UTF-8](https://en.wikipedia.org/wiki/UTF-8) into
+@@ -108,8 +120,7 @@
+   subst h
+   rfl
+ 
+-@[simp] theorem String.toByteArray_ofList {l : List Char} : (String.ofList l).toByteArray = l.utf8Encode := by
+-  simp [String.ofList]
++@[simp] theorem String.toByteArray_ofList {l : List Char} : (String.ofList l).toByteArray = l.utf8Encode := rfl
+ 
+ @[deprecated String.toByteArray_ofList (since := "2025-10-30")]
+ theorem List.toByteArray_asString {l : List Char} : (String.ofList l).toByteArray = l.utf8Encode :=
+@@ -118,7 +129,7 @@
+ theorem String.exists_eq_ofList (s : String) :
+     ∃ l : List Char, s = String.ofList l := by
+   rcases s with ⟨_, ⟨l, rfl⟩⟩
+-  refine ⟨l, by simp [← String.toByteArray_inj]⟩
++  exact ⟨l, rfl⟩
+ 
+ @[deprecated String.exists_eq_ofList (since := "2025-10-30")]
+ theorem String.exists_eq_asString (s : String) :
+@@ -321,13 +332,13 @@
+ 
+ @[simp]
+ theorem Pos.Raw.isValid_zero {s : String} : (0 : Pos.Raw).IsValid s where
+-  le_rawEndPos := by simp [Pos.Raw.le_iff]
+-  isValidUTF8_extract_zero := by simp
++  le_rawEndPos := Nat.zero_le _
++  isValidUTF8_extract_zero := ByteArray.extract_same.symm ▸ ByteArray.isValidUTF8_empty
+ 
+ @[simp]
+ theorem Pos.Raw.isValid_rawEndPos {s : String} : s.rawEndPos.IsValid s where
+-  le_rawEndPos := by simp
+-  isValidUTF8_extract_zero := by simp [← size_toByteArray, s.isValidUTF8]
++  le_rawEndPos := Nat.le_refl _
++  isValidUTF8_extract_zero := ByteArray.extract_zero_size.symm ▸ s.isValidUTF8
+ 
+ theorem Pos.Raw.isValid_of_eq_rawEndPos {s : String} {p : Pos.Raw} (h : p = s.rawEndPos) :
+     p.IsValid s := by
+@@ -360,7 +371,7 @@
+ @[inline, expose]
+ def startPos (s : String) : s.Pos where
+   offset := 0
+-  isValid := by simp
++  isValid := Pos.Raw.isValid_zero
+ 
+ @[simp]
+ theorem offset_startPos {s : String} : s.startPos.offset = 0 := (rfl)
+@@ -372,7 +383,7 @@
+ @[inline, expose]
+ def endPos (s : String) : s.Pos where
+   offset := s.rawEndPos
+-  isValid := by simp
++  isValid := Pos.Raw.isValid_rawEndPos
+ 
+ @[simp]
+ theorem offset_endPos {s : String} : s.endPos.offset = s.rawEndPos := (rfl)
+@@ -417,7 +428,7 @@
+   startInclusive_le_endExclusive : startInclusive ≤ endExclusive
+ 
+ instance : Inhabited Slice where
+-  default := ⟨"", "".startPos, "".startPos, by simp [Pos.le_iff]⟩
++  default := ⟨"", "".startPos, "".startPos, by exact Nat.le_refl 0⟩
+ 
+ /--
+ Returns a slice that contains the entire string.
+@@ -427,7 +438,7 @@
+   str := s
+   startInclusive := s.startPos
+   endExclusive := s.endPos
+-  startInclusive_le_endExclusive := by simp [Pos.le_iff, Pos.Raw.le_iff]
++  startInclusive_le_endExclusive := by exact Nat.zero_le s.utf8ByteSize
+ 
+ instance : Coe String String.Slice where
+   coe := String.toSlice
+@@ -527,7 +538,12 @@
+ @[inline, expose]
+ def Slice.startPos (s : Slice) : s.Pos where
+   offset := 0
+-  isValidForSlice := ⟨by simp [Pos.Raw.le_iff], by simpa using s.startInclusive.isValid⟩
++  isValidForSlice := ⟨Nat.zero_le _, by
++    have translated : (0 : Pos.Raw).offsetBy s.startInclusive.offset =
++        s.startInclusive.offset := by
++      apply Pos.Raw.ext
++      exact Nat.add_zero _
++    exact translated.symm ▸ s.startInclusive.isValid⟩
+ 
+ @[simp]
+ theorem Slice.offset_startPos {s : Slice} : s.startPos.offset = 0 := (rfl)
+@@ -563,8 +579,12 @@
+ 
+ @[simp]
+ theorem Pos.Raw.isValidForSlice_rawEndPos {s : Slice} : (s.rawEndPos).IsValidForSlice s where
+-  le_rawEndPos := by simp
+-  isValid_offsetBy := by simpa using s.endExclusive.isValid
++  le_rawEndPos := Nat.le_refl _
++  isValid_offsetBy := by
++    have heq : s.rawEndPos.offsetBy s.startInclusive.offset = s.endExclusive.offset := by
++      apply Pos.Raw.ext
++      exact Nat.add_sub_of_le s.startInclusive_le_endExclusive
++    exact heq.symm ▸ s.endExclusive.isValid
+ 
+ theorem Pos.Raw.isValidForSlice_of_eq_rawEndPos {p : Pos.Raw} {s : Slice} (h : p = s.rawEndPos) :
+     p.IsValidForSlice s := by

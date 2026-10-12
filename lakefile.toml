@@ -1,36 +1,310 @@
-name = "ccl"
-version = "0.1.0"
-defaultTargets = ["LocalMathlib", "CCL", "RFAP", "FiniteMeasure", "DivineProportions", "RationalRotations"]
+name = "purelib"
+version = "1.0.0"
+# Use Lean 4.32.2 built-in linting; no additional driver or dependency is needed.
+builtinLint = true
+defaultTargets = [
+  "Purelib",
+  "CCLPublication",
+  "RFAPPublication",
+  "RFAP2Publication",
+  "DivineProportionsPublication",
+  "RationalRotationsPublication",
+  "MinkowskiRotationsPublication",
+  "PurelibExamples",
+  "Test",
+  "CCLExamples",
+  "DivineProportionsExamples",
+  "RationalRotationsExamples",
+  "IntegrationCheckpointIO",
+  "RootStateCheckpointIO",
+  "CenterCheckpointIO",
+  "RootRefinementCheckpointIO",
+  "QuadraticSampleCheckpointIO",
+  "DiameterPreparationCheckpointIO",
+  "InitialExtractionCheckpointIO",
+  "SquareRootFamilyCheckpointIO",
+  "PreparedBankCheckpointIO",
+  "PreparedCycleCheckpointIO",
+  "PreparedCenterCheckpointIO",
+  "NanodaExport",
+  "canonical_isolation_checkpoint_harness",
+  "fraction_regression",
+  "unreserved_sharpness_regression",
+  "canonical_pilot_benchmark",
+  "scalar_gcd_benchmark",
+  "legendre_replay_harness",
+  "integration_replay_regression",
+  "integration_checkpoint_harness",
+  "quadratic_refinement_harness",
+  "square_factor_observation_harness",
+  "initial_isolation_harness",
+  "polynomial_period_observation_harness",
+  "adaptive_prepared_banks_harness",
+  "canonical_period_preparation_harness",
+  "moving_reset_harness",
+  "saved_root_refinement_harness",
+  "prepared_source_replay_harness",
+  "saved_forecast_harness",
+  "saved_geometry_harness",
+  "saved_boundary_harness",
+  "finite_tasks_scheduling_harness",
+  "standard_branch_geometry_harness",
+  "json_regression",
+  "polynomial_inverse_checkpoint_harness",
+  "project_query_replay_observation",
+]
+
+# Load only the reviewed linter providers, without adding source imports.
+# Native dependencies precede their consumers; keep this order at the pinned revision.
+dynlibs = ["batteries/Batteries:shared"]
+plugins = [
+  "mathlib/+Mathlib.Tactic.Linter.DirectoryDependency:dynlib",
+  "mathlib/+Mathlib.Tactic.Linter.Header:dynlib",
+  "mathlib/+Mathlib.Tactic.DeclarationNames:dynlib",
+  "mathlib/+Mathlib.Tactic.Linter.Style:dynlib",
+  "mathlib/+Mathlib.Tactic.Linter.DeprecatedSyntaxLinter:dynlib",
+  "mathlib/+Mathlib.Tactic.Linter.Whitespace:dynlib",
+  "mathlib/+Mathlib.Tactic.Linter.DocString:dynlib",
+  "mathlib/+Mathlib.Tactic.Linter.UnusedTacticExtension:dynlib",
+  "mathlib/+Mathlib.Tactic.Linter.UnusedTactic:dynlib",
+  "mathlib/+Mathlib.Tactic.Linter.Lint:dynlib",
+]
+
+# Weak options permit reviewed declaration-local exceptions and do not rebuild Mathlib.
+# See docs/linting.md for scope and the conventions intentionally left opt-in.
+# Name/value records support both an option and options below its name.
+leanOptions = [
+  { name = "weak.linter.unusedVariables", value = true },
+  { name = "weak.linter.unusedSectionVars", value = true },
+  { name = "weak.linter.missingDocs", value = true },
+  { name = "weak.linter.unusedTactic", value = true },
+  { name = "weak.linter.dupNamespace", value = true },
+  { name = "weak.linter.style.nativeDecide", value = true },
+  { name = "weak.linter.style.openClassical", value = true },
+  { name = "weak.linter.style.maxHeartbeats", value = true },
+  { name = "weak.linter.style.longLine", value = true },
+  { name = "weak.linter.style.longLine.maxLineLength", value = 120 },
+  { name = "weak.linter.style.whitespace", value = true },
+  { name = "weak.linter.style.docString", value = true },
+  { name = "weak.linter.style.docString.empty", value = true },
+  { name = "weak.linter.style.setOption", value = true },
+  { name = "weak.linter.style.nameCheck", value = true },
+  { name = "weak.linter.unusedDecidableInType", value = false },
+  { name = "weak.linter.unusedFintypeInType", value = false },
+]
 
 [[lean_lib]]
-name = "LocalMathlib"
-roots = ["mathlib"]
-globs = ["mathlib.+"]
+name = "Purelib"
+roots = ["Purelib.Library", "Purelib.Measure", "Purelib.Riemann", "Purelib.Geometry.Rotations", "Purelib.Geometry", "Purelib.Curves"]
+globs = ["Purelib.Library", "Purelib.Measure", "Purelib.Riemann", "Purelib.Geometry.Rotations", "Purelib.Geometry", "Purelib.Algebra.+", "Purelib.Approximation.+", "Purelib.CCL.+", "Purelib.Curves.+", "Purelib.Data.+", "Purelib.Elab.+", "Purelib.Geometry.+", "Purelib.Integration.+", "Purelib.LinearAlgebra.+", "Purelib.Measure.+", "Purelib.NumberTheory.+", "Purelib.Polynomial.+", "Purelib.RationalFunctions.+", "Purelib.Riemann.+", "Purelib.RootIsolation.+", "Purelib.Tactic.+", "Purelib.Topology.+", "Purelib.Calculus.+", "Purelib.Computation.+", "Purelib.Control.+", "Purelib.System.+", "Purelib.Logic.+", "Purelib.Physics.+", "Purelib.Curves"]
 
 [[lean_lib]]
-name = "CCL"
+name = "CCLPublication"
+roots = ["papers.CCL.CCL"]
+globs = ["papers.CCL.CCL", "papers.CCL.Chapters.+"]
 
 [[lean_lib]]
-name = "RFAP"
+name = "RFAPPublication"
+roots = ["papers.RFAP.RFAP"]
+globs = ["papers.RFAP.RFAP", "papers.RFAP.Chapters.+"]
 
 [[lean_lib]]
-name = "FiniteMeasure"
+name = "RFAP2Publication"
+roots = ["papers.RFAP.RFAP2"]
+globs = ["papers.RFAP.RFAP2"]
 
 [[lean_lib]]
-name = "DivineProportions"
+name = "DivineProportionsPublication"
+roots = ["formalisations.DivineProportions.DivineProportions"]
+globs = ["formalisations.DivineProportions.DivineProportions", "formalisations.DivineProportions.Chapters", "formalisations.DivineProportions.Chapters.+"]
 
 [[lean_lib]]
-name = "RationalRotations"
+name = "RationalRotationsPublication"
+roots = ["formalisations.RationalRotations.RationalRotations"]
+globs = ["formalisations.RationalRotations.RationalRotations", "formalisations.RationalRotations.Chapters", "formalisations.RationalRotations.Chapters.+"]
+
+[[lean_lib]]
+name = "MinkowskiRotationsPublication"
+roots = ["formalisations.MinkowskiRotations.MinkowskiRotations"]
+globs = ["formalisations.MinkowskiRotations.MinkowskiRotations"]
+
+[[lean_lib]]
+name = "PurelibExamples"
+roots = ["Purelib.Examples.All"]
+globs = ["Purelib.Examples.+"]
+
+[[lean_lib]]
+name = "Test"
+roots = ["Test.All"]
+globs = ["Test.+"]
+
+[[lean_lib]]
+name = "CCLExamples"
+roots = ["papers.CCL.Examples"]
+globs = ["papers.CCL.Examples"]
+
+[[lean_lib]]
+name = "DivineProportionsExamples"
+roots = ["formalisations.DivineProportions.Examples"]
+
+[[lean_lib]]
+name = "RationalRotationsExamples"
+roots = ["formalisations.RationalRotations.Examples"]
+
+[[lean_lib]]
+name = "IntegrationCheckpointIO"
+roots = ["scripts.checkpoint.Integration", "scripts.checkpoint.Integration.Import"]
+
+[[lean_lib]]
+name = "RootStateCheckpointIO"
+# Reusable dependencies retain their Purelib library owner and arrive by import.
+roots = ["scripts.checkpoint.RootState"]
+
+[[lean_lib]]
+name = "CenterCheckpointIO"
+roots = ["scripts.checkpoint.Center"]
+
+[[lean_lib]]
+name = "RootRefinementCheckpointIO"
+roots = ["scripts.checkpoint.RootRefinement"]
+
+[[lean_lib]]
+name = "QuadraticSampleCheckpointIO"
+roots = ["scripts.checkpoint.QuadraticSample"]
+
+[[lean_lib]]
+name = "DiameterPreparationCheckpointIO"
+roots = ["scripts.checkpoint.DiameterPreparation"]
+
+[[lean_lib]]
+name = "InitialExtractionCheckpointIO"
+roots = ["scripts.checkpoint.InitialExtraction"]
+
+[[lean_lib]]
+name = "SquareRootFamilyCheckpointIO"
+roots = ["scripts.checkpoint.SquareRootFamily"]
+
+[[lean_lib]]
+name = "PreparedBankCheckpointIO"
+roots = ["scripts.checkpoint.PreparedBank"]
+
+[[lean_lib]]
+name = "PreparedCycleCheckpointIO"
+roots = ["scripts.checkpoint.PreparedCycle"]
+
+[[lean_lib]]
+name = "PreparedCenterCheckpointIO"
+# Imported reusable modules belong to Purelib, including native library emission.
+roots = ["scripts.checkpoint.PreparedCenter"]
 
 [[lean_exe]]
-name = "canonical_fraction_regression"
-root = "scripts.CanonicalFractionRegressionMain"
+name = "canonical_isolation_checkpoint_harness"
+root = "Test.RootIsolation.Checkpoint.Main"
+
+
+[[lean_exe]]
+name = "fraction_regression"
+root = "Test.Data.Rat.Fraction.RegressionMain"
+
+[[lean_exe]]
+name = "unreserved_sharpness_regression"
+root = "Test.NumberTheory.Approximation.UnreservedMain"
 
 [[lean_exe]]
 name = "canonical_pilot_benchmark"
-root = "scripts.CanonicalPilotBenchmark"
+root = "scripts.profiling.CanonicalPilot"
+
+[[lean_exe]]
+name = "scalar_gcd_benchmark"
+root = "scripts.profiling.ScalarGCD"
+
+[[lean_exe]]
+name = "legendre_replay_harness"
+root = "scripts.observations.LegendreReplay"
+
+[[lean_exe]]
+name = "integration_replay_regression"
+root = "Test.Integration.Replay.Runtime"
+
+[[lean_exe]]
+name = "integration_checkpoint_harness"
+root = "Test.System.Checkpoint.Integration"
+
+[[lean_exe]]
+name = "quadratic_refinement_harness"
+root = "scripts.observations.QuadraticRefinement"
+
+[[lean_exe]]
+name = "square_factor_observation_harness"
+root = "scripts.observations.SquareFactorObservation"
+
+[[lean_exe]]
+name = "initial_isolation_harness"
+root = "scripts.observations.InitialIsolation"
+
+[[lean_exe]]
+name = "polynomial_period_observation_harness"
+root = "scripts.observations.PolynomialPeriodObservation"
+
+[[lean_exe]]
+name = "adaptive_prepared_banks_harness"
+root = "Test.RootIsolation.SquareRoot.Preparation.Bank.AdaptiveRun"
+
+[[lean_exe]]
+name = "canonical_period_preparation_harness"
+root = "scripts.observations.CanonicalPeriodPreparation"
+
+[[lean_exe]]
+name = "moving_reset_harness"
+root = "scripts.observations.MovingReset"
+
+[[lean_exe]]
+name = "saved_root_refinement_harness"
+root = "scripts.observations.saved.RootRefinement"
+
+[[lean_exe]]
+name = "prepared_source_replay_harness"
+root = "Test.Riemann.Preparation.SourceReplay"
+
+[[lean_exe]]
+name = "saved_forecast_harness"
+root = "scripts.observations.saved.Forecast"
+
+[[lean_exe]]
+name = "saved_geometry_harness"
+root = "scripts.observations.saved.Geometry"
+
+[[lean_exe]]
+name = "saved_boundary_harness"
+root = "scripts.observations.saved.Boundary"
+
+[[lean_exe]]
+name = "finite_tasks_scheduling_harness"
+root = "scripts.profiling.FiniteTasksScheduling"
+
+[[lean_exe]]
+name = "standard_branch_geometry_harness"
+root = "scripts.observations.StandardBranchGeometry"
 
 [[require]]
 name = "mathlib"
 git = "https://github.com/leanprover-community/mathlib4.git"
 rev = "v4.32.2"
+
+[[lean_exe]]
+name = "json_regression"
+root = "Test.Data.Json"
+
+[[lean_exe]]
+name = "polynomial_inverse_checkpoint_harness"
+root = "Test.LinearAlgebra.PolynomialMatrix.Checkpoint"
+
+[[lean_exe]]
+name = "project_query_replay_observation"
+root = "scripts.observations.ProjectQueryReplay"
+
+
+[[lean_lib]]
+name = "NanodaExport"
+# The custom native builder initializes the tool's meta phase before its entrypoint.
+roots = ["scripts.nanoda.NativeExport"]

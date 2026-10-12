@@ -1,0 +1,18 @@
+--- a/Std/Data/DHashMap/Internal/Index.lean
++++ b/Std/Data/DHashMap/Internal/Index.lean
+@@ -52,10 +52,13 @@
+     { u : USize // u.toNat < sz } :=
+   ⟨(scrambleHash hash).toUSize &&& (USize.ofNat sz - 1), by
+     -- This proof is a good test for our USize API
++    have oneNat : (1 : USize).toNat = 1 := USize.toNat_ofNat_of_lt_32 (by decide)
+     by_cases h' : sz < USize.size
+     · rw [USize.toNat_and, USize.toNat_sub_of_le, USize.toNat_ofNat_of_lt' h']
+-      · exact Nat.lt_of_le_of_lt Nat.and_le_right (Nat.sub_lt h (by simp))
+-      · simp [USize.le_iff_toNat_le, Nat.mod_eq_of_lt h', Nat.succ_le_of_lt h]
++      · exact Nat.lt_of_le_of_lt Nat.and_le_right (Nat.sub_lt h (by rewrite [oneNat]; exact Nat.zero_lt_succ 0))
++      · apply USize.le_iff_toNat_le.mpr
++        rewrite [oneNat, USize.toNat_ofNat_of_lt' h']
++        exact Nat.succ_le_of_lt h
+     · exact Nat.lt_of_lt_of_le (USize.toNat_lt_size _) (Nat.le_of_not_lt h')⟩
+ 
+ end Std.DHashMap.Internal

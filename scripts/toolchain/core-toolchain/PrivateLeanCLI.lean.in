@@ -1,0 +1,64 @@
+module
+import all Lean.Shell
+import Lean.Elab.Frontend
+open Lean
+
+/-- Reject unsupported options without invoking a different compiler. -/
+private def bad {α : Type} (arg : String) : EIO UInt32 α := do
+  let _ ← (IO.eprintln s!"unsupported private Lean option: {arg}").toBaseIO
+  throw 2
+
+/-- Parse supported production options through the original shell handlers. -/
+private partial def parse (opts : ShellOptions) (files : List String)
+    (args : List String) : EIO UInt32 (ShellOptions × List String) := do
+  match args with
+  | [] => return (opts, files.reverse)
+  | "--" :: rest => return (opts, files.reverse ++ rest)
+  | arg :: rest =>
+    if !arg.startsWith "-" || arg == "-" then
+      if opts.run then return (opts, files.reverse ++ arg :: rest)
+      return ← parse opts (arg :: files) rest
+    let long : List (String × Char × Bool) := [
+      ("--run", 'r', false), ("--print-prefix", 'x', false),
+      ("--print-libdir", 'L', false), ("--version", 'v', false),
+      ("--short-version", 'V', false), ("--githash", 'g', false),
+      ("--help", 'h', false), ("--features", 'f', false),
+      ("--json", 'J', false), ("--stats", 'a', false),
+      ("--deps", 'd', false), ("--src-deps", 'O', false),
+      ("--deps-json", 'N', false), ("--stdin", 'I', false),
+      ("--profile", 'P', false), ("--quiet", 'q', false),
+      ("--setup", 'u', true), ("--root", 'R', true),
+      ("--o", 'o', true), ("--i", 'i', true), ("--c", 'c', true),
+      ("--bc", 'b', true), ("--threads", 'j', true),
+      ("--tstack", 's', true), ("--trust", 't', true),
+      ("--error", 'E', true), ("--plugin", 'p', true),
+      ("--load-dynlib", 'l', true), ("--incr-save", 'Y', true),
+      ("--incr-load", 'Z', true), ("--incr-header-save", 'H', true)]
+    let (opt, needs, inline?) ← if arg.startsWith "--" then do
+      let pieces := arg.splitOn "="
+      let key := pieces.head!
+      let some (_, c, needs) := long.find? (fun x => x.1 == key) | bad arg
+      let inline? := if pieces.length > 1 then some (String.intercalate "=" pieces.tail!) else none
+      pure (c, needs, inline?)
+    else do
+      match arg.toList with
+      | '-' :: c :: tail =>
+        let needs := ['o', 'i', 'c', 'b', 'R', 'D', 'E', 'j', 's', 't'].contains c
+        if !needs && !tail.isEmpty then bad arg
+        pure (c, needs, if tail.isEmpty then none else some (String.ofList tail))
+      | _ => bad arg
+    let (value?, rest) ← if needs && inline?.isNone then do
+      match rest with
+      | value :: tail => pure (some value, tail)
+      | [] => bad arg
+    else pure (inline?, rest)
+    let opts ← opts.process opt value?
+    parse opts files rest
+
+/-- Run the original production shell using the detached executable's own sysroot. -/
+public unsafe def main (args : List String) : IO UInt32 := do
+  enableInitializersExecution
+  initSearchPath (← getBuildDir)
+  match ← (parse {} [] args).toBaseIO with
+  | .error code => return code
+  | .ok (opts, files) => shellMain files opts

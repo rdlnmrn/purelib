@@ -1,0 +1,18 @@
+--- a/Init/Data/UInt/Basic.lean
++++ b/Init/Data/UInt/Basic.lean
+@@ -767,7 +767,14 @@
+ /-- Converts an `Int` to a `USize` by taking the (non-negative remainder of the division by `2 ^ numBits`. -/
+ def USize.ofInt (x : Int) : USize := ofNat (x % 2 ^ System.Platform.numBits).toNat
+ 
+-@[simp] theorem USize.le_size : 2 ^ 32 ≤ USize.size := by cases USize.size_eq <;> simp_all
++@[simp] theorem USize.le_size : 2 ^ 32 ≤ USize.size := by
++  cases USize.size_eq with
++  | inl h =>
++    rewrite [h]
++    exact Nat.le_refl _
++  | inr h =>
++    rewrite [h]
++    decide
+ @[simp] theorem USize.size_le : USize.size ≤ 2 ^ 64 := by cases USize.size_eq <;> simp_all
+ 
+ /--

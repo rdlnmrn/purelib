@@ -1,0 +1,612 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{array,booktabs,longtable}
+\usepackage[hyphens]{url}
+\usepackage[hidelinks]{hyperref}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\F}{\mathbb F}
+\newcommand{\SO}{\operatorname{SO}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\adj}{\operatorname{adj}}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\setlength{\emergencystretch}{3em}
+\title{Issues and Resolutions to Open Problems in\\
+  \emph{Rational Rotations of Three Dimensional Minkowski Space}}
+\author{}
+\date{12 October 2026}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+This companion addresses N.~J.~Wildberger's revised Minkowski paper.
+It records the constructive
+formalisation of its finite algebraic assertions, clarifies null-axis spread
+and the inverse of a negative-norm ray, and separates causal character from
+arithmetic splitting. It answers the coefficient-product
+question in Problem~90 and an explicit projective boost--rotation
+factorization for Problem~92, including the half spread and spinor norm of
+the Thomas--Wigner rotation. The general ternary Clifford correspondence
+answers Problem~93. Finite-word spinor calculations give partial information
+for Problem~91, while the integral programme in Problem~94 remains open.
+Results with existing Lean certificates are distinguished from the
+additional coordinate proofs supplied in this companion.
+\end{abstract}
+
+\section{Source, conventions and status}
+
+The source is the supplied 36-page revision of \emph{Rational rotations of
+three dimensional Minkowski space: rotations, boosts and spinors}
+\cite{source}. Its numbered assertion inventory ends at Theorem~89 and its
+research questions are Problems~90--94. Vectors are rows in the time-first
+convention
+\[
+ G=\operatorname{diag}(1,-1,-1),\quad
+ B(v,u)=vGu^T,\quad Q(t,r,s)=t^2-r^2-s^2.
+\]
+All general-field statements assume characteristic different from two.
+The signed cross product is exactly the source's
+\[
+ v\times u=(s_vr_u-r_vs_u,\ s_vt_u-t_vs_u,\ t_vr_u-r_vt_u).
+\]
+The dihedron multiplication, norm and matrix map are
+\begin{equation}
+ (x:v)(y:u)=(xy-B(v,u):xu+yv-v\times u),\qquad
+ N(x:v)=x^2+Q(v),
+ \label{eq:product}
+\end{equation}
+\begin{equation}
+ \Phi(x:t,r,s)=
+ \begin{pmatrix}x+s&r-t\\r+t&x-s\end{pmatrix},
+ \qquad\det\Phi=N.
+ \label{eq:matrix}
+\end{equation}
+The product is multiplicative in this matrix order. The rotation invariant
+is \(p(\rho)=(3-\tr\rho)/4\). For a cap represented by \((1:v)\),
+\[
+ p=\frac{Q(v)}{1+Q(v)},\qquad \chi=[1+Q(v)]=[1-p].
+\]
+
+The repository's older rational Minkowski development uses the different
+form \(\operatorname{diag}(1,1,-1)\). Its vectors and cross-product signs
+cannot be read as the coordinates above. The formal comparison uses an
+explicit time-first form owner and a vector sign conversion; all examples
+below use \eqref{eq:matrix} directly.
+
+\begin{center}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.17\textwidth}>{\raggedright\arraybackslash}p{0.74\textwidth}}
+\toprule
+Source item & Result of this companion \\
+\midrule
+Definition~45 / Theorem~46 & Extension to zero and nonzero null anchors,
+with an explicit non-null test direction. \\
+Section~12.3 & Exact inverse ray for both signs of the norm; distinction
+between representative rays and anchor-vector rays. \\
+Problem~90 & Necessity and sufficiency in characteristic different from two of
+\(\delta=-\gamma^2\), by the coordinate proof below. \\
+Problem~91 & Finite-word determinant classes and kernel tests; no complete
+classification of generated subgroups or arithmetic subgroups. \\
+Problem~92 & Projective Wigner factor, its half spread and spinor norm,
+for two future pure boosts; factor order is specified. \\
+Problem~93 & General ternary projective Clifford correspondence. \\
+Problem~94 & Elementary primitive-representative reduction is described;
+the integral classification programme is not solved. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Null axes and the measurement of spread}
+
+Definition~45 defines spread for a cap with a non-null anchor, or a half turn.
+The prose after Theorem~46 also discusses parabolic rotations with \(p=0\).
+To attach its divided vector-spread measurement to these rotations, the
+definition and existence argument should explicitly include null anchors.
+The nondegenerate-perpendicular-plane argument in its printed proof alone
+does not establish that extension.
+
+For a nonzero null vector \(v=(t,r,s)\), a non-null perpendicular vector
+can be chosen without a square root. If \(t\ne0\), take
+\[
+ w=(0,s,-r),\qquad B(v,w)=0,\quad Q(w)=-r^2-s^2=-t^2\ne0.
+\]
+If \(t=0\), take \(w=(1,0,0)\). The same latter vector handles the zero
+anchor. For a non-null anchor the existing finite perpendicular construction
+applies. Thus an admissible \(w\) exists in every case, over any field of
+characteristic different from two.
+
+The proof of the formula does not require \(Q(v)\ne0\). For any defined cap
+and any supplied \(w\perp v\) with \(Q(w)\ne0\),
+\[
+ w\rho=\frac{(1-Q(v))w+2(v\times w)}{1+Q(v)},\qquad
+ s(w,w\rho)=4p(1-p).
+\]
+Consequently a null cap has measured spread zero even when it is not the
+identity. One proposed editorial repair is to let Definition~45 use any cap
+anchor and insert the displayed null-anchor construction in Theorem~46.
+This strengthens the stated domain without altering its formula. Non-null
+test vectors remain essential: the denominator of vector spread is not
+defined on a null test vector.
+
+\section{Ray inverses and rational normalization}
+
+\subsection{The sign-sensitive inverse}
+
+A ray identifies \(P\) with \(aP\) only for \(a>0\). A projective
+proportion allows every \(a\ne0\), so a non-null projective point contains
+two opposite rays. The exact dihedron inverse is
+\begin{equation}
+ P^{-1}=\frac{\bar P}{N(P)},\qquad \overline{(x:v)}=(x:-v).
+ \label{eq:inverse}
+\end{equation}
+This identity proves both inverse laws, since
+\(P\bar P=\bar PP=N(P)1\). It also shows that inversion respects positive
+scaling: \((aP)^{-1}=a^{-1}P^{-1}\).
+
+For \(N(P)>0\), the inverse ray is the ray of \(\bar P\). For
+\(N(P)<0\), it is the ray of \(-\bar P\). Using the conjugate alone in
+that second case gives a product in the ray of \(-1\), not the identity
+ray. Projectivization hides this sign, but positive rays retain it. The
+source's full ray-group assertion is correct with \eqref{eq:inverse};
+making the representative of the inverse explicit avoids this ambiguity.
+
+For the source's negative-norm example,
+\[
+ P=(2:1,2,3),\quad N(P)=-8,\quad
+ \Phi(P)=\begin{pmatrix}5&1\\3&-1\end{pmatrix},
+\]
+the inverse in the source coordinates is
+\[
+ P^{-1}=(-\tfrac14:\tfrac18,\tfrac14,\tfrac38),\qquad
+ \Phi(P^{-1})=\begin{pmatrix}1/8&1/8\\3/8&-5/8\end{pmatrix}.
+\]
+Both matrix products are the identity; its norm is \(-1/8\). This exact
+example and its sign conversion into the retained Clifford coordinates are
+checked by the facade consumer.
+
+\subsection{Two different sorts of rays}
+
+Opposite dihedron rays \(P\) and \(-P\) represent the same rotation.
+Faithfulness of the projective action says that its rotation fibers consist
+of exactly these two rays, and the kernel is the scalar rays of \(1\) and
+\(-1\). By contrast, opposite nonzero \emph{anchor-vector} rays \(v\)
+and \(-v\) represent inverse cap rotations. This distinction holds for
+timelike, spacelike and null anchors. It is the anchor-vector distinction
+which records the source's sense of orientation.
+
+The norm-one representative question is separate again. A rational ray can
+be rescaled to norm one precisely when \(N(P)\) is a nonzero rational square.
+If it exists, the positive rescaling and the unit representative are unique
+within that ray. Negative norm makes normalization to \(+1\) impossible;
+positive norm alone is insufficient over \(\Q\). The introductory boost
+\((3:0,0,1)\) has norm eight and class \([2]\), so has no rational
+determinant-one representative. Its projective matrix nevertheless gives
+the exact rational boost
+\[
+ \begin{pmatrix}5/4&3/4&0\\3/4&5/4&0\\0&0&1\end{pmatrix}.
+\]
+Hence rational dihedron rays cover the whole group twice, whereas rational
+determinant-one representatives cover only \(\ker\chi\).
+
+\section{Causal type and arithmetic splitting}
+
+Theorem~89 uses the discriminant
+\[
+ \Delta=-16p(1-p).
+\]
+For a prescribed non-null axis \(v\), write its cap anchor as \(\lambda v\),
+where \(\lambda\ne0\). The existence equation is
+\(\lambda^2Q(v)=p/(1-p)\), and therefore
+\[
+ \Delta=\bigl(4\lambda(1-p)\bigr)^2(-Q(v)).
+\]
+Thus the arithmetic splitting condition is precisely that \(-Q(v)\) be
+a square in the ground field. It is not just that the axis is spacelike.
+The retained square witness constructs both nontrivial eigenvalues and
+actual nonzero eigenvectors of the original three-by-three matrix.
+
+The distinction is already correct in the revised source; it is worth making
+its exact examples explicit. The introductory boost has \(p=-1/8\) and
+nontrivial eigenvalues \(2,1/2\). The rational axis \((1,2,3)\) has
+\(Q=-12\), and is spacelike, but 12 has no rational square root. The
+formal example with anchor \((1/4)(1,2,3)\) has \(p=-3\), time entry
+\(15/2>0\), and no nontrivial rational eigenvalue. It is causally
+boost-type while arithmetically nonsplit over \(\Q\).
+
+The non-orthochronous example \((2:1,2,3)\) has \(p=3/2\), time entry
+\(-9/4\), and characteristic polynomial
+\[
+ (X-1)\bigl((X+2)^2-3\bigr).
+\]
+Over a field supplied with \(r^2=3\), its other roots are \(-2\pm r\).
+They are not rational. Causal sign ranges, determinant square classes and
+ground-field eigenvalue splitting are therefore three separate pieces of
+information; none substitutes for the other.
+
+\section{Problem 90: associative products}
+
+The revised question asks about
+\[
+ v\star u=\frac{v+u+\gamma(v\times u)}{1+\delta B(v,u)},
+ \qquad\gamma\ne0.
+\]
+
+\begin{theorem}[Lorentz coefficient classification]
+This product is associative wherever all four products in the two
+bracketings are defined if and only if \(\delta=-\gamma^2\).
+\end{theorem}
+\begin{proof}
+Take \(e_0=(1,0,0)\) and \(e_1=(0,1,0)\). For any supplied nonzero
+\(a\) with \(D=1+\delta a^2\ne0\), the Lorentz coordinate
+identities
+\[
+ B(e_0,e_0)=1,\quad B(e_0,e_1)=0,\quad
+ e_0\times e_1=(0,0,1),\quad e_0\times(0,0,1)=-e_1
+\]
+give, for the triple \((ae_0,ae_0,e_1)\), the same two middle coordinates
+as in the Euclidean probe:
+\[
+ \bigl((ae_0\star ae_0)\star e_1\bigr)_r=1,\qquad
+ \bigl(ae_0\star(ae_0\star e_1)\bigr)_r
+     =\frac{1-\gamma^2a^2}{1+\delta a^2}.
+\]
+All four denominators are nonzero. Equality forces
+\((\delta+\gamma^2)a^2=0\). Try \(a=1\). If its denominator is zero,
+then \(\delta=-1\); when \(\gamma^2=1\) the required relation is already
+true, and otherwise the nonzero probe \(a=\gamma\) has denominator
+\(1-\gamma^2\ne0\). These explicit alternatives prove necessity in every
+stated characteristic.
+
+For sufficiency the dilation \(v\mapsto\gamma v\) identifies the product
+with \((v+u+v\times u)/(1-B(v,u))\), the opposite dihedron affine product.
+The associative homogeneous matrix product \eqref{eq:product} proves
+equality on every common affine domain. The dilation is invertible and
+preserves precisely the displayed denominators.
+\end{proof}
+
+This answers the revised question over every field of characteristic
+different from two, including its primary rational case. The rational
+coefficient classification already has a Euclidean Lean certificate. The
+Lorentz necessity calculation above is a proof supplied in this paper, not
+a newly added standalone Lean theorem.
+
+\section{Problem 91: finite spinor calculations and remaining subgroup theory}
+
+The determinant class of a supplied rational invertible matrix is computable
+exactly. A nonzero rational \(c\) has the square-class signature consisting
+of its sign and the primes occurring to odd exponent in its reduced
+numerator and denominator. Sign and prime parities add modulo two under
+multiplication. The sign coordinate is essential in the Lorentz case:
+\(\chi\) takes values in all rational nonzero square classes, not just the
+positive ones.
+
+Given finitely many generator matrices, every supplied finite signed word
+can therefore be evaluated by exact two-by-two products. Multiplicativity
+of the determinant gives its spinor class, and a word is in \(\ker\chi\)
+precisely when its determinant is a rational square. Comparing the class of
+one word times the inverse of another gives an exact kernel-coset test.
+The finitely many generator sign/parity vectors span a finite binary space,
+whose vectors and generator words can be enumerated. These calculations
+describe the spinor image detected by the generators. They do not determine
+the internal relations of the generated subgroup.
+
+In particular, if the generators are already in \(\ker\chi\), every word
+has trivial spinor norm, but it may still be a different group element.
+There is no internal subgroup classification hidden in this test. The
+repository's complete generated-subgroup certificate is for the Euclidean
+positive-norm case; its exact rational matrix and square-class laws supply
+the ingredients here, but no separate Lorentz subgroup-classification
+certificate is asserted.
+
+The complete Euclidean finite-order table in the other companion cannot be
+silently transferred to the full Lorentz group. For example, a Lorentz half
+turn has \(\chi=[Q(v)]\), which may be negative. The norm-square test answers
+the question for any supplied matrix or order certificate, but a complete
+classification of finite-order spinor values and natural arithmetic
+subgroups is not supplied here. These parts of Problem~91 remain open.
+
+\section{Problem 92: a projective Thomas--Wigner factor}
+
+We specify the convention first: factor the product of two future pure
+boosts as a future pure boost followed by a spatial rotation, in the source's
+matrix order. Changing this convention changes the factor one calls the
+Wigner rotation. No angle or square-root normalization is needed for the
+following factorization.
+
+\subsection{The factorization and its invariants}
+
+Let the boost anchors be
+\[
+ v=(0,r_1,s_1),\qquad u=(0,r_2,s_2),\qquad
+ r_i^2+s_i^2<1.
+\]
+These inequalities select the future pure-boost representatives
+\[
+ A=\Phi(1:v),\qquad B=\Phi(1:u),
+\]
+which are symmetric with positive determinant and positive trace. Define
+\begin{equation}
+ d=1-B(v,u)=1+r_1r_2+s_1s_2,\qquad
+ k=r_1s_2-s_1r_2,\qquad H=d^2+k^2.
+ \label{eq:wignerdata}
+\end{equation}
+Let \(r=r_1+r_2\), \(s=s_1+s_2\). The product dihedron is
+\(P=(d:k,r,s)\), so \(AB=\Phi(P)\).
+
+\begin{theorem}[Projective boost--rotation decomposition]
+Over \(\Q\), or any ordered field, the quantities in
+\eqref{eq:wignerdata} satisfy \(d>0\), \(H>0\). Put
+\[
+ R=\begin{pmatrix}d&-k\\k&d\end{pmatrix},\qquad
+ S=\begin{pmatrix}
+ H+sd-rk&rd+sk\\rd+sk&H-sd+rk
+ \end{pmatrix}.
+\]
+Then
+\begin{equation}
+ AB=H^{-1}SR.
+ \label{eq:factorization}
+\end{equation}
+The projective class of \(S\) is a future pure boost and that of \(R\)
+is a spatial rotation. The corresponding Wigner rotation \(\omega\) has
+\begin{equation}
+ p(\omega)=\frac{k^2}{d^2+k^2},\qquad
+ \chi(\omega)=[d^2+k^2].
+ \label{eq:wignerinvariants}
+\end{equation}
+This spatial-rotation factor is unique among factorizations in this order
+with a future pure-boost factor.
+\end{theorem}
+\begin{proof}
+Write \(a=r_1r_2+s_1s_2\) and \(b_i=r_i^2+s_i^2<1\).
+The identity \(a^2+k^2=b_1b_2\) gives \(a^2<1\), hence \(a>-1\)
+and \(d=1+a>0\). Thus \(H>0\). Direct multiplication gives
+\[
+ \Phi(P)\adj(R)=S,\qquad R\adj(R)=HI,
+\]
+and therefore \eqref{eq:factorization}. The matrix \(S\) is symmetric and
+\[
+ \det S=(\det A)(\det B)H=(1-b_1)(1-b_2)H>0,
+ \qquad\tr S=2H>0.
+\]
+Its dihedron has coordinates
+\( (H:0,rd+sk,sd-rk)\). After scaling by \(H^{-1}>0\), its scalar
+coordinate is one, its time anchor coordinate is zero, and its norm is
+positive. Thus its spatial anchor has squared length less than one, exactly
+the future pure-boost condition. The matrix \(R\) has dihedron coordinates
+\((d:k,0,0)\), so it acts as a spatial rotation fixing the time axis.
+The norm and half-spread identities give \eqref{eq:wignerinvariants}.
+
+For uniqueness, any non-null spatial-rotation representative has the form
+\(R'=\left(\begin{smallmatrix}a&-b\\b&a\end{smallmatrix}\right)\).
+Symmetry of \(\Phi(P)\adj(R')\), required of its boost factor, is
+equivalent to \(ka=db\). Since \(d\ne0\), nonzeroness of \(R'\) forces
+\(a\ne0\), and its projective class is exactly that of \(R\).
+\end{proof}
+
+This gives a closed formula for the \emph{rotation factor}, rather than
+merely detecting a time component in the product anchor. It stays over the
+ground field: normalization of either two-by-two factor to determinant one
+may require a square root, but the projective factors do not.
+
+For comparison, the half spread and spinor norm of the \emph{whole product}
+are
+\begin{equation}
+ p(\rho(v)\rho(u))
+   =1-\frac{d^2}{(1+Q(v))(1+Q(u))},\qquad
+ \chi(\rho(v)\rho(u))=[(1+Q(v))(1+Q(u))].
+ \label{eq:wholeproduct}
+\end{equation}
+These are generally different from \eqref{eq:wignerinvariants}. They follow
+directly from the homogeneous scalar coordinate and multiplicative norm;
+calling them the Wigner rotation's invariants would conflate the boost with
+the rotation factor.
+
+\subsection{The perpendicular-boost example}
+
+For Example~69 take
+\[
+ v=(0,0,1/3),\qquad u=(0,1/3,0).
+\]
+Then \(d=1\), \(k=-1/9\), and \(H=82/81\). Reversing the boosts
+changes \(k\) to \(-k\) and inverts the Wigner rotation. The projective
+rotation representative is \((1:-1/9,0,0)\), and
+\[
+ p(\omega)=\frac1{82},\qquad\chi(\omega)=[82].
+\]
+The whole product instead has \(p=-17/64\) and trivial spinor norm, since
+both boost norms are \(8/9\). A convenient rational factorization is
+\[
+ \Phi(P)=
+ \begin{pmatrix}4/3&4/9\\2/9&2/3\end{pmatrix}
+ =\frac{81}{82}
+ \begin{pmatrix}112/81&8/27\\8/27&52/81\end{pmatrix}
+ \begin{pmatrix}1&1/9\\-1/9&1\end{pmatrix}.
+\]
+The residual future pure boost has anchor \((0,12/41,15/41)\). Its
+spinor class is also \([82]\), so the two nontrivial factor classes cancel
+in the product. This is an exact rational example of why the product's
+spinor norm alone does not determine that of the Wigner rotation.
+
+The projective product and Example~69 are already Lean-checked. The
+factorization theorem, uniqueness argument and its Wigner formulas are
+additional coordinate proofs in this paper. They have not been added as
+standalone Lean declarations, and the earlier full audit should not be
+represented as certifying those new theorem statements.
+
+\section{Problem 93: the general ternary correspondence}
+
+For a symmetric nonsingular matrix \(M\), put
+\[
+ B_M(u,v)=uMv^T,\quad Q_M(u)=B_M(u,u),\quad d=\det M,
+ \quad C_M(u,v)=(u\times_{\mathrm{coord}}v)\adj(M).
+\]
+The general even Clifford product is
+\[
+ (x:u)(y:v)=(xy-dB_M(u,v):xv+yu-C_M(u,v)),
+ \qquad N_M(x:u)=x^2+dQ_M(u).
+\]
+Its conjugation, associative product and multiplicative norm give the
+action
+\[
+ (0:w)\longmapsto N_M(P)^{-1}\bar P(0:w)P.
+\]
+The retained constructive two-reflection theorem produces a preimage of
+every supplied member of \(\SO(M,F)\), and equality of actions is equivalent
+to an explicit nonzero scalar relation between the original non-null
+representatives. This is the projective correspondence requested in
+Problem~93, with the determinant factors and ownership of \(M\) retained.
+The proof and affine formula are stated in the Euclidean companion
+\cite{companion}; the same subject-owned Lean provider serves both papers.
+
+For the present \(G\), \(d=1\) and the generic form-relative cross is the
+\emph{negative} of the paper's signed Lorentz cross. Negating the vector
+coordinate of the generic Clifford representative identifies its product
+with \eqref{eq:product}. This explicit conversion explains why one may
+share the abstract theorem without changing the source's signs.
+
+The null quadric has a separate exact description. A nonzero null dihedron
+maps to a nonzero singular two-by-two matrix. Testing its four possible
+nonzero pivot entries constructs a nonzero column \(\xi\) and row \(\eta\)
+with \(\Phi(P)=\xi\eta\). Its only factorization ambiguity is
+\[
+ (\xi,\eta)\longmapsto(a\xi,a^{-1}\eta),\qquad a\ne0.
+\]
+Holding either projective spinor fixed gives a ruling; distinct rulings in
+one family are disjoint, while a column ruling and a row ruling meet exactly
+in their outer-product point. The finite-field lists have exactly
+\((q+1)^2\) such projective null points and \(q(q^2-1)\) non-null rotation
+points. These counts and all four pivot charts are part of the checked
+Minkowski facade surface, not consequences of an assumed completed quadric.
+
+\section{Problem 94: the integral programme}
+
+Every supplied rational non-null proportion can be reduced to an integral
+primitive four-vector: clear the four denominators, divide by their common
+integer gcd, and choose the sign of the first nonzero coordinate. This gives
+a unique representative for its rational projective point. Two primitive
+integer four-vectors representing the same rational point differ only by
+sign: a reduced rational scale's denominator must divide all four input
+coordinates, and its numerator must divide all four output coordinates.
+Both gcds are one.
+
+Products of integral dihedrons are integral by \eqref{eq:product}, and their
+norms multiply. Thus one finite composition is performed by multiplying the
+four coordinates and then removing the resulting common gcd and sign.
+These elementary observations specify the arithmetic operation, but do not
+give a classification of its primitive norm fibers or integral subgroups.
+
+The matrix lattice deserves an explicit qualification. An integral matrix
+\(\left(\begin{smallmatrix}a&b\\c&e\end{smallmatrix}\right)\)
+has integral dihedron coordinates exactly when
+\[
+ a\equiv e\pmod2,\qquad b\equiv c\pmod2,
+\]
+because its inverse coordinate map is
+\[
+ x=(a+e)/2,\quad s=(a-e)/2,\quad
+ r=(b+c)/2,\quad t=(c-b)/2.
+\]
+Primitive four-coordinates do not necessarily give a primitive matrix:
+\((1:0,0,3)\) is primitive and non-null, but its matrix
+\(\operatorname{diag}(4,-2)\) has gcd two. Conversely, a primitive matrix
+need not lie in this parity lattice before rescaling. An integral theory must
+specify which primitive object it normalizes; rational projective equality
+does not by itself settle that lattice question.
+
+These are introductory arithmetic reductions proved directly here. No
+standalone Lean implementation of the primitive-normalization procedure,
+full arithmetic orbit classification, presentation of integral subgroups or
+local-to-global norm theorem is claimed. Problem~94 remains open as that
+larger programme.
+
+\section{Formal evidence, finite boundaries and open work}
+
+The facade is
+\path{formalisations/MinkowskiRotations/MinkowskiRotations.lean}, and its
+claim ledger is \path{formalisations/MinkowskiRotations/coverage.md}.
+It covers the finite algebraic assertions numbered 1--89 and the unnumbered
+constructions, with direct source-coordinate facade consumers. Entry points
+include the following owners.
+
+\begingroup\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.28\textwidth}>{\raggedright\arraybackslash}p{0.65\textwidth}}
+\toprule
+Checked result & Mathematical owner \\
+\midrule
+\endhead
+Source vector and anchor signs &
+\path{Purelib/Geometry/Quadratic/Ternary/Lorentz.lean}. \\
+Dihedron/matrix dictionary &
+\path{Purelib/Algebra/Clifford/Lorentz/Matrix.lean}; exact product,
+determinant and two coordinate inverses. \\
+Composition and velocities &
+\path{Purelib/Geometry/Rotations/Ternary/Lorentz/Composition.lean};
+the partial anchor law and exact Einstein velocity identity. \\
+Ray inversion and fibers &
+\path{Purelib/Algebra/Clifford/Ternary/Ray.lean};
+\path{Purelib/Geometry/Rotations/Ternary/Clifford/RayCover.lean}. \\
+Prescribed axes and splitting &
+\path{Purelib/Geometry/Rotations/Ternary/Lorentz/Prescribed.lean};
+\path{Purelib/Geometry/Rotations/Ternary/Lorentz/Splitting.lean}. \\
+Null spinors and rulings &
+\path{Purelib/LinearAlgebra/Coordinates2/RankOne.lean};
+the original Lorentz matrix recovery and finite null-point enumeration. \\
+General ternary correspondence &
+\path{Purelib/Geometry/Rotations/Ternary/Clifford.lean};
+\texttt{projectiveCliffordCorrespondence}. \\
+\bottomrule
+\end{longtable}
+\endgroup
+
+The mathematical tree at commit \texttt{a6219f044} passed all twelve
+completion gates on 11 October 2026, including the warning-fatal full build
+and lint, full configured-script axiom audit and independent nanoda pass.
+Build phases used 64 Lean threads. The normal audit checked 136,660 project
+declarations and 1,536 selected canonical declarations with no allowed
+axioms; nanoda accepted all 42 compatible module sets. This is the selected
+mathematical proof closure, not a strict audit of every internal meta-provider
+helper. The Lorentz proof for Problem~90, the Wigner factorization for
+Problem~92 and the integral reductions for Problem~94 are printed proofs
+introduced here, outside that existing Lean declaration inventory.
+
+The infinite-index assertion of Corollary~86 has retained finite content:
+for every supplied \(n\), construct \(n\) pairwise distinct rational square
+classes, preimages with those norms and pairwise kernel-separated rotations.
+The source norm witness
+\[
+ \left(\frac{c+1}{2}:0,\frac{c-1}{2},0\right)
+ \quad\text{has norm }c
+\]
+works for every requested nonzero rational \(c\). This supplies arbitrary
+finite coset packs without forming a completed quotient carrier. Real square
+roots, topological connected components, completed Lie groups and analytic
+angle/rapidity dictionaries remain outside the formal scope. Their absence
+is a constructive boundary, not a claimed defect in the source.
+
+Problem~90 has the general-field answer above. Problem~92 has the displayed
+projective decomposition for the stated pure-boost convention, and
+Problem~93 has the general constructive correspondence. Problem~91 still
+asks for internal subgroup and arithmetic classifications not obtained by
+finite spinor tests. Problem~94 still asks for an integral theory beyond
+primitive-coordinate reduction. Formalising the additional printed proofs
+would be separate work; these companions do not imply that it has already
+been done.
+
+\begin{thebibliography}{9}
+\bibitem{source} N.~J.~Wildberger,
+\emph{Rational rotations of three dimensional Minkowski space: rotations,
+boosts and spinors}, supplied revision
+\texttt{RelativisticsRationalRotations3.pdf}, 36 pages.
+Source SHA-256:
+\url{8c397b21f726bf0a8c89b8c56bf84edf5d2586bcac552c0f10134d3c9fff46d7}.
+\bibitem{companion} \emph{Issues and Resolutions to Open Problems in Rational
+Rotations of Three Dimensional Euclidean Space}, companion in
+\path{formalisations/RationalRotations/IssuesAndOpenProblems.pdf},
+12 October 2026.
+\end{thebibliography}
+\end{document}

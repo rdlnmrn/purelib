@@ -1,0 +1,31 @@
+--- a/Init/Data/Array/Basic.lean
++++ b/Init/Data/Array/Basic.lean
+@@ -116,8 +116,8 @@
+   List.mem_toArray
+ 
+ @[simp] theorem getElem_mem {xs : Array α} {i : Nat} (h : i < xs.size) : xs[i] ∈ xs := by
+-  rw [Array.mem_def, ← getElem_toList]
+-  apply List.getElem_mem
++  exact Array.Mem.mk (List.getElem_mem h)
++
+ 
+ grind_pattern getElem_mem => xs[i] ∈ xs
+ 
+@@ -760,7 +760,7 @@
+         map (i+1) (bs.push (← f as[i]))
+       else
+         pure bs
+-  decreasing_by simp_wf; decreasing_trivial_pre_omega
++  decreasing_by simp_wf; exact Nat.pred_lt (Nat.ne_zero_of_lt (Nat.sub_pos_of_lt hlt))
+   map 0 (emptyWithCapacity as.size)
+ 
+ /--
+@@ -1538,7 +1538,7 @@
+   loop (as : Array α) (i : Nat) (j : Fin as.size) :=
+     if h : i < j then
+       have := termination h
+-      let as := as.swap i j (Nat.lt_trans h j.2)
++      let as := as.swap i j (Nat.lt_trans h j.2) (by exact j.2)
+       have : j-1 < as.size := by rw [size_swap]; exact Nat.lt_of_le_of_lt (Nat.pred_le _) j.2
+       loop as (i+1) ⟨j-1, this⟩
+     else

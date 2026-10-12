@@ -1,0 +1,17 @@
+--- a/Init/Data/Iterators/Basic.lean
++++ b/Init/Data/Iterators/Basic.lean
+@@ -47,12 +47,12 @@
+ /-- Converts elements of {name}`α` into elements of {lean}`Shrink α`. -/
+ @[always_inline]
+ def Shrink.deflate {α} (x : α) : Shrink α :=
+-  cast (by simp [Shrink, Internal.idOpaque.property]) x
++  cast (by unfold Shrink; rewrite [Internal.idOpaque.property]; rfl) x
+ 
+ /-- Converts elements of {lean}`Shrink α` into elements of {name}`α`. -/
+ @[always_inline]
+ def Shrink.inflate {α} (x : Shrink α) : α :=
+-  cast (by simp [Shrink, Internal.idOpaque.property]) x
++  cast (by unfold Shrink; rewrite [Internal.idOpaque.property]; rfl) x
+ 
+ @[simp, grind =]
+ theorem Shrink.deflate_inflate {α} {x : Shrink α} :

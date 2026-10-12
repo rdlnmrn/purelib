@@ -1,0 +1,21 @@
+--- a/Init/Data/BitVec/Lemmas.lean
++++ b/Init/Data/BitVec/Lemmas.lean
+@@ -5751,12 +5751,12 @@
+ -/
+ theorem toNat_sub_of_le {x y : BitVec n} (h : y ≤ x) :
+     (x - y).toNat = x.toNat - y.toNat := by
+-  simp only [toNat_sub]
+-  rw [BitVec.le_def] at h
+-  by_cases h' : x.toNat = y.toNat
+-  · rw [h', Nat.sub_self, Nat.sub_add_cancel (by omega), Nat.mod_self]
+-  · have : 2 ^ n - y.toNat + x.toNat = 2 ^ n + (x.toNat - y.toNat) := by omega
+-    rw [this, Nat.add_mod_left, Nat.mod_eq_of_lt (by omega)]
++  change y.toNat ≤ x.toNat at h
++  change (2 ^ n - y.toNat + x.toNat) % 2 ^ n = x.toNat - y.toNat
++  rewrite [Nat.add_comm (2 ^ n - y.toNat) x.toNat,
++    ← Nat.add_sub_assoc (Nat.le_of_lt y.isLt), Nat.add_comm x.toNat (2 ^ n),
++    Nat.add_sub_assoc h, Nat.add_mod_left]
++  exact Nat.mod_eq_of_lt (Nat.lt_of_le_of_lt (Nat.sub_le _ _) x.isLt)
+ 
+ /--
+ If `y > x`, then the subtraction `(x - y)` *does* overflow, and the result is the wraparound.

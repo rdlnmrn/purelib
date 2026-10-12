@@ -1,0 +1,137 @@
+--- a/Init/Data/Int/Lemmas.lean
++++ b/Init/Data/Int/Lemmas.lean
+@@ -118,7 +118,7 @@
+     have ⟨k, h⟩ := Nat.le.dest (Nat.le_of_sub_eq_zero h)
+     rw [h.symm, Nat.add_sub_cancel_left]; apply hp
+   | succ k =>
+-    rw [Nat.sub_eq_iff_eq_add (Nat.le_of_lt (Nat.lt_of_sub_eq_succ h))] at h
++    have h := (Nat.sub_eq_iff_eq_add (Nat.le_of_lt (Nat.lt_of_sub_eq_succ h))).mp h
+     rw [h, Nat.add_comm]; apply hn
+ 
+ theorem subNatNat_add_left : subNatNat (m + n) m = n := by
+@@ -126,7 +126,8 @@
+   rw [Nat.sub_eq_zero_of_le (Nat.le_add_right ..), Nat.add_sub_cancel_left, ofNat_eq_natCast]
+ 
+ theorem subNatNat_add_right : subNatNat m (m + n + 1) = negSucc n := by
+-  simp [subNatNat, Nat.add_assoc, Nat.add_sub_cancel_left]
++  simp only [subNatNat, Nat.add_assoc, Nat.add_sub_cancel_left, -eq_self, -iff_self]
++  rfl
+ 
+ theorem subNatNat_add_add (m n k : Nat) : subNatNat (m + k) (n + k) = subNatNat m n := by
+   apply subNatNat_elim m n (fun m n i => subNatNat (m + k) (n + k) = i)
+@@ -162,27 +163,33 @@
+ theorem subNatNat_add (m n k : Nat) : subNatNat (m + n) k = m + subNatNat n k := by
+   cases n.lt_or_ge k with
+   | inl h' =>
+-    simp [subNatNat_of_lt h', sub_one_add_one_eq_of_pos (Nat.sub_pos_of_lt h')]
+-    conv => lhs; rw [← Nat.sub_add_cancel (Nat.le_of_lt h')]
+-    apply subNatNat_add_add
+-  | inr h' => simp [subNatNat_of_le h',
+-      subNatNat_of_le (Nat.le_trans h' (le_add_left ..)), Nat.add_sub_assoc h', -natCast_add]
++    rewrite [subNatNat_of_lt h']
++    change subNatNat (m + n) k = subNatNat m (Nat.succ (Nat.pred (k - n)))
++    rewrite [Nat.succ_pred_eq_of_pos (Nat.sub_pos_of_lt h')]
++    conv => lhs; rewrite [← Nat.sub_add_cancel (Nat.le_of_lt h')]
++    exact subNatNat_add_add m (k - n) n
++  | inr h' =>
++    rewrite [subNatNat_of_le h',
++      subNatNat_of_le (Nat.le_trans h' (le_add_left ..))]
++    exact congrArg Int.ofNat (Nat.add_sub_assoc h' m)
+ 
+ theorem subNatNat_add_negSucc (m n k : Nat) :
+     subNatNat m n + -[k+1] = subNatNat m (n + succ k) := by
+-  have h := Nat.lt_or_ge m n
+-  cases h with
++  cases Nat.lt_or_ge m n with
+   | inr h' =>
+-    rw [subNatNat_of_le h']
+-    simp
+-    rw [subNatNat_sub h', Nat.add_comm]
++    rewrite [subNatNat_of_le h']
++    change subNatNat (m - n) (k + 1) = subNatNat m (n + (k + 1))
++    exact (subNatNat_sub h' (k + 1)).trans
++      (congrArg (subNatNat m) (Nat.add_comm (k + 1) n))
+   | inl h' =>
+     have h₂ : m < n + succ k := Nat.lt_of_lt_of_le h' (le_add_right _ _)
+-    rw [subNatNat_of_lt h', subNatNat_of_lt h₂]
+-    simp only [pred_eq_sub_one, negSucc_add_negSucc, succ_eq_add_one, negSucc.injEq]
+-    rw [Nat.add_right_comm, sub_one_add_one_eq_of_pos (Nat.sub_pos_of_lt h'), Nat.sub_sub,
+-      ← Nat.add_assoc, succ_sub_succ_eq_sub, Nat.add_comm n,Nat.add_sub_assoc (Nat.le_of_lt h'),
+-      Nat.add_comm]
++    rewrite [subNatNat_of_lt h', subNatNat_of_lt h₂]
++    change negSucc ((n - m - 1) + k + 1) = negSucc ((n + (k + 1) - m) - 1)
++    apply congrArg negSucc
++    rewrite [Nat.add_right_comm, sub_one_add_one_eq_of_pos (Nat.sub_pos_of_lt h'), Nat.sub_sub,
++      ← Nat.add_assoc, succ_sub_succ_eq_sub, Nat.add_comm n,
++      Nat.add_sub_assoc (Nat.le_of_lt h'), Nat.add_comm]
++    rfl
+ 
+ theorem subNatNat_self : ∀ n, subNatNat n n = 0
+   | 0      => rfl
+@@ -193,10 +200,11 @@
+ /- addition -/
+ 
+ protected theorem add_comm : ∀ a b : Int, a + b = b + a
+-  | ofNat n, ofNat m => by simp [Nat.add_comm, -natCast_add]
+-  | ofNat _, -[_+1]  => rfl
+-  | -[_+1],  ofNat _ => rfl
+-  | -[_+1],  -[_+1]  => by simp [Nat.add_comm]
++  | ofNat n, ofNat m => congrArg Int.ofNat (Nat.add_comm n m)
++  | ofNat _, -[_+1] => rfl
++  | -[_+1], ofNat _ => rfl
++  | -[n+1], -[m+1] =>
++      congrArg (fun value => Int.negSucc (Nat.succ value)) (Nat.add_comm n m)
+ 
+ instance : Std.Commutative (α := Int) (· + ·) := ⟨Int.add_comm⟩
+ 
+@@ -224,15 +232,22 @@
+   | (m:Nat), -[n+1], -[k+1] => by
+     rw [Int.add_comm, Int.add_comm m, Int.add_comm m, ← aux2, Int.add_comm -[k+1]]
+   | -[m+1], -[n+1], -[k+1] => by
+-    simp [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc]
++    change Int.negSucc ((m + n + 1) + k + 1) =
++      Int.negSucc (m + (n + k + 1) + 1)
++    rewrite [Nat.succ_add (m + n) k, Nat.add_succ m (n + k)]
++    exact congrArg (fun value => Int.negSucc (value + 1 + 1))
++      (Nat.add_assoc m n k)
+ where
+   aux1 (m n : Nat) : ∀ c : Int, m + n + c = m + (n + c)
+-    | (k:Nat) => by simp [Nat.add_assoc, -natCast_add]
+-    | -[k+1]  => by simp [subNatNat_add, -natCast_add]
++    | (k:Nat) => congrArg Int.ofNat (Nat.add_assoc m n k)
++    | -[k+1] => subNatNat_add m n (k + 1)
+   aux2 (m n k : Nat) : -[m+1] + -[n+1] + k = -[m+1] + (-[n+1] + k) := by
+-    simp
+-    rw [Int.add_comm, subNatNat_add_negSucc]
+-    simp [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc]
++    change Int.subNatNat k (m + n + 1 + 1) =
++      Int.negSucc m + Int.subNatNat k (n + 1)
++    rewrite [Int.add_comm (Int.negSucc m), subNatNat_add_negSucc]
++    apply congrArg (Int.subNatNat k)
++    rewrite [Nat.succ_add n (m + 1)]
++    exact congrArg (fun value => value + 1 + 1) (Nat.add_comm m n)
+ instance : Std.Associative (α := Int) (· + ·) := ⟨Int.add_assoc⟩
+ 
+ protected theorem add_left_comm (a b c : Int) : a + (b + c) = b + (a + c) := by
+@@ -244,9 +259,9 @@
+ /- ## negation -/
+ 
+ protected theorem add_left_neg : ∀ a : Int, -a + a = 0
+-  | 0      => rfl
+-  | succ m => by simp [neg_ofNat_succ, -natCast_add]
+-  | -[m+1] => by simp [neg_negSucc, -natCast_add]
++  | 0 => rfl
++  | succ m => subNatNat_self (m + 1)
++  | -[m+1] => subNatNat_self (m + 1)
+ 
+ protected theorem add_right_neg (a : Int) : a + -a = 0 := by
+   rw [Int.add_comm, Int.add_left_neg]
+@@ -304,7 +319,7 @@
+ 
+ @[simp] protected theorem sub_zero (a : Int) : a - 0 = a := by simp [Int.sub_eq_add_neg]
+ 
+-@[simp] protected theorem zero_sub (a : Int) : 0 - a = -a := by simp [Int.sub_eq_add_neg]
++@[simp] protected theorem zero_sub (a : Int) : 0 - a = -a := Int.zero_add (-a)
+ 
+ protected theorem sub_eq_zero_of_eq {a b : Int} (h : a = b) : a - b = 0 := by
+   rw [h, Int.sub_self]

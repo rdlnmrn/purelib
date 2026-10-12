@@ -1,0 +1,21 @@
+--- a/Lean/Meta/CongrTheorems.lean
++++ b/Lean/Meta/CongrTheorems.lean
+@@ -464,14 +464,15 @@
+     return none
+ 
+ /--
+-Similar to `mkCongrSimp?`, but uses reserved names to ensure we don't keep creating the
+-same congruence theorem over and over again.
++Reuse an existing reserved-name congruence theorem when available. Otherwise return
++the raw proof from `mkCongrSimp?`; callers cache it without publishing an unused theorem.
++Explicit reserved-name realization remains available.
+ -/
+ def mkCongrSimpForConst? (declName : Name) (levels : List Level) : MetaM (Option CongrTheorem) := do
+   let thmName := Name.str declName congrSimpSuffix
+   try
+     unless (← getEnv).containsOnBranch thmName do
+-      let _ ← executeReservedNameAction thmName
++      return ← mkCongrSimp? (mkConst declName levels)
+     let proof := mkConst thmName levels
+     let type ← inferType proof
+     let some argKinds := congrKindsExt.find? (← getEnv) thmName

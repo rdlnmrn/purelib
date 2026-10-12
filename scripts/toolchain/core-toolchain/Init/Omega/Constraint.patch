@@ -1,0 +1,86 @@
+--- a/Init/Omega/Constraint.lean
++++ b/Init/Omega/Constraint.lean
+@@ -240,7 +240,47 @@
+ abbrev sat' (c : Constraint) (x y : Coeffs) := c.sat (Coeffs.dot x y)
+ 
+ theorem combine_sat' {s t : Constraint} {x y} (ws : s.sat' x y) (wt : t.sat' x y) :
+-    (s.combine t).sat' x y := (combine_sat _ _ _).mpr ⟨ws, wt⟩
++    (s.combine t).sat' x y := by
++  have lower (a b : LowerBound) (ha : a.sat (Coeffs.dot x y))
++      (hb : b.sat (Coeffs.dot x y)) :
++      LowerBound.sat (Option.merge max a b) (Coeffs.dot x y) := by
++    cases a with
++    | none =>
++      cases b with
++      | none => rfl
++      | some b => exact hb
++    | some a =>
++      cases b with
++      | none => exact ha
++      | some b =>
++        apply decide_eq_true
++        have ha := of_decide_eq_true ha
++        have hb := of_decide_eq_true hb
++        rewrite [Int.max_def]
++        split <;> assumption
++  have upper (a b : UpperBound) (ha : a.sat (Coeffs.dot x y))
++      (hb : b.sat (Coeffs.dot x y)) :
++      UpperBound.sat (Option.merge min a b) (Coeffs.dot x y) := by
++    cases a with
++    | none =>
++      cases b with
++      | none => rfl
++      | some b => exact hb
++    | some a =>
++      cases b with
++      | none => exact ha
++      | some b =>
++        apply decide_eq_true
++        have ha := of_decide_eq_true ha
++        have hb := of_decide_eq_true hb
++        rewrite [Int.min_def]
++        split <;> assumption
++  have hs : s.lowerBound.sat (Coeffs.dot x y) ∧ s.upperBound.sat (Coeffs.dot x y) :=
++    of_decide_eq_true ws
++  have ht : t.lowerBound.sat (Coeffs.dot x y) ∧ t.upperBound.sat (Coeffs.dot x y) :=
++    of_decide_eq_true wt
++  apply decide_eq_true
++  exact ⟨lower _ _ hs.1 ht.1, upper _ _ hs.2 ht.2⟩
+ 
+ theorem div_sat' {c : Constraint} {x y} (h : Coeffs.gcd x ≠ 0) (w : c.sat (Coeffs.dot x y)) :
+     (c.div (Coeffs.gcd x)).sat' (Coeffs.sdiv x (Coeffs.gcd x)) y := by
+@@ -253,15 +293,28 @@
+ 
+ theorem addInequality_sat (w : c + Coeffs.dot x y ≥ 0) :
+     Constraint.sat' { lowerBound := some (-c), upperBound := none } x y := by
+-  simp [Constraint.sat', Constraint.sat]
+-  rw [← Int.zero_sub c]
+-  exact Int.sub_left_le_of_le_add w
++  have translated : -c ≤ Coeffs.dot x y := by
++    have h : 0 - c ≤ Coeffs.dot x y := Int.sub_left_le_of_le_add w
++    rewrite [Int.zero_sub] at h
++    exact h
++  change decide ((decide (-c ≤ Coeffs.dot x y) = true) ∧ (true = true)) = true
++  exact decide_eq_true ⟨decide_eq_true translated, rfl⟩
+ 
+ theorem addEquality_sat (w : c + Coeffs.dot x y = 0) :
+     Constraint.sat' { lowerBound := some (-c), upperBound := some (-c) } x y := by
+-  simp [Constraint.sat', Constraint.sat]
+-  rw [Int.eq_iff_le_and_ge] at w
+-  rwa [Int.add_le_zero_iff_le_neg', Int.add_nonneg_iff_neg_le', and_comm] at w
++  have translated : Coeffs.dot x y = -c :=
++    (Int.neg_add_cancel_left c (Coeffs.dot x y)).symm.trans
++      ((congrArg (-c + ·) w).trans (Int.add_zero (-c)))
++  change decide ((decide (-c ≤ Coeffs.dot x y) = true) ∧
++    (decide (Coeffs.dot x y ≤ -c) = true)) = true
++  apply decide_eq_true
++  constructor
++  · apply decide_eq_true
++    rewrite [translated]
++    exact Int.le_refl _
++  · apply decide_eq_true
++    rewrite [translated]
++    exact Int.le_refl _
+ 
+ end Constraint
+ 

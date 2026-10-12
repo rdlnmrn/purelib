@@ -1,0 +1,49 @@
+--- a/Init/Data/String/Lemmas/IsEmpty.lean
++++ b/Init/Data/String/Lemmas/IsEmpty.lean
+@@ -58,12 +58,43 @@
+ @[simp]
+ theorem isEmpty_sliceFrom {s : Slice} {p : s.Pos} :
+     (s.sliceFrom p).isEmpty ↔ p = s.endPos := by
+-  simp [← startPos_eq_endPos_iff, ← Pos.ofSliceFrom_inj]
++  constructor
++  · intro h
++    change (s.sliceFrom p).isEmpty = true at h
++    rw [isEmpty_eq, utf8ByteSize_eq, endExclusive_sliceFrom,
++      startInclusive_sliceFrom, Pos.offset_str, String.Pos.Raw.byteIdx_offsetBy] at h
++    have z : s.endExclusive.offset.byteIdx -
++        (s.startInclusive.offset.byteIdx + p.offset.byteIdx) = 0 := of_decide_eq_true h
++    have lower := Nat.sub_le_sub_right (Nat.le_of_sub_eq_zero z) s.startInclusive.offset.byteIdx
++    have lower' : s.utf8ByteSize ≤ p.offset.byteIdx :=
++      (Nat.add_sub_cancel_left s.startInclusive.offset.byteIdx p.offset.byteIdx) ▸ lower
++    have upper : p.offset.byteIdx ≤ s.utf8ByteSize := p.isValidForSlice.le_rawEndPos
++    exact Pos.ext (String.Pos.Raw.ext (Nat.le_antisymm upper lower'))
++  · intro h
++    cases h
++    have bound : s.startInclusive.offset.byteIdx ≤ s.endExclusive.offset.byteIdx :=
++      s.startInclusive_le_endExclusive
++    have sum := Nat.add_sub_of_le bound
++    have z : s.endExclusive.offset.byteIdx - (s.startInclusive.offset.byteIdx +
++        (s.endExclusive.offset.byteIdx - s.startInclusive.offset.byteIdx)) = 0 :=
++      sum.symm ▸ Nat.sub_self s.endExclusive.offset.byteIdx
++    change (s.sliceFrom s.endPos).isEmpty = true
++    rw [isEmpty_eq, utf8ByteSize_eq, endExclusive_sliceFrom,
++      startInclusive_sliceFrom, Pos.offset_str, String.Pos.Raw.byteIdx_offsetBy,
++      offset_endPos, byteIdx_rawEndPos, utf8ByteSize_eq]
++    exact decide_eq_true z
+ 
+ @[simp]
+ theorem isEmpty_sliceFrom_eq_false_iff {s : Slice} {p : s.Pos} :
+-    (s.sliceFrom p).isEmpty = false ↔ p ≠ s.endPos :=
+-  Decidable.not_iff_not.1 (by simp)
++    (s.sliceFrom p).isEmpty = false ↔ p ≠ s.endPos := by
++  constructor
++  · intro hf heq
++    have ht := isEmpty_sliceFrom.mpr heq
++    exact Bool.false_ne_true (hf.symm.trans ht)
++  · intro h
++    cases he : (s.sliceFrom p).isEmpty with
++    | false => rfl
++    | true => exact False.elim (h (isEmpty_sliceFrom.mp he))
+ 
+ @[simp]
+ theorem isEmpty_sliceTo {s : Slice} {p : s.Pos} :

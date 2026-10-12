@@ -1,0 +1,40 @@
+--- a/Lean/Meta/FunInfo.lean
++++ b/Lean/Meta/FunInfo.lean
+@@ -38,24 +38,25 @@
+     modify fun s => { s with cache := { s.cache with funInfo := s.cache.funInfo.insert key finfo } }
+     return finfo
+ 
+-@[inline] private def whenHasVar {α} (e : Expr) (deps : α) (k : α → α) : α :=
+-  if e.hasFVar then k deps else deps
+-
++/-- Collect each parameter dependency once, including in shared expression DAGs. -/
+ private def collectDeps (fvars : Array Expr) (e : Expr) : Array Nat :=
+-  let rec visit (e : Expr) (deps : Array Nat) : Array Nat :=
++  let rec visit (e : Expr) (deps : Array Nat) : StateM ExprSet (Array Nat) := do
++    if !e.hasFVar then return deps
++    if (← get).contains e then return deps
++    modify (·.insert e)
+     match e with
+-    | .app f a         => whenHasVar e deps (visit a ∘ visit f)
+-    | .forallE _ d b _ => whenHasVar e deps (visit b ∘ visit d)
+-    | .lam _ d b _     => whenHasVar e deps (visit b ∘ visit d)
+-    | .letE _ t v b _  => whenHasVar e deps (visit b ∘ visit v ∘ visit t)
++    | .app f a         => visit a (← visit f deps)
++    | .forallE _ d b _ => visit b (← visit d deps)
++    | .lam _ d b _     => visit b (← visit d deps)
++    | .letE _ t v b _  => visit b (← visit v (← visit t deps))
+     | .proj _ _ e      => visit e deps
+     | .mdata _ e       => visit e deps
+     | .fvar ..         =>
+       match fvars.idxOf? e with
+-      | none   => deps
+-      | some i => if deps.contains i then deps else deps.push i
+-    | _ => deps
+-  let deps := visit e #[]
++      | none   => return deps
++      | some i => return if deps.contains i then deps else deps.push i
++    | _ => return deps
++  let deps := (visit e #[]).run' {}
+   deps.qsort (fun i j => i < j)
+ 
+ /-- Update `hasFwdDeps` fields using new `backDeps` -/

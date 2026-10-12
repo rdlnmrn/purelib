@@ -165,7 +165,7 @@ export default function App() {
               <SourceLink href="../../CCL/Arithmetic/BoxedNameProcess.lean">Boxed arithmetic</SourceLink>
               <SourceLink href="../../CCL/Transcendental/Output.lean">Transcendental outputs</SourceLink>
               <SourceLink href="../../CCL/Calculus/DividedDifference.lean">Finite calculus</SourceLink>
-              <SourceLink href="../../RFAP/Paper.lean">RFAP root isolation</SourceLink>
+              <SourceLink href="../../papers/RFAP/Chapters/Paper.lean">RFAP root isolation</SourceLink>
             </div>
           </section>
 
@@ -207,7 +207,7 @@ export default function App() {
               computable prefix radius.
             </p>
             <div className="source-list">
-              <SourceLink href="../../FiniteMeasure.lean">Finite-measure theorem index</SourceLink>
+              <SourceLink href="../../Purelib/Measure.lean">Finite-measure theorem index</SourceLink>
               <SourceLink href="../../CCL/Measure/CylinderConcentration.lean">CCL cylinder concentration</SourceLink>
             </div>
           </section>

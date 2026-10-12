@@ -1,0 +1,74 @@
+--- a/Init/Data/Array/Bootstrap.lean
++++ b/Init/Data/Array/Bootstrap.lean
+@@ -43,8 +43,28 @@
+   simp [foldlM, foldlM_toList.aux]
+ 
+ @[simp, grind =] theorem foldl_toList (f : β → α → β) {init : β} {xs : Array α} :
+-    xs.toList.foldl f init = xs.foldl f init :=
+-  List.foldl_eq_foldlM .. ▸ foldlM_toList ..
++    xs.toList.foldl f init = xs.foldl f init := by
++  have aux {i j : Nat} (H : xs.size ≤ i + j) (b : β) :
++      foldlM.loop (m := Id) (fun b a => f b a) xs xs.size (Nat.le_refl _) i j b =
++        (xs.toList.drop j).foldl f b := by
++    induction i generalizing j b with
++    | zero =>
++      unfold foldlM.loop
++      split
++      · exact False.elim (Nat.not_le_of_gt ‹j < xs.size› (Nat.zero_add j ▸ H))
++      · rw [List.drop_of_length_le (Nat.le_of_not_gt ‹¬j < xs.size›)]
++        rfl
++    | succ i ih =>
++      unfold foldlM.loop
++      split
++      · rename_i h
++        rw [← List.getElem_cons_drop h]
++        exact ih ((Nat.succ_add i j).trans (Nat.add_succ i j).symm ▸ H) (f b xs[j])
++      · rw [List.drop_of_length_le (Nat.le_of_not_gt ‹¬j < xs.size›)]
++        rfl
++  unfold foldl foldlM
++  rw [dif_pos (Nat.le_refl _)]
++  exact (aux (i := xs.size) (j := 0) (Nat.le_refl _) init).symm
+ 
+ theorem foldrM_eq_reverse_foldlM_toList.aux [Monad m]
+     {f : α → β → m β} {xs : Array α} {init : β} {i} (h) :
+@@ -74,8 +94,7 @@
+   List.foldr_eq_foldrM .. ▸ foldrM_toList ..
+ 
+ @[simp, grind =] theorem toList_push {xs : Array α} {x : α} : (xs.push x).toList = xs.toList ++ [x] := by
+-  rcases xs with ⟨xs⟩
+-  simp [push, List.concat_eq_append]
++  exact List.concat_eq_append
+ 
+ @[simp, grind =] theorem toListAppend_eq {xs : Array α} {l : List α} : xs.toListAppend l = xs.toList ++ l := by
+   simp [toListAppend, ← foldr_toList]
+@@ -91,18 +110,26 @@
+     (xs ++ ys).toList = xs.toList ++ ys.toList := by
+   rw [← append_eq_append]; unfold Array.append
+   rw [← foldl_toList]
+-  induction ys.toList generalizing xs <;> simp [*]
++  induction ys.toList generalizing xs with
++  | nil => exact (List.append_nil xs.toList).symm
++  | cons y ys ih =>
++    change ((ys.foldl (fun xs v => xs.push v) (xs.push y)).toList) = xs.toList ++ (y :: ys)
++    rw [ih]
++    rw [toList_push]
++    exact List.append_assoc xs.toList [y] ys
+ 
+ @[simp] theorem toList_empty : (#[] : Array α).toList = [] := rfl
+ 
+ @[simp, grind =] theorem append_empty {xs : Array α} : xs ++ #[] = xs := by
+-  apply ext'; simp only [toList_append, List.append_nil]
++  rfl
+ 
+ @[simp, grind =] theorem empty_append {xs : Array α} : #[] ++ xs = xs := by
+-  apply ext'; simp only [toList_append, List.nil_append]
++  apply ext'
++  rw [toList_append]
++  rfl
+ 
+ @[simp] theorem append_assoc {xs ys zs : Array α} : xs ++ ys ++ zs = xs ++ (ys ++ zs) := by
+-  apply ext'; simp only [toList_append, List.append_assoc]
++  apply ext'; simp only [toList_append, -eq_self, -iff_self]; exact List.append_assoc ..
+ 
+ grind_pattern append_assoc => (xs ++ ys) ++ zs where
+   xs =/= #[]; ys =/= #[]; zs =/= #[]

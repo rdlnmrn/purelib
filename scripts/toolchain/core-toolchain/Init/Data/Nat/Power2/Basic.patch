@@ -1,0 +1,24 @@
+--- a/Init/Data/Nat/Power2/Basic.lean
++++ b/Init/Data/Nat/Power2/Basic.lean
+@@ -16,9 +16,9 @@
+ namespace Nat
+ 
+ theorem nextPowerOfTwo_dec {n power : Nat} (h₁ : power > 0) (h₂ : power < n) : n - power * 2 < n - power := by
+-  have : power * 2 = power + power := by simp +arith
+-  rw [this, Nat.sub_add_eq]
+-  exact Nat.sub_lt (Nat.zero_lt_sub_of_lt h₂) h₁
++  have : power * 2 = power + power := Nat.mul_two power
++  rewrite [this, Nat.sub_add_eq]
++  exact Nat.sub_lt (Nat.sub_pos_of_lt h₂) h₁
+ 
+ /--
+ Returns the least power of two that's greater than or equal to `n`.
+@@ -51,7 +51,7 @@
+ 
+ theorem isPowerOfTwo_mul_two_of_isPowerOfTwo (h : isPowerOfTwo n) : isPowerOfTwo (n * 2) :=
+   have ⟨k, h⟩ := h
+-  ⟨k+1, by simp [h, Nat.pow_succ]⟩
++  ⟨k+1, (congrArg (· * 2) h).trans (Nat.pow_succ 2 k).symm⟩
+ 
+ theorem pos_of_isPowerOfTwo (h : isPowerOfTwo n) : n > 0 := by
+   have ⟨k, h⟩ := h

@@ -1,0 +1,636 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{array,booktabs,longtable}
+\usepackage[hyphens]{url}
+\usepackage[hidelinks]{hyperref}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\F}{\mathbb F}
+\newcommand{\SO}{\operatorname{SO}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\adj}{\operatorname{adj}}
+\newcommand{\Span}{\operatorname{span}}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\setlength{\emergencystretch}{3em}
+\title{Issues and Resolutions to Open Problems in\\
+  \emph{Rational Rotations of Three Dimensional Euclidean Space}}
+\author{}
+\date{12 October 2026}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+This companion records the mathematical findings of the constructive Lean
+formalisation of N.~J.~Wildberger's revised Euclidean rotation paper.
+It gives an explicit repair to the
+perpendicular-direction argument for null anchors, answers the
+associativity question in Problem~80, gives exact finite-field counts and
+conjugacy types for Problem~81, and states the finite-word and finite-order
+results obtained for Problem~82. It also supplies the determinant-weighted
+Clifford correspondence requested in Problem~83. Rational normalization,
+positive rays, projective proportions and finite formulations of size claims
+are kept distinct. Numbering refers to the revised source, not its earlier
+August draft. The remaining subgroup-classification and arithmetic questions
+are identified explicitly.
+\end{abstract}
+
+\section{Source, conventions and status}
+
+The source is the supplied 33-page revision of \emph{Rational rotations of
+three dimensional Euclidean space} \cite{source}. Its numbered assertion
+inventory ends at Example~79, followed by Problems~80--83. We use row vectors,
+\[
+ B(v,u)=v\cdot u,\qquad Q(v)=v\cdot v,
+ \qquad p(\rho)=\frac{3-\tr\rho}{4}.
+\]
+All general-field statements below assume characteristic different from two.
+An assertion involving an ordered field additionally assumes its ordinary
+ordered-field laws. The original quaternion product has the row-action signs
+\begin{equation}
+ (x:v)(y:u)=(xy-v\cdot u:xu+yv-v\times u),
+ \qquad N(x:v)=x^2+Q(v).
+ \label{eq:quaternion}
+\end{equation}
+The displayed representatives, their nonzero scales and their exact
+coefficients are retained throughout.
+
+The revised paper already repairs several defects discussed for the August
+draft. In particular, Corollary~51 now requires both input caps to be defined,
+Theorem~54 states the cap domains needed for its proof of conditional
+associativity, and Problem~80 has fixed linear coefficients and excludes the
+zero cross coefficient. The old projection counterexample to the earlier
+four-coefficient conjecture is consequently not a counterexample to the new
+question. It should not be carried forward as one.
+
+\begin{center}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.16\textwidth}>{\raggedright\arraybackslash}p{0.75\textwidth}}
+\toprule
+Source item & Result of this companion \\
+\midrule
+Theorem~33 & The formula is retained; a missing zero/null-anchor existence
+case in its printed proof is supplied. \\
+Problem~80 & Complete classification in characteristic different from two:
+\(\delta=-\gamma^2\), using explicit scalar probes. \\
+Problem~81 & Exact counts, spinor classes and conjugacy types; one
+nonidentity parabolic conjugacy class in the full rotation group. \\
+Problem~82 & Exact finite-word spinor image, kernel/coset tests and
+finite-order table. Internal classification of generated subgroups remains
+open. \\
+Problem~83 & The projective Clifford correspondence for every displayed
+nonsingular symmetric ternary form. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This is an account of proved statements and their limits, rather than a
+claim to have solved every research question in the source. Scope boundaries
+concerning completed infinite objects and topology are not mathematical
+errors in the source.
+
+\section{Theorem 33: non-null perpendicular directions}
+
+Definition~32 permits a cap with a zero or null anchor. The last sentence of
+the proof of Theorem~33 appeals to nondegeneracy of the plane perpendicular
+to a \emph{non-null} anchor. This establishes existence in that case, but
+does not cover the identity anchor or the nonzero null anchor in Example~45.
+The spread formula itself remains correct.
+
+\begin{lemma}[Four-candidate perpendicular construction]
+For every \(v=(t,r,s)\in F^3\), one can explicitly find \(w\) with
+\(w\cdot v=0\) and \(Q(w)\ne0\).
+\end{lemma}
+\begin{proof}
+Test the three perpendicular vectors
+\[
+ w_1=(-r,t,0),\qquad w_2=(-s,0,t),\qquad w_3=(0,-s,r).
+\]
+Any non-null candidate suffices. If all three are null, then
+\[
+ Q(w_1)+Q(w_2)-Q(w_3)=2t^2=0.
+\]
+Since \(2\ne0\), this gives \(t=0\). The vector \(w=(1,0,0)\) is then
+perpendicular to \(v\) and has quadrance one. The construction includes
+\(v=0\), and each branch uses just a scalar equality test.
+\end{proof}
+
+For a cap \(\rho=c(A_v)\) and such a \(w\), quadratic reduction gives
+\[
+ w\rho=\frac{(1-Q(v))w+2(v\times w)}{1+Q(v)}.
+\]
+The cross term is perpendicular to \(w\), and the rotation preserves its
+quadrance. Therefore
+\[
+ s(w,w\rho)
+ =1-\frac{(1-Q(v))^2}{(1+Q(v))^2}
+ =4p(\rho)(1-p(\rho)).
+\]
+For a half turn the perpendicular vector is negated and the spread is zero.
+This proves independence of the chosen admissible direction in all charts.
+The proposed source repair is simply to replace the final existence sentence
+of Theorem~33 by the four-candidate construction.
+
+\section{Problem 80: the associative coefficient products}
+
+The revised question concerns
+\begin{equation}
+ v\star u=\frac{v+u+\gamma(v\times u)}{1+\delta(v\cdot u)},
+ \qquad\gamma\ne0,
+ \label{eq:coefficient}
+\end{equation}
+on its displayed nonzero-denominator domain. ``Associative wherever
+defined'' means equality of the two bracketings whenever all four products
+occurring in them are defined. It does not mean that the two bracketings
+have identical domains.
+
+\begin{theorem}[Answer to Problem 80]
+For \(\gamma,\delta\in F\) with \(\gamma\ne0\), the operation
+\eqref{eq:coefficient} is associative wherever defined if and only if
+\(\delta=-\gamma^2\).
+\end{theorem}
+\begin{proof}
+Let \(e_1=(1,0,0)\), \(e_2=(0,1,0)\). For any nonzero \(a\)
+with \(D=1+\delta a^2\ne0\), all four products for the triple
+\((ae_1,ae_1,e_2)\) are then defined. The \(e_2\)-coordinate of
+\((ae_1\star ae_1)\star e_2\) is one, whereas the same coordinate of
+\(ae_1\star(ae_1\star e_2)\) is
+\[
+ \frac{1-\gamma^2a^2}{1+\delta a^2}.
+\]
+Equality gives \((\delta+\gamma^2)a^2=0\), hence the claimed relation.
+The necessary probe or coefficient relation is obtained finitely. Try
+\(a=1\). If its denominator vanishes, then \(\delta=-1\). If
+\(\gamma^2=1\), the desired relation already follows. Otherwise take
+\(a=\gamma\ne0\), whose denominator \(1-\gamma^2\) is nonzero. This
+argument also covers characteristic three; no appeal to an infinite field
+is needed.
+
+For sufficiency assume \(\delta=-\gamma^2\). The invertible dilation
+\(D_\gamma(v)=\gamma v\) transports \(\star\), including its denominator,
+to the opposite anchor product:
+\[
+ D_\gamma(v\star u)=
+ \frac{D_\gamma(v)+D_\gamma(u)
+       +D_\gamma(v)\times D_\gamma(u)}
+      {1-D_\gamma(v)\cdot D_\gamma(u)}.
+\]
+Its homogeneous product is the opposite of the associative quaternion
+product \eqref{eq:quaternion}. Comparing affine representatives proves
+associativity on every common domain, even without assuming that all
+intermediate vectors are cap anchors.
+\end{proof}
+
+The fixed linear coefficients already make zero a two-sided identity. The
+nonzero cross coefficient in the revised question permits the two-probe
+argument above over every stated field. The retained formal theorem states
+the stronger homogeneous rational classification: for
+\[
+ \frac{\alpha v+\beta u+\gamma(v\times u)}
+      {\epsilon+\delta(v\cdot u)},
+\]
+zero is a two-sided identity and the product is associative wherever defined
+exactly when
+\[
+ \epsilon\ne0,\qquad\alpha=\beta=\epsilon,
+ \qquad\epsilon\delta=-\gamma^2.
+\]
+Thus the revised normalized problem has a positive classification answer;
+the degenerate projection operations excluded by its new statement play no
+role in that answer.
+
+\section{Problem 81: finite fields}
+
+Let \(F=\F_q\) with \(q\) odd, and write \(\eta(c)=1,-1,0\) according as
+\(c\) is a nonzero square, a nonsquare, or zero. The constructions use a
+supplied complete finite carrier and its exact square table.
+
+\subsection{Vector counts and half-spread fibers}
+
+\begin{lemma}[Ternary quadric count]
+For \(a\in F\),
+\[
+ \#\{v:Q(v)=a\}=q^2+q\eta(-a).
+\]
+\end{lemma}
+\begin{proof}
+Put \(\varepsilon=\eta(-1)\), and let
+\(C(b)=\#\{(r,s):r^2+s^2=b\}\). If \(-1=i^2\), the substitution
+\((r,s)\mapsto(r+is,r-is)\) counts solutions of \(xy=b\), giving
+\(C(0)=2q-1\) and \(C(b)=q-1\) for \(b\ne0\).
+If \(-1\) is nonsquare then \(C(0)=1\). For \(b\ne0\), the two square
+sets of size \((q+1)/2\) give a point on the conic
+\(r^2+s^2=bt^2\). Lines through it parametrize \(q+1\) projective points;
+none is at infinity, so \(C(b)=q+1\). In both cases
+\[
+ C(0)=q+(q-1)\varepsilon,\qquad C(b)=q-\varepsilon\quad(b\ne0).
+\]
+Sum \(C(a-t^2)\) over \(t\). There are one, two or zero exceptional
+summands according as \(a\) is zero, a nonzero square or a nonsquare. These
+three counts give the stated formula.
+\end{proof}
+
+\begin{theorem}[Rotation count and half-spread distribution]
+The complete rotation count is \(q(q^2-1)\). Its half-spread fibers are
+\[
+ \#\{\rho:p(\rho)=h\}=
+ \begin{cases}
+ q^2,&h=0\text{ or }h=1,\\
+ q^2+q\eta(-h(1-h)),&h\ne0,1.
+ \end{cases}
+\]
+The two spinor-norm fibers each have \(q(q^2-1)/2\) elements.
+\end{theorem}
+\begin{proof}
+In the affine chart \((1:v)\), exclude \(Q(v)=-1\), which removes
+\(q^2+q\) vectors. At infinity the non-null lines number
+\[
+ \frac{(q^3-1)-(q^2-1)}{q-1}=q^2.
+\]
+Their sum is \(q^3-q\). For \(h\ne1\), the unique affine representative
+satisfies \(Q(v)=h/(1-h)\). Apply the lemma, observing that the square
+class of \(-h/(1-h)\) equals that of \(-h(1-h)\).
+Half turns are precisely the \(q^2\) points at infinity.
+Every nonzero field element is a sum of two squares, so both norm classes
+have quaternion representatives. Multiplication by a representative of
+nonsquare norm bijects their rotation fibers. They consequently have equal
+size.
+\end{proof}
+
+For \(h\ne1\), every rotation in a half-spread fiber has spinor norm
+\([1-h]\). For \(h=1\), its norm is the square class \([Q(v)]\) of its
+axis. More explicitly, the half-turn axes of either prescribed square class
+\([c]\) number
+\[
+ \frac{q^2+q\eta(-c)}2.
+\]
+Indeed, there are \((q-1)/2\) nonzero quadrances in that class, each having
+the lemma's vector count, and each projective line contains \(q-1\)
+nonzero vectors.
+
+\subsection{Conjugacy types and parabolics}
+
+The reciprocal factor of the characteristic polynomial is
+\[
+ X^2-2(1-2h)X+1,\qquad \Delta=-16h(1-h).
+\]
+For \(h\ne0,1\), it has distinct roots. Square \(-h(1-h)\) gives split
+semisimple type; nonsquare \(-h(1-h)\) gives nonsplit semisimple type.
+Through the retained split-quaternion matrix model, there is one projective
+conjugacy class for each such fixed \(h\). Indeed, the matrix trace is nonzero
+when \(h\ne1\); scale it to one. The identity
+\(1-h=(\tr M)^2/(4\det M)\) then fixes its determinant at
+\(1/(4(1-h))\), so both matrices have the same characteristic polynomial.
+A non-scalar two-by-two matrix has a cyclic vector: test the two coordinate
+vectors and their sum. If none were cyclic, the first two tests would make
+the matrix diagonal and the third would force equal diagonal entries.
+In the basis consisting of a cyclic vector and its image, the matrix is
+the companion matrix of its characteristic polynomial. The two matrices
+are therefore similar. A half turn instead has a non-scalar trace-zero
+representative. Representatives with the same determinant square class can
+be scaled to the same determinant and the same cyclic-basis argument
+applies. The two determinant classes thus give its two conjugacy classes.
+
+The zero fiber has characteristic polynomial \((X-1)^3\). Its identity
+has anchor zero; the other \(q^2-1\) rotations have nonzero null anchors.
+There are \(q+1\) null axis lines and \(q-1\) nonzero parameters over each.
+These nonidentity parabolics form one conjugacy class in the \emph{full}
+group \(\SO(3,F)\simeq\operatorname{PGL}_2(F)\). To see this, a nonidentity
+unipotent projective matrix can be put in the form
+\(\left(\begin{smallmatrix}1&a\\0&1\end{smallmatrix}\right)\),
+\(a\ne0\); diagonal conjugation changes any such \(a\) to any other.
+This statement is about the full group, not conjugacy restricted to its
+index-two unit-representable subgroup.
+
+\subsection{The distribution on one non-null axis}
+
+Fix \(v\) with \(Q(v)\ne0\). The source's condition
+\(Q(v)h(1-h)\) square for \(h\ne0,1\) holds for exactly
+\begin{equation}
+ \frac{q-2-\eta(-Q(v))}{2}
+ \label{eq:axiscount}
+\end{equation}
+values. This is the count of points with \(y\ne0\) on
+\[
+ (h-\tfrac12)^2+Q(v)y^2=\tfrac14,
+\]
+after removing its two points with \(y=0\) and pairing the remaining
+points as \(\pm y\). Thus the count is \((q-3)/2\) if \(-Q(v)\) is a
+square, and \((q-1)/2\) otherwise. Each amount has exactly two inverse cap
+rotations. The forbidden affine scales are counted by
+\(\lambda^2Q(v)=-1\), equivalently the square-root fiber of \(-Q(v)\).
+These are actual filtered-carrier and root-fiber counts in the formalisation,
+including the literal examples over \(\F_3\) and \(\F_5\).
+
+As a check on the global distribution, the half-spread counts for
+\(\F_3,\F_5,\F_7\), in the order of the field's integer representatives,
+are respectively
+\[
+ (9,9,6),\quad(25,25,20,30,20),\quad
+ (49,49,56,42,42,42,56).
+\]
+They sum to \(24,120,336\). Over \(\F_5\) there are additionally
+\(36\) null quaternion proportions, \(6\) null axis lines and \(24\)
+nonidentity parabolics, agreeing with Example~70.
+
+\section{Problem 82: what the spinor norm determines}
+
+\subsection{Normalization and the kernel}
+
+For a rational nonzero quaternion representative \(P\), \(N(P)>0\), and
+\[
+ \chi(\rho(P))=[N(P)].
+\]
+A rational norm-one representative exists exactly when this class is
+trivial: \(N(P)=r^2\ne0\) permits division by \(r\), while any unit
+rescaling exhibits such a square. The rotations with this property form
+\(K=\ker\chi\), closed under products and inverses. For a half turn the
+criterion is exactly that its supplied axis quadrance is a square.
+
+\subsection{Finite generator lists and signed words}
+
+\begin{theorem}[Complete finite spinor image]
+Given a finite list of rational rotations \(g_1,\ldots,g_m\), one can
+compute their complete finite spinor image, a word realizing every image
+element, and exact kernel and kernel-coset tests for every supplied finite
+signed word.
+\end{theorem}
+\begin{proof}
+For positive \(c=a/b\) in reduced form, let \(S(c)\) be the finite set of
+primes occurring to odd exponent in \(ab\). Finite factorization gives
+\[
+ [c]=[d]\ \Longleftrightarrow\ S(c)=S(d),
+ \qquad S(cd)=S(c)\mathbin\triangle S(d).
+\]
+Choose retained representatives for the generators and take the union \(S\)
+of their supports. Their parity vectors \(s_i\in\F_2^S\) span a finite
+space \(V\). The spinor vector of a signed word is the sum of its generator
+vectors; inverses have the same vector. Thus a word is in \(K\) exactly
+when its vector is zero, and two words lie in the same \(K\)-coset exactly
+when their vectors agree. Finite binary elimination computes the rank \(r\)
+and the \(2^r\) image vectors, retaining generator words realizing them.
+The quaternion product separately evaluates each word's exact rotation.
+\end{proof}
+
+This classifies the image and the quotient detected by \(\chi\), not the
+generated subgroup internally. Different words can have the same spinor
+vector and different rotation matrices. Matrix comparison decides any
+supplied pair, but does not provide an isomorphism type, presentation or
+complete relation theory of the generated subgroup.
+
+\subsection{Finite-order values}
+
+\begin{theorem}[Rational finite-order table]
+If \(\rho\in\SO(3,\Q)\) is supplied with an exact positive order, then
+the following table is exhaustive:
+\[
+\begin{array}{c|c|c}
+\text{order}&p(\rho)&\chi(\rho)\\\hline
+1&0&[1]\\
+2&1&[Q(a)]\text{ for its nonzero axis }a\\
+3&3/4&[1]\\
+4&1/2&[2]\\
+6&1/4&[3].
+\end{array}
+\]
+\end{theorem}
+\begin{proof}
+Set \(\tau=\tr\rho-1\) and use the finite recurrence
+\[
+ L_0=2,\quad L_1=\tau,\quad L_{k+2}=\tau L_{k+1}-L_k.
+\]
+Cayley--Hamilton gives \(\tr(\rho^k)=1+L_k\). An identity power implies
+\(L_n=2\), and the monic integer equation \(L_n(\tau)-2=0\) forces a
+reduced rational \(\tau\) to be integral by denominator clearing and
+B\'ezout. The Euclidean half-spread bounds give \(-2\le\tau\le2\).
+The five integer values produce exactly the orders in the table; the
+retained smaller nonidentity powers certify minimality. Finally
+\(p=(2-\tau)/4\), and \(\chi=[1-p]\) away from half turns, give its last
+two columns. At a half turn use \((0:a)\) instead.
+\end{proof}
+
+The order-two row is a complete answer for a supplied axis. A separate global
+classification of the positive square classes represented by three rational
+squares has not been supplied. No claim that every positive square class
+occurs as an order-two value is made here.
+
+\subsection{Retained finite-precision approximation}
+
+The earlier development also proves a precise finite approximation statement:
+for each rational rotation \(\rho\) and positive rational \(\varepsilon\),
+it constructs \(\eta\in K\) with
+\[
+ \sum_{i,j}(\eta_{ij}-\rho_{ij})^2<\varepsilon.
+\]
+Choose the projectively equivalent sign of \(P=(x:v)\) with \(x\ge0\).
+Put \(n=N(P)>0\), choose a sufficiently tight positive rational upper
+square-root bracket endpoint \(u\), and set
+\[
+ A=u+x,\quad R=(A^2-Q(v):2Av),\quad D=A^2+Q(v),\quad U=D^{-1}R.
+\]
+The retained construction ensures \(D\ne0\). Exact expansion gives
+\(N(R)=D^2\), hence \(N(U)=1\), and the rotation of \(U\) satisfies
+\[
+ \sum_{i,j}(\eta_{ij}-\rho_{ij})^2
+ =\frac{8(u^2-n)^2Q(v)}{D^2n}.
+\]
+Finite integer square-root refinement makes this less than the requested
+bound. This is a theorem for each finite request. It neither constructs a
+completed topological space nor asserts a formal closure theorem.
+
+\section{Problem 83: arbitrary nondegenerate ternary forms}
+
+Let \(M\) be a supplied symmetric nonsingular three-by-three matrix over
+\(F\), and put
+\[
+ B_M(u,v)=uMv^T,\quad Q_M(u)=B_M(u,u),\quad d=\det M,
+ \quad C_M(u,v)=(u\times v)\adj(M).
+\]
+The cross on the right is the ordinary coordinate cross product. It is
+essential to retain the determinant factors: a bare replacement of the
+Euclidean dot product would give the wrong algebra for a general form.
+
+\begin{theorem}[Form-relative projective Clifford correspondence]
+The product and norm
+\[
+ (x:u)(y:v)=(xy-dB_M(u,v):xv+yu-C_M(u,v)),
+ \qquad N_M(x:u)=x^2+dQ_M(u)
+\]
+are associative and multiplicative, with
+\[
+ P\bar P=\bar PP=(N_M(P):0),\qquad\overline{(x:u)}=(x:-u).
+\]
+For \(N_M(P)\ne0\), normalized conjugation
+\[
+ (0:w)\longmapsto N_M(P)^{-1}\bar P(0:w)P
+\]
+is a member of \(\SO(M,F)\). Every member occurs, and two non-null
+representatives give the same rotation if and only if they differ by a
+nonzero scalar.
+\end{theorem}
+\begin{proof}
+Adjugate identities give the determinant-weighted Lagrange,
+Binet--Cauchy and vector triple-product identities. Expanding the displayed
+finite coordinates proves associativity, the conjugation identities and
+norm multiplicativity. The same identities prove preservation of \(B_M\)
+and determinant one of the action.
+
+For surjectivity, the retained constructive two-reflection theorem gives
+two non-null normals for any supplied rotation. Their pure Clifford
+representatives give half turns; multiplying the two half turns gives the
+same rotation as multiplying the reflections. This constructs a non-null
+preimage, including for the identity. The construction selects non-null
+vectors and displacements from explicit finite coordinate candidates.
+For faithfulness, the action identities force a trivially acting non-null
+representative to have vector part zero. Applying this to the relative
+product of two representatives and cancelling the non-null factor gives the
+nonzero scalar witness. Conversely a rescaling multiplies both action
+numerator and norm by the same square.
+\end{proof}
+
+The affine chart \((1:u)\) has
+\[
+ p=\frac{dQ_M(u)}{1+dQ_M(u)},\qquad
+ u\star_Mv=\frac{u+v-C_M(u,v)}{1-dB_M(u,v)}.
+\]
+For defined input caps and nonzero product denominator,
+\[
+ 1+dQ_M(u\star_Mv)=
+ \frac{(1+dQ_M(u))(1+dQ_M(v))}{(1-dB_M(u,v))^2}.
+\]
+Thus all the affine exceptional loci and their projective resolution extend
+with the same retained form. No diagonalizing basis or square-root
+normalization is required. The form \(I\) gives the Euclidean algebra;
+\(\operatorname{diag}(1,-1,-1)\), with the source's explicit vector sign
+conversion, gives the dihedron convention of the Minkowski companion
+\cite{companion}.
+
+\section{Rays, normalization and the size boundary}
+
+A quaternion ray identifies \(P\) with \(aP\) only for \(a>0\).
+A projective proportion permits every \(a\ne0\), so it consists of two
+opposite rays. Quaternion multiplication and inversion respect positive
+scaling; over an ordered field \(P^{-1}=\bar P/N(P)\) is in the same ray
+as \(\bar P\), because \(N(P)>0\). Equality of rotation matrices means
+the representatives are projectively equivalent, hence either on the same
+ray or on opposite rays. Each rotation fiber therefore contains exactly two
+distinct rays; the kernel consists of the scalar rays of \(1\) and \(-1\).
+
+These quaternion rays must not be confused with rays of the \emph{anchor
+vector}. The quaternions \(P\) and \(-P\) give the same rotation. The
+nonzero affine anchors \(v\) and \(-v\) give inverse rotations, and are
+distinct vector rays. The source's orientation data concerns this second
+distinction.
+
+A rational quaternion ray has a unit representative precisely when its norm
+class is trivial. When it exists, its unit representative is unique within
+that positive ray. Thus the full rational ray cover is strictly larger than
+the rational norm-one cover. The Pauli matrix description and its algebraic
+determinant-one unitary image are checked using a formal imaginary scalar;
+no completed complex field or Lie group is needed for those identities.
+The real spin-group and trigonometric identifications lie outside the present
+formal constructive scope.
+
+The infinitude clause of Theorem~74 and the infinite-index clause of
+Corollary~75 have the following checked finite content. For every supplied
+natural number \(n\), an executable construction returns \(n\) pairwise
+inequivalent positive rational square classes and rotation preimages, and
+\(n\) rotations pairwise separated modulo \(K\). Successive finite prime
+constructions supply the classes; a four-square construction supplies exact
+quaternion norms. The pairwise certificates are retained. This gives
+arbitrary finite size without constructing an infinite quotient carrier.
+
+An additional retained result, no longer a numbered open problem in the
+revision, is point--plane polarity: \([x]\) corresponds to the plane with
+normal \(x\). The identity
+\((x\rho)\cdot(y\rho)=x\cdot y\) makes this correspondence equivariant
+and preserves incidence. For non-null representatives, projective point
+quadrance equals spread of the corresponding plane normals. Null
+representatives retain incidence but do not admit that divided spread.
+
+\section{Formal evidence and remaining questions}
+
+\begingroup\raggedright
+The reusable mathematical owners remain in \texttt{Purelib}; the publication
+facade is
+\path{formalisations/RationalRotations/RationalRotations.lean}. Its
+claim ledger is \path{formalisations/RationalRotations/coverage.md}, with
+the earlier draft's numbering preserved separately in
+\path{formalisations/RationalRotations/coverage-2026-08-31.md}.
+The following map gives direct entry points rather than copied proofs.
+\par\endgroup
+
+\begingroup\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.27\textwidth}>{\raggedright\arraybackslash}p{0.66\textwidth}}
+\toprule
+Result & Mathematical owner / retained entry point \\
+\midrule
+\endhead
+Perpendicular witness &
+\path{Purelib/Geometry/Quadratic/Space3/Perpendicular.lean};
+\texttt{perpendicularNonNullWitness}. \\
+Coefficient classification &
+\path{Purelib/Geometry/Rotations/Cayley/CoefficientProducts.lean};
+\newline\texttt{rational\_hardenedAssociativityClassification}. \\
+Finite strata and conjugacy &
+\path{Purelib/Geometry/Rotations/FiniteField/Classification.lean};
+the original finite-field presentation and its classification certificate. \\
+Fixed-axis amounts &
+\path{Purelib/Geometry/Rotations/Axis/Finite.lean};
+\texttt{admissibleAmounts\_length}, cached roots and two-scale fibers. \\
+Generated spinor image &
+\path{Purelib/Geometry/Rotations/Rational/Generators/Classification.lean};
+\texttt{GeneratedSubgroups.classify}. \\
+Finite orders and approximation &
+\path{Purelib/Geometry/Rotations/Rational/Order.lean};
+\path{Purelib/Geometry/Rotations/Rational/Kernel/Approximation.lean}. \\
+General ternary correspondence &
+\path{Purelib/Geometry/Rotations/Ternary/Theory.lean};
+\texttt{TernaryForm.generalRotationTheory}, together with
+\texttt{projectiveCliffordCorrespondence}. \\
+Ray cover &
+\path{Purelib/Geometry/Rotations/Projective/RayCover.lean};
+the original \texttt{RayProportion} product, inverse and fiber laws. \\
+\bottomrule
+\end{longtable}
+\endgroup
+
+The mathematical tree at commit \texttt{a6219f044} passed all twelve
+completion gates on 11 October 2026: warning-fatal full build and lint,
+the full configured-script axiom audit, independent nanoda checking and the
+tooling regressions. Builds used 64 Lean threads. The normal proof-closure
+audit accepted 136,660 project declarations and 1,536 selected canonical
+declarations with no allowed axioms; nanoda checked all 42 compatible
+module sets. This certifies the selected mathematical proof closure, not a
+separate strict audit of every internal meta-provider helper. These papers
+change documentation only; they do not introduce new Lean declarations.
+The finite-field counts, stratum certificates and parabolic conjugators
+have retained Lean proofs. The cyclic-matrix argument above additionally
+deduces the full semisimple and half-turn conjugacy classes in this paper;
+it is not claimed as a newly checked standalone Lean classification theorem.
+
+Problem~80 is answered over every field of characteristic different from
+two, and the finite-field
+and general-form results above answer Problems~81 and~83 in the displayed
+constructive sense. Problem~82 remains open as an internal classification of
+natural generated subgroups. A global list of order-two spinor classes and
+any completed topological statement would need additional results. Historical
+priority and numerical-performance claims have not been inferred from the
+formalisation.
+
+\begin{thebibliography}{9}
+\raggedright
+\bibitem{source} N.~J.~Wildberger,
+\emph{Rational rotations of three dimensional Euclidean space}, supplied
+revision \texttt{RationalRotationsQuaternions2.pdf}, 33 pages.
+Source SHA-256:
+\url{3e03d449b480ab4b27b520e8059495bab2e62cdf3852b1ff33e02a38c7ad8c53}.
+\bibitem{companion} \emph{Issues and Resolutions to Open Problems in Rational
+Rotations of Three Dimensional Minkowski Space}, companion in
+\path{formalisations/MinkowskiRotations/IssuesAndOpenProblems.pdf},
+12 October 2026.
+\end{thebibliography}
+\end{document}

@@ -1,0 +1,140 @@
+module
+import Purelib.Approximation.Gaussian.Acquisition.Positive.Obstruction
+public import Purelib.Approximation.Gaussian.Acquisition.Positive.Obstruction.Signed
+import Purelib.Approximation.Gaussian.Acquisition.Signed.Gap.Basic
+import Purelib.Approximation.Gaussian.Acquisition.Signed.Gap.Canonical
+import Purelib.Approximation.Gaussian.Acquisition.Signed.Gap.Decision
+public import Purelib.Approximation.Gaussian.Acquisition.Signed.Gap.PositiveRunner
+public import Purelib.Approximation.Gaussian.Acquisition.Signed.Gap.Requested
+import Purelib.Approximation.Gaussian.Acquisition.Signed.Gap.Schedule
+import Purelib.Approximation.Gaussian.Acquisition.State.Schedule
+import Purelib.Approximation.Gaussian.Division.Prepared.Basic
+import Purelib.Approximation.Gaussian.Equivalence
+import Purelib.Approximation.Gaussian.FractionalAction.Integral.Words.Fold.Basic
+import Purelib.Approximation.Gaussian.FractionalAction.Integral.Words.Fold.Comparison
+import Purelib.Approximation.Gaussian.FractionalAction.Integral.Words.Fold.Reversal
+import Purelib.Approximation.Gaussian.FractionalAction.Integral.Words.Homogeneous
+import Purelib.Approximation.Gaussian.FractionalAction.Integral.Words.Product
+import Purelib.Approximation.Gaussian.FractionalAction.Integral.Words.Step
+import Purelib.Approximation.Gaussian.Name.Coherent
+import Purelib.Approximation.Gaussian.Vector.Operational.Basic
+import Purelib.Approximation.Matrix.Operational.Integral.Word
+public import Purelib.Curves
+import Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutCancellation
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.EvenExteriorCorrection
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBoundary
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartEnergy
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.EnergyTolerance
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedCapPaths
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ParentOrientation
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RequestedEnergy
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceEnergy
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPeriodArea
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalLoopSplit
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularPeriodControl
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.EvenAccuracy
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.NamedArea
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.OddAccuracy
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.PairedAreaAccuracy
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.PairedAreaReadings
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodReadback
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.ResidualComparison
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoExteriorBudget
+public import Purelib.Curves.Legendre.Acquisition.Signed.Gap
+public import Purelib.Curves.Legendre.BoundedTransport
+import Purelib.Curves.Legendre.FractionalWords.Braid
+import Purelib.Curves.Legendre.FractionalWords.Periods
+public import Purelib.Curves.Legendre.FractionalWords.Standard
+import Purelib.Curves.Legendre.GapTransport
+import Purelib.Curves.Legendre.GuaranteedFold
+import Purelib.Curves.Legendre.PeriodMonodromy
+public import Purelib.Curves.Legendre.SeparatedWords
+public import Purelib.Examples.Curves.Hyperelliptic.Quartic.Branches
+public import Purelib.Examples.Curves.Hyperelliptic.Periods.Worked
+public import Purelib.Examples.Curves.Legendre.Branches
+public import Purelib.Examples.Curves.Legendre.NormalizedMonodromy
+import Purelib.Examples.Riemann.ExplicitLegendreNormalizedAcquisition
+import Purelib.Geometry.Rectangle.Partition.PreparedBoxBoundary
+public import Purelib.Integration.Algebraic.SquareFactor.ObservationTransport
+import Purelib.LinearAlgebra.Matrix.Basic
+import Purelib.LinearAlgebra.Matrix.Integral.Word
+public import Purelib.Riemann
+import Purelib.Riemann.Branches.ContainedPreparedPolynomialSheets
+import Purelib.Riemann.Branches.PreparedSheetContinuation
+import Purelib.Riemann.Branches.ReconditionedClearSheetContinuation
+import Purelib.Riemann.Integration.LegendreModularMonodromy
+public import Purelib.Riemann.Integration.PreparedCompatiblePrimitives
+import Purelib.Riemann.Integration.PreparedConstantModels
+import Purelib.Riemann.Integration.PreparedOwnerClosedSchedules
+import Purelib.Riemann.Integration.PreparedRefinementPrograms
+public import Purelib.Riemann.Integration.PreparedSubdivisionModels
+public import Purelib.Riemann.Integration.PreparedSubedgePrimitiveContacts
+import Purelib.Riemann.Meshes.GridLiftedDualSteps
+import Purelib.Riemann.Meshes.GridLiftedVertexConnections
+import Purelib.Riemann.Normalization.RegularFaceInverseModels
+import Purelib.Riemann.Paths.PreparedClearPathModels
+import Purelib.Riemann.Paths.PreparedTraceEdges
+public import Purelib.Riemann.Paths.RectangularCenteredTrace
+public import Purelib.Riemann.Paths.RectangularSeamTraceBounds
+public import Purelib.Riemann.Periods.NewtonRequestedBilinear
+public import Purelib.Riemann.Periods.NewtonStandardExteriorPeriods
+import Purelib.Riemann.Periods.PeriodTheorem
+public import Purelib.Riemann.Periods.PolynomialPeriodObservation
+import Purelib.Riemann.Periods.PreparedGridPeriodPrograms
+import Purelib.Riemann.Periods.PreparedRootClosedPeriodBank
+import Purelib.Riemann.Periods.PreparedRootSafePeriodPrograms
+import Purelib.Riemann.Readings.PreparedBoundaryGluing
+public import Purelib.Riemann.Readings.PrimitiveDyadicBoundary
+public import Purelib.Riemann.Readings.ReconditionedDifferentialObservations
+public import Purelib.Riemann.Readings.RectangularBoundaryAccuracy
+import Purelib.Riemann.Readings.RectangularExteriorBoundary
+public import Purelib.Riemann.Readings.RectangularRequestedClippedBoundary
+import Purelib.Riemann.Readings.UniformPreparedRequests
+import Purelib.Riemann.RootContinuation.NewtonObservationLocalEnergy
+import Purelib.Riemann.RootContinuation.NewtonObservationPartitions
+import Purelib.Riemann.RootContinuation.NewtonProtectedObservations
+import Purelib.Riemann.RootContinuation.NewtonRequestedExteriorRemainder
+import Purelib.Riemann.RootContinuation.NewtonRequestedObservationEnergy
+public import Purelib.Riemann.RootContinuation.NewtonStandardPairedBoundary
+public import Purelib.Riemann.RootContinuation.PreparedCheckedBridgeRoots
+public import Purelib.Riemann.RootContinuation.PreparedNewtonBandArea
+import Purelib.Riemann.RootContinuation.PreparedNewtonPairedBoundaryRoots
+import Purelib.Riemann.RootContinuation.PreparedNewtonPairedSideTrace
+import Purelib.Riemann.RootContinuation.PreparedNewtonPrimitiveTotals
+public import Purelib.Riemann.RootContinuation.PreparedRootConnectedRefinements
+public import Purelib.Riemann.RootContinuation.RequestedNewtonPairedArea
+import Purelib.Riemann.RootContinuation.RequestedNewtonPrimitiveParents
+public import Purelib.Riemann.RootContinuation.SquareRootDecisionLaws
+import Purelib.Riemann.RootContinuation.SquareRootReconditioning
+import Purelib.Riemann.RootContinuation.SquareRootTrace
+import Purelib.Riemann.RootContinuation.SquareRootTrackEquivalence
+import Purelib.Riemann.RootContinuation.UniformSquareRootPreparation
+public import Purelib.Riemann.Topology.NewtonSewnAreaComparison
+import Purelib.Riemann.Topology.NewtonSewnExcision
+import Purelib.Riemann.Topology.PreparedCycleModels
+import Purelib.Riemann.Topology.PreparedSurfaceCoercivity
+public import Purelib.Riemann.Topology.PrimitiveSurfaceLower
+public import Purelib.RootIsolation.SquareRoot.Preparation.Congruence
+import Purelib.RootIsolation.SquareRoot.Preparation.Handoff.Trace
+public import Purelib.RootIsolation.SquareRoot.Preparation.StationaryObstruction
+public import Purelib.Topology.Surface.Sewing.Bilinear.Coverage
+import Purelib.Topology.Surface.Sewing.PrimitiveSewing
+import Purelib.Topology.Surface.Sewing.SewnPrimitiveAccounting
+public import Purelib.Topology.Surface.Sewing.SewnPrimitiveAnalyticControl
+import Purelib.Topology.Surface.Sewing.SewnPrimitiveBoundary
+import Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces
+import Purelib.Topology.Surface.Sewing.SewnPrimitiveRefinement
+import Purelib.Topology.Surface.Sewing.SewnPrimitiveRequests
+import Purelib.Topology.Surface.Word.NormalForm
+import Purelib.Topology.Surface.Word.Selection
+import Purelib.Topology.Surface.Word.Surgery
+
+@[expose] public section
+
+/-!
+# CCL Riemann chapter surface
+
+This facade exposes the general Riemann development and small canonical
+curve-theorem examples. Fixed numerical quartic fixtures are retired.
+-/

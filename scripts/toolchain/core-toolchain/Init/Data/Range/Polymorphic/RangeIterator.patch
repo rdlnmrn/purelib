@@ -1,0 +1,498 @@
+--- a/Init/Data/Range/Polymorphic/RangeIterator.lean
++++ b/Init/Data/Range/Polymorphic/RangeIterator.lean
+@@ -135,17 +135,17 @@
+     it.IsPlausibleOutput a ↔
+       it.internalState.next = some a ∧
+         a ≤ it.internalState.upperBound := by
+-  simp [IterM.IsPlausibleOutput, isPlausibleStep_iff, Monadic.step]
+-  split
+-  · simp [*]
+-  · constructor
+-    · rintro ⟨it', hit'⟩
+-      split at hit' <;> simp_all
+-    · rename_i heq
+-      rintro ⟨heq', h'⟩
+-      simp only [heq', Option.some.injEq] at heq
+-      simp_all
+-
++  constructor
++  · rintro ⟨it', h⟩; change IterStep.yield it' a = Monadic.step it at h
++    cases hn : it.internalState.next with
++    | none => rewrite [Monadic.step, hn] at h; cases h
++    | some b =>
++      by_cases hb : b ≤ it.internalState.upperBound
++      · rewrite [Monadic.step, hn] at h; dsimp only at h; rewrite [if_pos hb] at h; cases (IterStep.yield.inj h).2; exact ⟨rfl, hb⟩
++      · rewrite [Monadic.step, hn] at h; dsimp only at h; rewrite [if_neg hb] at h; cases h
++  · rintro ⟨hn, hp⟩
++    refine ⟨⟨⟨succ? a, it.internalState.upperBound⟩⟩, ?_⟩
++    change IterStep.yield _ a = Monadic.step it; rewrite [Monadic.step, hn]; dsimp only; rewrite [if_pos hp]; rfl
+ theorem Iterator.isPlausibleOutput_next
+     [UpwardEnumerable α] [LE α] [DecidableLE α]
+     {it : Iter (α := Rxc.Iterator α) α} (h : it.internalState.next = some a)
+@@ -169,23 +169,23 @@
+         a ≤ it.internalState.upperBound ∧
+         UpwardEnumerable.succ? a = it'.internalState.next ∧
+         it'.internalState.upperBound = it.internalState.upperBound := by
+-  simp only [IterM.IsPlausibleSuccessorOf]
+   constructor
+   · rintro ⟨step, h, h'⟩
+-    cases h'
+-    simp only [Monadic.step] at h
++    change step = Monadic.step it at h'; cases h'
++    unfold Monadic.step at h
+     split at h
+     · cases h
+     · split at h
+-      · simp only [IterStep.successor, Option.some.injEq] at h
+-        cases h
++      · have heq := Option.some.inj h; cases heq
+         exact ⟨_, ‹_›, ‹_›, rfl, rfl⟩
+       · cases h
+-  · rintro ⟨a, h, hP, h'⟩
++  · rintro ⟨a, h, hp, hs, hb⟩
+     refine ⟨.yield it' a, rfl, ?_⟩
+-    simp only [IterM.IsPlausibleStep, Iterator.IsPlausibleStep, step, h, hP, ↓reduceIte,
+-      IterStep.yield.injEq, and_true, instIteratorIteratorIdOfUpwardEnumerableOfDecidableLE] -- TODO
+-    simp [h'.1, ← h'.2]
++    change IterStep.yield it' a = Monadic.step it
++    rewrite [Monadic.step, h]; dsimp only; rewrite [if_pos hp]
++    have hstate : it'.internalState = ⟨succ? a, it.internalState.upperBound⟩ := by cases it' with | mk state => cases state; cases hs; cases hb; rfl
++    exact congrArg (fun state : Rxc.Iterator α => IterStep.yield (IterM.mk state) a) hstate
++
+ 
+ theorem Iterator.isPlausibleSuccessorOf_iff
+     [UpwardEnumerable α] [LE α] [DecidableLE α]
+@@ -388,40 +388,40 @@
+         out ≤ it.internalState.upperBound := by
+   constructor
+   · intro h
+-    induction h
+-    case direct h =>
+-      rw [Monadic.isPlausibleOutput_iff] at h
+-      refine ⟨0, by simp [h, LawfulUpwardEnumerable.succMany?_zero]⟩
+-    case indirect h _ ih =>
+-      rw [Monadic.isPlausibleSuccessorOf_iff] at h
+-      obtain ⟨n, hn⟩ := ih
+-      obtain ⟨a, ha, h₁, h₂, h₃⟩ := h
+-      refine ⟨n + 1, ?_⟩
+-      simp [ha, ← h₃, hn.2, succMany?_add_one_eq_succ?_bind_succMany?, h₂, hn]
++    induction h with
++    | direct h =>
++      obtain ⟨hn, hu⟩ := Monadic.isPlausibleOutput_iff.mp h
++      refine ⟨0, ?_, hu⟩; rewrite [hn, Option.bind_some, succMany?_zero]; rfl
++    | indirect h _ ih =>
++      obtain ⟨a, ha, hlt, hs, hb⟩ := Monadic.isPlausibleSuccessorOf_iff.mp h
++      obtain ⟨n, hn, hu⟩ := ih
++      refine ⟨n + 1, ?_, ?_⟩
++      · rewrite [ha, Option.bind_some, succMany?_add_one_eq_succ?_bind_succMany?, hs]; exact hn
++      · rewrite [← hb]; exact hu
+   · rintro ⟨n, hn, hu⟩
+-    induction n generalizing it
+-    case zero =>
+-      apply IterM.IsPlausibleIndirectOutput.direct
+-      rw [Monadic.isPlausibleOutput_iff]
+-      exact ⟨by simpa [LawfulUpwardEnumerable.succMany?_zero] using hn, hu⟩
+-    case succ ih =>
+-      cases hn' : it.internalState.next
+-      · simp [hn'] at hn
+-      rename_i a
+-      simp only [hn', Option.bind_some] at hn
+-      have hle : UpwardEnumerable.LE a out := ⟨_, hn⟩
+-      rw [succMany?_add_one_eq_succ?_bind_succMany?] at hn
+-      cases hn' : succ? a
+-      · simp only [hn', Option.bind_none, reduceCtorEq] at hn
+-      rename_i a'
+-      simp only [hn', Option.bind_some] at hn
+-      specialize ih (it := ⟨some a', it.internalState.upperBound⟩) hn hu
+-      refine IterM.IsPlausibleIndirectOutput.indirect ?_ ih
+-      rw [Monadic.isPlausibleSuccessorOf_iff]
+-      refine ⟨a, ‹_›, ?_, hn', rfl⟩
+-      haveI := UpwardEnumerable.instLETransOfLawfulUpwardEnumerableLE (α := α)
+-      exact Trans.trans (α := α) (r := (· ≤ ·)) (UpwardEnumerable.le_iff.mpr hle) hu
+-
++    induction n generalizing it with
++    | zero =>
++      apply IterM.IsPlausibleIndirectOutput.direct; apply Monadic.isPlausibleOutput_iff.mpr
++      refine ⟨?_, hu⟩
++      cases hs : it.internalState.next with
++      | none => rewrite [hs, Option.bind_none] at hn; cases hn
++      | some a => rewrite [hs, Option.bind_some, succMany?_zero] at hn; exact hn
++    | succ n ih =>
++      cases hs : it.internalState.next with
++      | none => rewrite [hs, Option.bind_none] at hn; cases hn
++      | some a =>
++        rewrite [hs, Option.bind_some] at hn
++        have hlt : UpwardEnumerable.LE a out := ⟨n + 1, hn⟩
++        rewrite [succMany?_add_one_eq_succ?_bind_succMany?] at hn
++        cases hsucc : succ? a with
++        | none => rewrite [hsucc, Option.bind_none] at hn; cases hn
++        | some a' =>
++          rewrite [hsucc, Option.bind_some] at hn
++          have hi := ih (it := ⟨⟨some a', it.internalState.upperBound⟩⟩) hn hu
++          refine IterM.IsPlausibleIndirectOutput.indirect ?_ hi
++          apply Monadic.isPlausibleSuccessorOf_iff.mpr; refine ⟨a, hs, ?_, hsucc, rfl⟩
++          haveI := UpwardEnumerable.instLETransOfLawfulUpwardEnumerableLE (α := α)
++          exact Trans.trans (α := α) (UpwardEnumerable.le_iff.mpr hlt) hu
+ theorem Iterator.isPlausibleIndirectOutput_iff
+     [UpwardEnumerable α] [LE α] [DecidableLE α]
+     [LawfulUpwardEnumerable α] [LawfulUpwardEnumerableLE α]
+@@ -429,8 +429,8 @@
+     it.IsPlausibleIndirectOutput out ↔
+       ∃ n, it.internalState.next.bind (succMany? n ·) = some out ∧
+         out ≤ it.internalState.upperBound := by
+-  simp only [Iter.isPlausibleIndirectOutput_iff_isPlausibleIndirectOutput_toIterM,
+-    Monadic.isPlausibleIndirectOutput_iff, Iter.toIterM]
++  exact Iter.isPlausibleIndirectOutput_iff_isPlausibleIndirectOutput_toIterM.trans
++    Monadic.isPlausibleIndirectOutput_iff
+ 
+ section IteratorLoop
+ 
+@@ -468,22 +468,22 @@
+             return acc) next acc h
+   finally
+     case hf =>
+-      rw [Monadic.isPlausibleIndirectOutput_iff]
+-      simp only [UpwardEnumerable.le_iff] at ha₁
+-      obtain ⟨n, hn⟩ := ha₁
++      apply Monadic.isPlausibleIndirectOutput_iff.mpr
++      obtain ⟨n, hn⟩ := UpwardEnumerable.le_iff.mp ha₁
+       exact ⟨n, hn, ha₂⟩
+     case hle =>
+-      simp only [UpwardEnumerable.le_iff] at hna hab ⊢
+-      exact UpwardEnumerable.le_trans hna hab
++      exact UpwardEnumerable.le_iff.mpr (UpwardEnumerable.le_trans (UpwardEnumerable.le_iff.mp hna) (UpwardEnumerable.le_iff.mp hab))
+     case hle' =>
+-      simp only [UpwardEnumerable.le_iff]
++      apply UpwardEnumerable.le_iff.mpr
+       refine ⟨1, ?_⟩
+-      simpa [succMany?_one] using hs
++      exact succMany?_one.trans hs
+     case hle'' =>
+       exact UpwardEnumerable.le_iff.mpr (UpwardEnumerable.le_refl _)
+     case decreasing =>
+-      simp_wf
+-      simp [IteratorLoop.rel, Monadic.isPlausibleStep_iff, Monadic.step, *]
++      apply Or.inl
++      refine ⟨next, ?_, h'⟩
++      change IterStep.yield _ next = Monadic.step _
++      rewrite [Monadic.step]; dsimp only; rewrite [if_pos hu, hs]; rfl
+ 
+ private noncomputable def Iterator.instIteratorLoop.loop.wf [UpwardEnumerable α] [LE α] [DecidableLE α]
+     [LawfulUpwardEnumerable α] [LawfulUpwardEnumerableLE α]
+@@ -716,17 +716,17 @@
+     it.IsPlausibleOutput a ↔
+       it.internalState.next = some a ∧
+         a < it.internalState.upperBound := by
+-  simp [IterM.IsPlausibleOutput, isPlausibleStep_iff, Monadic.step]
+-  split
+-  · simp [*]
+-  · constructor
+-    · rintro ⟨it', hit'⟩
+-      split at hit' <;> simp_all
+-    · rename_i heq
+-      rintro ⟨heq', h'⟩
+-      simp only [heq', Option.some.injEq] at heq
+-      simp_all
+-
++  constructor
++  · rintro ⟨it', h⟩; change IterStep.yield it' a = Monadic.step it at h
++    cases hn : it.internalState.next with
++    | none => rewrite [Monadic.step, hn] at h; cases h
++    | some b =>
++      by_cases hb : b < it.internalState.upperBound
++      · rewrite [Monadic.step, hn] at h; dsimp only at h; rewrite [if_pos hb] at h; cases (IterStep.yield.inj h).2; exact ⟨rfl, hb⟩
++      · rewrite [Monadic.step, hn] at h; dsimp only at h; rewrite [if_neg hb] at h; cases h
++  · rintro ⟨hn, hp⟩
++    refine ⟨⟨⟨succ? a, it.internalState.upperBound⟩⟩, ?_⟩
++    change IterStep.yield _ a = Monadic.step it; rewrite [Monadic.step, hn]; dsimp only; rewrite [if_pos hp]; rfl
+ theorem Iterator.isPlausibleOutput_next
+     [UpwardEnumerable α] [LT α] [DecidableLT α]
+     {it : Iter (α := Rxo.Iterator α) α} (h : it.internalState.next = some a)
+@@ -750,23 +750,23 @@
+         a < it.internalState.upperBound ∧
+         UpwardEnumerable.succ? a = it'.internalState.next ∧
+         it'.internalState.upperBound = it.internalState.upperBound := by
+-  simp only [IterM.IsPlausibleSuccessorOf]
+   constructor
+   · rintro ⟨step, h, h'⟩
+-    cases h'
+-    simp only [Monadic.step] at h
++    change step = Monadic.step it at h'; cases h'
++    unfold Monadic.step at h
+     split at h
+     · cases h
+     · split at h
+-      · simp only [IterStep.successor, Option.some.injEq] at h
+-        cases h
++      · have heq := Option.some.inj h; cases heq
+         exact ⟨_, ‹_›, ‹_›, rfl, rfl⟩
+       · cases h
+-  · rintro ⟨a, h, hP, h'⟩
++  · rintro ⟨a, h, hp, hs, hb⟩
+     refine ⟨.yield it' a, rfl, ?_⟩
+-    simp only [IterM.IsPlausibleStep, Iterator.IsPlausibleStep, step, h, hP, ↓reduceIte,
+-      IterStep.yield.injEq, and_true, instIteratorIteratorIdOfUpwardEnumerableOfDecidableLT] -- TODO
+-    simp [h'.1, ← h'.2]
++    change IterStep.yield it' a = Monadic.step it
++    rewrite [Monadic.step, h]; dsimp only; rewrite [if_pos hp]
++    have hstate : it'.internalState = ⟨succ? a, it.internalState.upperBound⟩ := by cases it' with | mk state => cases state; cases hs; cases hb; rfl
++    exact congrArg (fun state : Rxo.Iterator α => IterStep.yield (IterM.mk state) a) hstate
++
+ 
+ theorem Iterator.isPlausibleSuccessorOf_iff
+     [UpwardEnumerable α] [LT α] [DecidableLT α]
+@@ -968,40 +968,40 @@
+         out < it.internalState.upperBound := by
+   constructor
+   · intro h
+-    induction h
+-    case direct h =>
+-      rw [Monadic.isPlausibleOutput_iff] at h
+-      refine ⟨0, by simp [h, LawfulUpwardEnumerable.succMany?_zero]⟩
+-    case indirect h _ ih =>
+-      rw [Monadic.isPlausibleSuccessorOf_iff] at h
+-      obtain ⟨n, hn⟩ := ih
+-      obtain ⟨a, ha, h₁, h₂, h₃⟩ := h
+-      refine ⟨n + 1, ?_⟩
+-      simp [ha, ← h₃, hn.2, succMany?_add_one_eq_succ?_bind_succMany?, h₂, hn]
++    induction h with
++    | direct h =>
++      obtain ⟨hn, hu⟩ := Monadic.isPlausibleOutput_iff.mp h
++      refine ⟨0, ?_, hu⟩; rewrite [hn, Option.bind_some, succMany?_zero]; rfl
++    | indirect h _ ih =>
++      obtain ⟨a, ha, hlt, hs, hb⟩ := Monadic.isPlausibleSuccessorOf_iff.mp h
++      obtain ⟨n, hn, hu⟩ := ih
++      refine ⟨n + 1, ?_, ?_⟩
++      · rewrite [ha, Option.bind_some, succMany?_add_one_eq_succ?_bind_succMany?, hs]; exact hn
++      · rewrite [← hb]; exact hu
+   · rintro ⟨n, hn, hu⟩
+-    induction n generalizing it
+-    case zero =>
+-      apply IterM.IsPlausibleIndirectOutput.direct
+-      rw [Monadic.isPlausibleOutput_iff]
+-      exact ⟨by simpa [LawfulUpwardEnumerable.succMany?_zero] using hn, hu⟩
+-    case succ ih =>
+-      cases hn' : it.internalState.next
+-      · simp [hn'] at hn
+-      rename_i a
+-      simp only [hn', Option.bind_some] at hn
+-      have hlt : UpwardEnumerable.LT a out := ⟨_, hn⟩
+-      rw [succMany?_add_one_eq_succ?_bind_succMany?] at hn
+-      cases hn' : succ? a
+-      · simp only [hn', Option.bind_none, reduceCtorEq] at hn
+-      rename_i a'
+-      simp only [hn', Option.bind_some] at hn
+-      specialize ih (it := ⟨some a', it.internalState.upperBound⟩) hn hu
+-      refine IterM.IsPlausibleIndirectOutput.indirect ?_ ih
+-      rw [Monadic.isPlausibleSuccessorOf_iff]
+-      refine ⟨a, ‹_›, ?_, hn', rfl⟩
+-      haveI := UpwardEnumerable.instLTTransOfLawfulUpwardEnumerableLT (α := α)
+-      exact Trans.trans (α := α) (UpwardEnumerable.lt_iff.mpr hlt) hu
+-
++    induction n generalizing it with
++    | zero =>
++      apply IterM.IsPlausibleIndirectOutput.direct; apply Monadic.isPlausibleOutput_iff.mpr
++      refine ⟨?_, hu⟩
++      cases hs : it.internalState.next with
++      | none => rewrite [hs, Option.bind_none] at hn; cases hn
++      | some a => rewrite [hs, Option.bind_some, succMany?_zero] at hn; exact hn
++    | succ n ih =>
++      cases hs : it.internalState.next with
++      | none => rewrite [hs, Option.bind_none] at hn; cases hn
++      | some a =>
++        rewrite [hs, Option.bind_some] at hn
++        have hlt : UpwardEnumerable.LT a out := ⟨n, hn⟩
++        rewrite [succMany?_add_one_eq_succ?_bind_succMany?] at hn
++        cases hsucc : succ? a with
++        | none => rewrite [hsucc, Option.bind_none] at hn; cases hn
++        | some a' =>
++          rewrite [hsucc, Option.bind_some] at hn
++          have hi := ih (it := ⟨⟨some a', it.internalState.upperBound⟩⟩) hn hu
++          refine IterM.IsPlausibleIndirectOutput.indirect ?_ hi
++          apply Monadic.isPlausibleSuccessorOf_iff.mpr; refine ⟨a, hs, ?_, hsucc, rfl⟩
++          haveI := UpwardEnumerable.instLTTransOfLawfulUpwardEnumerableLT (α := α)
++          exact Trans.trans (α := α) (UpwardEnumerable.lt_iff.mpr hlt) hu
+ theorem Iterator.isPlausibleIndirectOutput_iff
+     [UpwardEnumerable α] [LT α] [DecidableLT α]
+     [LawfulUpwardEnumerable α] [LawfulUpwardEnumerableLT α]
+@@ -1009,8 +1009,8 @@
+     it.IsPlausibleIndirectOutput out ↔
+       ∃ n, it.internalState.next.bind (succMany? n ·) = some out ∧
+         out < it.internalState.upperBound := by
+-  simp only [Iter.isPlausibleIndirectOutput_iff_isPlausibleIndirectOutput_toIterM,
+-    Monadic.isPlausibleIndirectOutput_iff, Iter.toIterM]
++  exact Iter.isPlausibleIndirectOutput_iff_isPlausibleIndirectOutput_toIterM.trans
++    Monadic.isPlausibleIndirectOutput_iff
+ 
+ section IteratorLoop
+ 
+@@ -1049,18 +1049,21 @@
+             return acc) next acc h
+   finally
+     case hf =>
+-      rw [Monadic.isPlausibleIndirectOutput_iff]
++      apply Monadic.isPlausibleIndirectOutput_iff.mpr
+       obtain ⟨n, hn⟩ := ha₁
+       exact ⟨n, hn, ha₂⟩
+     case hle =>
+       exact UpwardEnumerable.le_trans hna hab
+     case hle' =>
+       refine ⟨1, ?_⟩
+-      simpa [succMany?_one] using hs
++      exact succMany?_one.trans hs
+     case hle'' =>
+       exact UpwardEnumerable.le_refl _
+     case decreasing =>
+-      simp_wf; simp [IteratorLoop.rel, Monadic.isPlausibleStep_iff, Monadic.step, *]
++      apply Or.inl
++      refine ⟨next, ?_, h'⟩
++      change IterStep.yield _ next = Monadic.step _
++      rewrite [Monadic.step]; dsimp only; rewrite [if_pos hu, hs]; rfl
+ 
+ private noncomputable def Iterator.instIteratorLoop.loop.wf [UpwardEnumerable α] [LT α] [DecidableLT α]
+     [LawfulUpwardEnumerable α] [LawfulUpwardEnumerableLT α]
+@@ -1272,10 +1275,14 @@
+     {it : IterM (α := Rxi.Iterator α) Id α} :
+     it.IsPlausibleOutput a ↔
+       it.internalState.next = some a := by
+-  simp [IterM.IsPlausibleOutput, isPlausibleStep_iff, Monadic.step]
+-  split
+-  · simp [*]
+-  · simp_all [eq_comm (a := a)]
++  constructor
++  · rintro ⟨it', h⟩; change IterStep.yield it' a = Monadic.step it at h
++    cases hn : it.internalState.next with
++    | none => rewrite [Monadic.step, hn] at h; cases h
++    | some b => rewrite [Monadic.step, hn] at h; cases (IterStep.yield.inj h).2; rfl
++  · intro hn
++    refine ⟨⟨⟨succ? a⟩⟩, ?_⟩
++    change IterStep.yield _ a = Monadic.step it; rewrite [Monadic.step, hn]; rfl
+ 
+ theorem Iterator.isPlausibleOutput_next
+     [UpwardEnumerable α]
+@@ -1296,20 +1303,19 @@
+     it'.IsPlausibleSuccessorOf it ↔
+       ∃ a, it.internalState.next = some a ∧
+         UpwardEnumerable.succ? a = it'.internalState.next := by
+-  simp only [IterM.IsPlausibleSuccessorOf]
+   constructor
+   · rintro ⟨step, h, h'⟩
+-    cases h'
+-    simp only [Monadic.step] at h
++    change step = Monadic.step it at h'; cases h'
++    unfold Monadic.step at h
+     split at h
+     · cases h
+-    · cases h
+-      simp_all
+-  · rintro ⟨a, h, h'⟩
++    · have heq := Option.some.inj h; cases heq
++      exact ⟨_, ‹_›, rfl⟩
++  · rintro ⟨a, hn, hs⟩
+     refine ⟨.yield it' a, rfl, ?_⟩
+-    simp only [IterM.IsPlausibleStep, Iterator.IsPlausibleStep, step, h,
+-      IterStep.yield.injEq, and_true, instIteratorIteratorIdOfUpwardEnumerable] -- TODO
+-    simp [h']
++    change IterStep.yield it' a = Monadic.step it; rewrite [Monadic.step, hn]
++    have hstate : it'.internalState = ⟨succ? a⟩ := by cases it' with | mk state => cases state; cases hs; rfl
++    exact congrArg (fun state : Rxi.Iterator α => IterStep.yield (IterM.mk state) a) hstate
+ 
+ theorem Iterator.isPlausibleSuccessorOf_iff
+     [UpwardEnumerable α]
+@@ -1455,45 +1461,42 @@
+       ∃ n, it.internalState.next.bind (succMany? n ·) = some out := by
+   constructor
+   · intro h
+-    induction h
+-    case direct h =>
+-      rw [Monadic.isPlausibleOutput_iff] at h
+-      refine ⟨0, by simp [h, LawfulUpwardEnumerable.succMany?_zero]⟩
+-    case indirect h _ ih =>
+-      rw [Monadic.isPlausibleSuccessorOf_iff] at h
++    induction h with
++    | direct h =>
++      have hn := Monadic.isPlausibleOutput_iff.mp h
++      refine ⟨0, ?_⟩; rewrite [hn, Option.bind_some, succMany?_zero]; rfl
++    | indirect h _ ih =>
++      obtain ⟨a, ha, hs⟩ := Monadic.isPlausibleSuccessorOf_iff.mp h
+       obtain ⟨n, hn⟩ := ih
+-      obtain ⟨a, ha, h⟩ := h
+       refine ⟨n + 1, ?_⟩
+-      simp [ha, succMany?_add_one_eq_succ?_bind_succMany?, hn, h]
++      rewrite [ha, Option.bind_some, succMany?_add_one_eq_succ?_bind_succMany?, hs]; exact hn
+   · rintro ⟨n, hn⟩
+-    induction n generalizing it
+-    case zero =>
+-      apply IterM.IsPlausibleIndirectOutput.direct
+-      rw [Monadic.isPlausibleOutput_iff]
+-      simpa [LawfulUpwardEnumerable.succMany?_zero] using hn
+-    case succ ih =>
+-      cases hn' : it.internalState.next
+-      · simp [hn'] at hn
+-      rename_i a
+-      simp only [hn', Option.bind_some] at hn
+-      have hlt : UpwardEnumerable.LT a out := ⟨_, hn⟩
+-      rw [succMany?_add_one_eq_succ?_bind_succMany?] at hn
+-      cases hn' : succ? a
+-      · simp only [hn', Option.bind_none, reduceCtorEq] at hn
+-      rename_i a'
+-      simp only [hn', Option.bind_some] at hn
+-      specialize ih (it := ⟨⟨some a'⟩⟩) hn
+-      refine IterM.IsPlausibleIndirectOutput.indirect ?_ ih
+-      rw [Monadic.isPlausibleSuccessorOf_iff]
+-      exact ⟨a, ‹_›, hn'⟩
++    induction n generalizing it with
++    | zero =>
++      apply IterM.IsPlausibleIndirectOutput.direct; apply Monadic.isPlausibleOutput_iff.mpr
++      cases hs : it.internalState.next with
++      | none => rewrite [hs, Option.bind_none] at hn; cases hn
++      | some a => rewrite [hs, Option.bind_some, succMany?_zero] at hn; exact hn
++    | succ n ih =>
++      cases hs : it.internalState.next with
++      | none => rewrite [hs, Option.bind_none] at hn; cases hn
++      | some a =>
++        rewrite [hs, Option.bind_some, succMany?_add_one_eq_succ?_bind_succMany?] at hn
++        cases hsucc : succ? a with
++        | none => rewrite [hsucc, Option.bind_none] at hn; cases hn
++        | some a' =>
++          rewrite [hsucc, Option.bind_some] at hn
++          have hi := ih (it := ⟨⟨some a'⟩⟩) hn
++          refine IterM.IsPlausibleIndirectOutput.indirect ?_ hi
++          apply Monadic.isPlausibleSuccessorOf_iff.mpr; exact ⟨a, hs, hsucc⟩
+ 
+ theorem Iterator.isPlausibleIndirectOutput_iff
+     [UpwardEnumerable α] [LawfulUpwardEnumerable α]
+     {it : Iter (α := Rxi.Iterator α) α} {out : α} :
+     it.IsPlausibleIndirectOutput out ↔
+       ∃ n, it.internalState.next.bind (succMany? n ·) = some out := by
+-  simp only [Iter.isPlausibleIndirectOutput_iff_isPlausibleIndirectOutput_toIterM,
+-    Monadic.isPlausibleIndirectOutput_iff, Iter.toIterM]
++  exact Iter.isPlausibleIndirectOutput_iff_isPlausibleIndirectOutput_toIterM.trans
++    Monadic.isPlausibleIndirectOutput_iff
+ 
+ section IteratorLoop
+ 
+@@ -1527,17 +1530,20 @@
+           | ⟨.done acc', _⟩ => return acc') next acc h
+   finally
+     case hf =>
+-      rw [Monadic.isPlausibleIndirectOutput_iff]
++      apply Monadic.isPlausibleIndirectOutput_iff.mpr
+       exact ha
+     case hle =>
+       exact UpwardEnumerable.le_trans hna hab
+     case hle' =>
+       refine ⟨1, ?_⟩
+-      simpa [succMany?_one] using hs
++      exact succMany?_one.trans hs
+     case hle'' =>
+       exact UpwardEnumerable.le_refl _
+     case decreasing =>
+-      simp_wf; simp [IteratorLoop.rel, Monadic.isPlausibleStep_iff, Monadic.step, *]
++      apply Or.inl
++      refine ⟨next, ?_, h'⟩
++      change IterStep.yield _ next = Monadic.step _
++      rewrite [Monadic.step]; dsimp only; rewrite [hs]; rfl
+ 
+ private noncomputable def Iterator.instIteratorLoop.loop.wf [UpwardEnumerable α]
+     [LawfulUpwardEnumerable α]

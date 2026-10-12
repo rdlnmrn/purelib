@@ -1,0 +1,464 @@
+--- a/Lean/Elab/PreDefinition/WF/Unfold.lean
++++ b/Lean/Elab/PreDefinition/WF/Unfold.lean
+@@ -13,6 +13,12 @@
+ import Lean.Meta.Tactic.Simp.Main
+ import Lean.Meta.Tactic.Delta
+ import Lean.Meta.Tactic.Refl
++import Lean.Meta.Tactic.Intro
++import Lean.Meta.Tactic.Apply
++import Lean.Meta.Tactic.Replace
++import Lean.Meta.Tactic.Rewrite
++import Lean.Meta.Tactic.Generalize
++import Lean.Meta.Tactic.Cases
+ import Init.Simproc
+ 
+ /-!
+@@ -28,6 +34,390 @@
+ namespace Lean.Elab.WF
+ open Meta
+ open Eqns
++
++/-- Expose only original lambda and let applications, retaining conditional discriminators. -/
++private partial def exposePointwiseStep (e : Expr) : Expr :=
++  match e with
++  | .letE _ _ value body _ => exposePointwiseStep (body.instantiate1 value)
++  | .mdata _ body => exposePointwiseStep body
++  | .app f a =>
++    let e' := mkApp (exposePointwiseStep f) a
++    let b := e'.headBeta
++    if b != e' then exposePointwiseStep b else
++      if e'.isAppOfArity ``ite 5 || e'.isAppOfArity ``dite 5 then
++        let args := e'.getAppArgs
++        let decision := args[2]!
++        if decision.isAppOfArity ``Decidable.isTrue 2 then
++          exposePointwiseStep (if e'.isAppOf ``dite then mkApp args[3]! decision.appArg! else args[3]!)
++        else if decision.isAppOfArity ``Decidable.isFalse 2 then
++          exposePointwiseStep (if e'.isAppOf ``dite then mkApp args[4]! decision.appArg! else args[4]!)
++        else e'
++      else e'
++  | .lam name type body mode => .lam name type (exposePointwiseStep body) mode
++  | _ => e
++
++/-- Reduce complete original proof applications that explicitly retain a recursive callback.
++
++Scalar transport can then follow dependent proof fields without identifying functions.
++Fixed cases and available constructor Iff certificates are handled before this reduction. -/
++private partial def normalizeProofs (e left right : Expr) : MetaM Expr := do
++  if e.getAppFn.isConst && (e.getAppArgs.any (fun sub => sub == left || sub == right)) && (← isProp (← inferType e)) then
++    let info ← getConstInfo e.getAppFn.constName!
++    if let some body := info.value? (allowOpaque := true) then
++      let expanded := (mkAppN (body.instantiateLevelParams info.levelParams e.getAppFn.constLevels!) e.getAppArgs).headBeta
++      if expanded != e then return ← normalizeProofs expanded left right
++  match e with
++  | .app f a => return mkApp (← normalizeProofs f left right) (← normalizeProofs a left right)
++  | .proj owner index value => return .proj owner index (← normalizeProofs value left right)
++  | .lam n t b bi =>
++    withLocalDecl n bi t fun parameter => do
++      mkLambdaFVars #[parameter] (← normalizeProofs (b.instantiate1 parameter) left right)
++  | .letE _ _ value body _ => normalizeProofs (body.instantiate1 value) left right
++  | .mdata metadata body => return .mdata metadata (← normalizeProofs body left right)
++  | _ => return e
++
++/-- Close an exact step equality using scalar results and original constructor certificates. -/
++private partial def solvePointwiseStep (goal : MVarId) (pointwise leftCallback rightCallback : Expr) : MetaM Unit := goal.withContext do
++  let some (_, left, right) := (← goal.getType').eq?
++    | throwError "pointwise producer expected equality"
++  if left == right then
++    goal.assign (← mkEqRefl left)
++    return
++  unless ((← goal.getType').find? (· == leftCallback)).isSome do
++    try goal.refl; return catch _ => pure ()
++  if left.getAppFn == leftCallback then
++    if let some _ ← observing? do
++      let remaining ← goal.apply pointwise
++      unless remaining.isEmpty do throwError "not a direct recursive value"
++      return ()
++    then return
++  let left' := exposePointwiseStep (← whnfHeadPred left (fun e => pure (!e.isAppOf ``ite && !e.isAppOf ``dite && !e.isAppOf ``Bind.bind)))
++  let right' := exposePointwiseStep (← whnfHeadPred right (fun e => pure (!e.isAppOf ``ite && !e.isAppOf ``dite && !e.isAppOf ``Bind.bind)))
++  let goal ← goal.change (← mkEq left' right')
++  if left' == right' then
++    goal.assign (← mkEqRefl left')
++    return
++  unless ((← goal.getType').find? (· == leftCallback)).isSome do
++    try goal.refl; return catch _ => pure ()
++  if left'.getAppFn == right'.getAppFn && left'.getAppFn.isConst then
++    let constructorName := left'.getAppFn.constName!
++    if let .ctorInfo _ ← getConstInfo constructorName then
++      let equivalenceName := constructorName ++ `injEq
++      if (← getEnv).contains equivalenceName then
++        if let some _ ← observing? do
++          let equivalence ← mkConstWithFreshMVarLevels equivalenceName
++          let (arguments, _, claim) ← forallMetaTelescopeReducing (← inferType equivalence)
++          unless claim.isAppOfArity ``Iff 2 do throwError "constructor certificate is not Iff"
++          let claims := claim.getAppArgs
++          unless ← isDefEq claims[0]! (← goal.getType') do
++            throwError "constructor certificate does not identify complete original applications"
++          let certificate := mkAppN equivalence arguments
++          let reverse := mkApp3 (mkConst ``Iff.mpr) claims[0]! claims[1]! certificate
++          for remaining in ← goal.apply reverse do
++            for fieldGoal in ← remaining.splitAnd do
++              solvePointwiseStep fieldGoal pointwise leftCallback rightCallback
++          return ()
++        then return
++  if let some elimination := (← goal.getType').find? (fun e =>
++      e.getAppFn.isConst && e.getAppFn.constName!.getString! == "casesOn") then
++    let parent := elimination.getAppFn.constName!.getPrefix
++    for argument in elimination.getAppArgs do
++      if argument.isFVar then
++        let type ← whnf (← inferType argument)
++        if type.getAppFn.isConst && type.getAppFn.constName! == parent then
++          let branches ← goal.cases argument.fvarId!
++          for branch in branches do
++            solvePointwiseStep branch.mvarId (branch.subst.apply pointwise) (branch.subst.apply leftCallback) (branch.subst.apply rightCallback)
++          return
++  if let some recursor := (← goal.getType').find? (fun e =>
++      e.getAppFn.isConst && ["rec", "recOn"].contains e.getAppFn.constName!.getString! && !e.hasLooseBVars) then
++    if let .recInfo information ← getConstInfo recursor.getAppFn.constName! then
++      let arguments := recursor.getAppArgs
++      if information.getMajorIdx < arguments.size then
++        let major ← whnf arguments[information.getMajorIdx]!
++        let rec projectionRoot (e : Expr) : MetaM Expr := do
++          match e with
++          | .proj _ _ value => projectionRoot value
++          | _ =>
++            if e.getAppFn.isConst then
++              if let some information ← getProjectionFnInfo? e.getAppFn.constName! then
++                if information.numParams < e.getAppArgs.size then
++                  return ← projectionRoot e.getAppArgs[information.numParams]!
++            return e
++        let root ← projectionRoot major
++        if root.isFVar then
++          let branches ← goal.cases root.fvarId!
++          for branch in branches do
++            solvePointwiseStep branch.mvarId (branch.subst.apply pointwise) (branch.subst.apply leftCallback) (branch.subst.apply rightCallback)
++          return
++  let conditional? := [left', right'].find? (fun e =>
++      (e.isAppOfArity ``ite 5 || e.isAppOfArity ``dite 5) &&
++      !e.getAppArgs[2]!.hasLooseBVars &&
++      !e.getAppArgs[2]!.isAppOf ``Decidable.isTrue &&
++      !e.getAppArgs[2]!.isAppOf ``Decidable.isFalse)
++  if let some conditional := conditional? then
++    let args := conditional.getAppArgs
++    let applyDecision (branch : MVarId) (hypothesis : Expr) (positive : Bool) : MetaM Unit := branch.withContext do
++      let rule := if conditional.isAppOf ``dite then
++          if positive then ``dif_pos else ``dif_neg
++        else if positive then ``if_pos else ``if_neg
++      let equation := mkAppN (mkConst rule conditional.getAppFn.constLevels!)
++        #[args[1]!, args[2]!, hypothesis, args[0]!, args[3]!, args[4]!]
++      let rewritten ← branch.rewrite (← branch.getType') equation
++      unless rewritten.mvarIds.isEmpty do throwError "unexpected conditional transport goals"
++      let next ← branch.replaceTargetEq rewritten.eNew rewritten.eqProof
++      solvePointwiseStep next pointwise leftCallback rightCallback
++    let context ← getLCtx
++    if let some hypothesis := context.findDecl? (fun declaration => if declaration.type == args[1]! then some declaration else none) then
++      applyDecision goal hypothesis.toExpr true
++    else if let some hypothesis := context.findDecl? (fun declaration => if declaration.type == mkNot args[1]! then some declaration else none) then
++      applyDecision goal hypothesis.toExpr false
++    else
++      let (positive, negative) ← goal.byCasesDec args[1]! args[2]! `condition
++      applyDecision positive.mvarId (mkFVar positive.fvarId) true
++      applyDecision negative.mvarId (mkFVar negative.fvarId) false
++    return
++  if let some branches ← splitTarget? goal then
++    for branch in branches do solvePointwiseStep branch pointwise leftCallback rightCallback
++    return
++  let left' ← normalizeProofs left' leftCallback rightCallback
++  let right' ← normalizeProofs right' leftCallback rightCallback
++  let goal ← goal.change (← mkEq left' right')
++  if let some call := (← goal.getType').find? (fun e =>
++      e.getAppFn == leftCallback && e.getAppArgs.size == 2 && !e.hasLooseBVars) then
++    let eq := mkAppN pointwise call.getAppArgs
++    let rewritten ← goal.rewrite (← goal.getType') eq
++    unless rewritten.mvarIds.isEmpty do throwError "unexpected recursive transport goals"
++    let next ← goal.replaceTargetEq rewritten.eNew rewritten.eqProof
++    solvePointwiseStep next pointwise leftCallback rightCallback
++    return
++  if left'.isApp && right'.isApp then
++    if (← isDefEq left'.appFn! right'.appFn!) then
++      let sub ← mkFreshExprSyntheticOpaqueMVar (← mkEq left'.appArg! right'.appArg!)
++      solvePointwiseStep sub.mvarId! pointwise leftCallback rightCallback
++      let proof ← mkCongrArg left'.appFn! (← instantiateMVars sub)
++      goal.assign proof
++      return
++  throwError "unsupported pointwise step shape: {← goal.getType'}"
++
++namespace FamilyProducer
++
++/-- Expose complete original lambda applications without simplifying beneath functions. -/
++private partial def beta (e : Expr) : Expr :=
++  match e with
++  | .mdata _ body => beta body
++  | .letE _ _ value body _ => beta (body.instantiate1 value)
++  | .app f a =>
++      let e' := mkApp (beta f) (beta a)
++      let reduced := e'.headBeta
++      if reduced == e' then e' else beta reduced
++  | .lam n t body bi => .lam n t (beta body) bi
++  | _ => e
++
++/-- Inline only a retained proof's complete original application. -/
++private partial def inlineProof (e : Expr) : MetaM Expr := do
++  let e := beta e
++  if e.getAppFn.isConst then
++    unless isPrivateName e.getAppFn.constName! do return e
++    let info ← getConstInfo e.getAppFn.constName!
++    if let some body := info.value? (allowOpaque := true) then
++      let reduced ← whnf (beta (mkAppN (body.instantiateLevelParams info.levelParams e.getAppFn.constLevels!) e.getAppArgs))
++      if reduced == e then return e
++      return ← inlineProof reduced
++  return e
++
++/-- Remove irrelevant callback binders from retained scalar bound certificates. -/
++private partial def normalize (e left right : Expr) : MetaM Expr := do
++  if e.isApp && (e.getAppFn == left || e.getAppFn == right) && e.getAppArgs.size == 2 then
++    let args := e.getAppArgs
++    return mkAppN e.getAppFn #[← normalize args[0]! left right, ← inlineProof args[1]!]
++  if (← isProp (← inferType e)) then
++    return ← inlineProof e
++  match e with
++  | .app f a => return mkApp (← normalize f left right) (← normalize a left right)
++  | .lam n t b bi =>
++    withLocalDecl n bi t fun parameter => do
++      mkLambdaFVars #[parameter] (← normalize (b.instantiate1 parameter) left right)
++  | .mdata md b => return .mdata md (← normalize b left right)
++  | _ => return e
++
++/-- Identify a closed whole recursive result family. -/
++private def family? (e callback : Expr) : Option Expr :=
++  e.find? fun e => e.isLambda && !e.hasLooseBVars && (beta e.bindingBody!).getAppFn == callback
++
++/-- Move an original fixed conditional outside its parameter binder. -/
++private def factor (e : Expr) : MetaM (Option Expr) := do
++  unless e.isLambda do return none
++  lambdaTelescope e fun parameters body => do
++    unless parameters.size == 1 do return none
++    let body ← whnfHeadPred body (fun e => pure (!e.isAppOf ``dite && !e.isAppOf ``Bind.bind))
++    unless body.isAppOfArity ``dite 5 do return none
++    let args := body.getAppArgs
++    if args[1]!.containsFVar parameters[0]!.fvarId! then return none
++    let whenTrue ← withLocalDeclD `retained args[1]! fun retained => do
++      let family ← mkLambdaFVars parameters (mkApp args[3]! retained)
++      mkLambdaFVars #[retained] family
++    let negation ← mkAppM ``Not #[args[1]!]
++    let whenFalse ← withLocalDeclD `retained negation fun retained => do
++      let family ← mkLambdaFVars parameters (mkApp args[4]! retained)
++      mkLambdaFVars #[retained] family
++    let parameterType ← inferType parameters[0]!
++    let resultType ← inferType body
++    let levels := [← getLevel parameterType, ← getLevel resultType]
++    return some (mkAppN (mkConst ``WellFounded.Nat.dite_family_eq levels)
++      #[parameterType, resultType, args[1]!, args[2]!, whenTrue, whenFalse])
++
++/-- Prove the actual original step's whole-family congruence by complete transports. -/
++private partial def solve (goal : MVarId) (families left right : Expr) : MetaM Unit := goal.withContext do
++  let some (_, lhs, rhs) := (← goal.getType').eq? | throwError "expected equality"
++  if lhs == rhs then
++    goal.assign (← mkEqRefl lhs)
++    return
++  let lhs ← normalize (beta lhs) left right
++  let rhs ← normalize (beta rhs) left right
++  let goal ← goal.change (← mkEq lhs rhs)
++  if let some call := lhs.find? (fun e => e.getAppFn == left && e.getAppArgs.size == 2 &&
++      e.getAppArgs[0]!.isAppOfArity ``PSigma.mk 4 &&
++      !e.getAppArgs[0]!.getAppArgs[3]!.hasLooseBVars && !e.getAppArgs[1]!.hasLooseBVars) then
++    let callArgs := call.getAppArgs
++    let stateArgs := callArgs[0]!.getAppArgs
++    let nextIndex := stateArgs[3]!
++    let bound := callArgs[1]!
++    let family ← withLocalDeclD `parameter stateArgs[0]! fun parameter => do
++      let next := mkAppN callArgs[0]!.getAppFn #[stateArgs[0]!, stateArgs[1]!, parameter, nextIndex]
++      mkLambdaFVars #[parameter] (mkApp2 left next bound)
++    let eq := mkApp2 families nextIndex bound
++    let familyType ← inferType family
++    withLocalDeclD `recursiveFamily familyType fun placeholder => do
++      let replaceCall (callback : Expr) (e : Expr) : Option Expr := do
++        guard (e.getAppFn == callback && e.getAppArgs.size == 2)
++        let args := e.getAppArgs
++        guard (args[0]!.isAppOfArity ``PSigma.mk 4)
++        let state := args[0]!.getAppArgs
++        guard (state[0]! == stateArgs[0]! && state[1]! == stateArgs[1]! && state[3]! == nextIndex && args[1]! == bound)
++        return mkApp placeholder state[2]!
++      let l := lhs.replace (replaceCall left)
++      let r := rhs.replace (replaceCall right)
++      if l != r then throwError "complete original expanded callback contexts differ"
++      let context ← mkLambdaFVars #[placeholder] l
++      goal.assign (← mkCongrArg context eq)
++    return
++  if let some leftFamily := family? lhs left then
++    if let some rightFamily := family? rhs right then
++      let eq ← lambdaTelescope leftFamily fun parameters body => do
++        let args := (beta body).getAppArgs
++        let nextIndex ← whnf (← mkAppM ``PSigma.snd #[args[0]!])
++        if nextIndex.containsFVar parameters[0]!.fvarId! || args[1]!.containsFVar parameters[0]!.fvarId! then
++          throwError "family index/bound still depends on recursive parameter"
++        return mkAppN families #[nextIndex, args[1]!]
++      unless ← isDefEq (← inferType eq) (← mkEq leftFamily rightFamily) do
++        throwError "actual supplied family equality does not match"
++      let familyType ← inferType leftFamily
++      withLocalDeclD `recursiveFamily familyType fun placeholder => do
++        let l := lhs.replace fun e => if e == leftFamily then some placeholder else none
++        let r := rhs.replace fun e => if e == rightFamily then some placeholder else none
++        unless ← isDefEq l r do throwError "original callback contexts differ"
++        let context ← mkLambdaFVars #[placeholder] l
++        goal.assign (← mkCongrArg context eq)
++      return
++  if let some leftEq ← factor lhs then
++    if let some rightEq ← factor rhs then
++      let (_, _, leftConditional) := (← inferType leftEq).eq?.get!
++      let (_, _, rightConditional) := (← inferType rightEq).eq?.get!
++      let sub ← mkFreshExprSyntheticOpaqueMVar (← mkEq leftConditional rightConditional)
++      solve sub.mvarId! families left right
++      goal.assign (← mkEqTrans leftEq (← mkEqTrans (← instantiateMVars sub) (← mkEqSymm rightEq)))
++      return
++  let lhs ← whnfHeadPred lhs (fun e => pure (!e.isAppOf ``dite && !e.isAppOf ``Bind.bind))
++  let rhs ← whnfHeadPred rhs (fun e => pure (!e.isAppOf ``dite && !e.isAppOf ``Bind.bind))
++  let goal ← goal.change (← mkEq lhs rhs)
++  if lhs.isAppOfArity ``dite 5 && rhs.isAppOfArity ``dite 5 then
++    let a := lhs.getAppArgs
++    let b := rhs.getAppArgs
++    unless ← isDefEq a[1]! b[1]! do throwError "different original discriminators"
++    let trueEqual ← withLocalDeclD `retained a[1]! fun retained => do
++      let sub ← mkFreshExprSyntheticOpaqueMVar (← mkEq (mkApp a[3]! retained) (mkApp b[3]! retained))
++      solve sub.mvarId! families left right
++      mkLambdaFVars #[retained] (← instantiateMVars sub)
++    let falseEqual ← withLocalDeclD `retained (← mkAppM ``Not #[a[1]!]) fun retained => do
++      let sub ← mkFreshExprSyntheticOpaqueMVar (← mkEq (mkApp a[4]! retained) (mkApp b[4]! retained))
++      solve sub.mvarId! families left right
++      mkLambdaFVars #[retained] (← instantiateMVars sub)
++    let proof := mkAppN (mkConst ``WellFounded.Nat.dite_eq_by_branches [← getLevel a[0]!])
++      #[a[0]!, a[1]!, a[2]!, a[3]!, b[3]!, a[4]!, b[4]!, trueEqual, falseEqual]
++    goal.assign proof
++    return
++  throwError "unsupported original family step: {← goal.getType'}"
++
++end FamilyProducer
++
++/-- Split original index products before comparing complete recursive families. -/
++private partial def solveFamilyFields (goal : MVarId) (fields : Array Expr)
++    (families left right : Expr) : MetaM Unit := goal.withContext do
++  if let some field ← fields.findM? (fun field => do
++      pure (field.isFVar && (← whnf (← inferType field)).isAppOf ``PSigma)) then
++    for branch in (← goal.cases field.fvarId!) do
++      solveFamilyFields branch.mvarId branch.fields
++        (branch.subst.apply families) (branch.subst.apply left) (branch.subst.apply right)
++  else
++    FamilyProducer.solve goal families left right
++
++/-- Certify the original product-state recursion by whole recursive result families. -/
++private def familyNatFixEq? (fix : Expr) : MetaM (Option Expr) := observing? do
++  let args := fix.getAppArgs
++  unless args.size == 5 do throwError "expected saturated original natural fixed point"
++  let alpha ← whnf args[0]!
++  unless alpha.isAppOfArity ``PSigma 2 do throwError "not an original product state"
++  let some (.lam _ parameters index _) := alpha.getAppArgs.back? | throwError "not a product state family"
++  if index.hasLooseBVars then throwError "index depends on parameter"
++  let motive ← whnf args[1]!
++  unless motive.isLambda do throwError "not a constant original result motive"
++  let result := motive.bindingBody!
++  if result.hasLooseBVars then throwError "result depends on state"
++  let originalMeasure ← whnf args[2]!
++  unless originalMeasure.isLambda do throwError "not an original product measure"
++  let caseBody := originalMeasure.bindingBody!.consumeMData
++  unless caseBody.isAppOf ``PSigma.casesOn do throwError "not an original case-based product measure"
++  let branch := caseBody.getAppArgs.back!
++  let measure ← lambdaTelescope branch fun fields body => do
++    unless fields.size == 2 do throwError "not an original product measure branch"
++    if body.containsFVar fields[0]!.fvarId! then throwError "measure depends on parameter"
++    mkLambdaFVars #[fields[1]!] body
++  let levels := [← getLevel parameters, ← getLevel index, ← getLevel result]
++  let schemaArgs := #[parameters, index, result, measure, args[3]!]
++  let premise := mkAppN (mkConst ``WellFounded.Nat.FamilyStepCongruence levels) schemaArgs
++  let proof ← mkFreshExprSyntheticOpaqueMVar premise
++  let (introduced, goal) ← proof.mvarId!.introN 4
++  solveFamilyFields goal #[mkFVar introduced[0]!]
++    (mkFVar introduced[3]!) (mkFVar introduced[1]!) (mkFVar introduced[2]!)
++  let proof ← instantiateMVars proof
++  if proof.hasMVar then throwError "unresolved whole-family certificate"
++  let equation := mkAppN (mkConst ``WellFounded.Nat.fix_eq_of_familyStepCongruence levels)
++    (schemaArgs ++ #[proof, args[4]!])
++  let expected := mkAppN (mkConst ``WellFounded.Nat.fix_eq fix.getAppFn.constLevels!) args
++  unless ← isDefEq (← inferType equation) (← inferType expected) do
++    throwError "whole-family equation does not preserve original complete claim"
++  return equation
++
++/-- Use an imported pointwise equation certificate for the exact original natural recursion. -/
++private def pointwiseNatFixEq? (fix : Expr) : MetaM (Option Expr) := observing? do
++  let stepName := `WellFounded.Nat.StepCongruence
++  let eqName := `WellFounded.Nat.fix_eq_of_stepCongruence
++  unless (← getEnv).contains stepName && (← getEnv).contains eqName do
++    throwError "pointwise natural equation owner is not imported"
++  let args := fix.getAppArgs
++  unless args.size == 5 do throwError "expected saturated original natural fixed point"
++  -- Pointwise values cannot identify an opaque monadic continuation function.
++  -- The whole-family producer is tried first; unsupported bind steps retain the original equation route.
++  if (exposePointwiseStep args[3]!).find? (fun e => e.isAppOf ``Bind.bind) |>.isSome then
++    throwError "monadic step requires a whole-family certificate"
++  let levels := fix.getAppFn.constLevels!
++  let premise := mkAppN (mkConst stepName levels) args[:4].toArray
++  let proof ← mkFreshExprSyntheticOpaqueMVar premise
++  let (introduced, goal) ← proof.mvarId!.introN 4
++  solvePointwiseStep goal (mkFVar introduced[3]!) (mkFVar introduced[1]!) (mkFVar introduced[2]!)
++  let proof ← instantiateMVars proof
++  return mkAppN (mkConst eqName levels) (args[:4].toArray ++ #[proof, args[4]!])
+ 
+ def rwFixEq (mvarId : MVarId) : MetaM MVarId := mvarId.withContext do
+   let target ← mvarId.getType'
+@@ -40,7 +430,12 @@
+     | WellFounded.fix _α _C _r _hwf _F _x =>
+       pure <| mkAppN (mkConst ``WellFounded.fix_eq lhs'.getAppFn.constLevels!) lhs'.getAppArgs
+     | WellFounded.Nat.fix _α _C _motive _F _x =>
+-      pure <| mkAppN (mkConst ``WellFounded.Nat.fix_eq lhs'.getAppFn.constLevels!) lhs'.getAppArgs
++      if let some proof ← familyNatFixEq? lhs' then
++        pure proof
++      else if let some proof ← pointwiseNatFixEq? lhs' then
++        pure proof
++      else
++        pure <| mkAppN (mkConst ``WellFounded.Nat.fix_eq lhs'.getAppFn.constLevels!) lhs'.getAppArgs
+     | _ => throwTacticEx `rwFixEq mvarId m!"expected saturated fixed-point application in {lhs'}"
+   let F := lhs'.appFn!.appArg!
+   let x := lhs'.appArg!
+@@ -198,7 +593,28 @@
+   let step ← step.addExtraArgs matcherApp.remaining[1...*]
+   return .continue (some step)
+ 
++/-- Reduce original state eliminations before traversing a function-valued branch. -/
++private partial def reduceUnfoldState (goal : MVarId) : MetaM Unit := goal.withContext do
++  try goal.refl; return catch _ => pure ()
++  let some (_, lhs, rhs) := (← goal.getType').eq? | throwError "expected original equality"
++  let lhs ← whnfHeadPred lhs (fun e => pure (!e.isAppOf ``ite && !e.isAppOf ``dite && !e.isAppOf ``Bind.bind))
++  let rhs ← whnfHeadPred rhs (fun e => pure (!e.isAppOf ``ite && !e.isAppOf ``dite && !e.isAppOf ``Bind.bind))
++  let goal ← goal.change (← mkEq (exposePointwiseStep lhs) (exposePointwiseStep rhs))
++  try goal.refl; return catch _ => pure ()
++  if let some elimination := (← goal.getType').find? (fun e =>
++      e.getAppFn.isConst && e.getAppFn.constName!.getString! == "casesOn") then
++    let parent := elimination.getAppFn.constName!.getPrefix
++    for argument in elimination.getAppArgs do
++      if argument.isFVar then
++        let type ← whnf (← inferType argument)
++        if type.getAppFn.isConst && type.getAppFn.constName! == parent then
++          let branches ← goal.cases argument.fvarId!
++          for branch in branches do reduceUnfoldState branch.mvarId
++          return
++  throwError "original state does not reduce directly"
++
+ def mkUnfoldProof (declName : Name) (mvarId : MVarId) : MetaM Unit := withTransparency .all do
++  if let some _ ← observing? (reduceUnfoldState mvarId) then return
+   let ctx ← Simp.mkContext (config := { dsimp := false, etaStruct := .none, letToHave := false, singlePass := true })
+   let simprocs := ({} : Simp.SimprocsArray)
+   let simprocs ← simprocs.add ``matcherPushArg (post := false)
+@@ -220,8 +636,12 @@
+ 
+       let main ← mkFreshExprSyntheticOpaqueMVar type
+       let mvarId := main.mvarId!
+-      let wfPreprocessProof ← Simp.mkCongr { expr := type.appFn! } (← wfPreprocessProof.addExtraArgs xs)
+-      let mvarId ← applySimpResultToTarget mvarId type wfPreprocessProof
++      let appliedPreprocess ← wfPreprocessProof.addExtraArgs xs
++      let mvarId ← if (← isDefEq body appliedPreprocess.expr) then
++          pure mvarId
++        else do
++          let proof ← Simp.mkCongr { expr := type.appFn! } appliedPreprocess
++          applySimpResultToTarget mvarId type proof
+       let mvarId ← if preDef.declName != unaryPreDefName then deltaLHS mvarId else pure mvarId
+       let mvarId ← rwFixEq mvarId
+       mkUnfoldProof preDef.declName mvarId

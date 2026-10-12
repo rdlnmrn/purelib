@@ -1,0 +1,70 @@
+--- a/Init/Data/List/Basic.lean
++++ b/Init/Data/List/Basic.lean
+@@ -97,7 +97,7 @@
+   | cons x xs ih =>
+     cases i with
+     | zero => rfl
+-    | succ i => simp [set, ih]
++    | succ i => rewrite [set]; exact congrArg Nat.succ (ih (i := i))
+ 
+ /-! ### foldl -/
+ 
+@@ -110,7 +110,7 @@
+ theorem length_concat {as : List α} {a : α} : (concat as a).length = as.length + 1 := by
+   induction as with
+   | nil => rfl
+-  | cons _ xs ih => simp [concat, ih]
++  | cons _ xs ih => exact congrArg (fun n => n + 1) ih
+ 
+ theorem of_concat_eq_concat {as bs : List α} {a b : α} (h : as.concat a = bs.concat b) : as = bs ∧ a = b := by
+   match as, bs with
+@@ -622,7 +622,7 @@
+   induction as with
+   | nil => rfl
+   | cons a as ih =>
+-    simp_all only [HAppend.hAppend, Append.append, List.append]
++    exact congrArg (cons a) ih
+ 
+ instance : Std.LawfulIdentity (α := List α) (· ++ ·) [] where
+   left_id := nil_append
+@@ -630,13 +630,13 @@
+ 
+ @[simp, grind =] theorem length_append {as bs : List α} : (as ++ bs).length = as.length + bs.length := by
+   induction as with
+-  | nil => simp
+-  | cons _ as ih => simp [ih, Nat.succ_add]
++  | nil => exact (Nat.zero_add _).symm
++  | cons _ as ih => exact (congrArg Nat.succ ih).trans (Nat.succ_add _ _).symm
+ 
+ @[simp] theorem append_assoc (as bs cs : List α) : (as ++ bs) ++ cs = as ++ (bs ++ cs) := by
+   induction as with
+   | nil => rfl
+-  | cons a as ih => simp [ih]
++  | cons a as ih => exact congrArg (cons a) ih
+ 
+ grind_pattern append_assoc => (as ++ bs) ++ cs where
+   as =/= []; bs =/= []; cs =/= []
+@@ -648,10 +648,10 @@
+ 
+ -- Arguments are explicit as there is often ambiguity inferring the arguments.
+ theorem append_cons (as : List α) (b : α) (bs : List α) : as ++ b :: bs = as ++ [b] ++ bs := by
+-  simp
++  exact (append_assoc as [b] bs).symm
+ 
+ @[simp, grind =] theorem concat_eq_append {as : List α} {a : α} : as.concat a = as ++ [a] := by
+-  induction as <;> simp [concat, *]
++  induction as with | nil => rfl | cons x xs ih => exact congrArg (cons x) ih
+ 
+ theorem reverseAux_eq_append {as bs : List α} : reverseAux as bs = reverseAux as [] ++ bs := by
+   induction as generalizing bs with
+@@ -711,8 +711,8 @@
+ 
+ @[simp, grind =] theorem length_replicate {n : Nat} {a : α} : (replicate n a).length = n := by
+   induction n with
+-  | zero => simp
+-  | succ n ih => simp only [ih, replicate_succ, length_cons]
++  | zero => rfl
++  | succ n ih => exact congrArg Nat.succ ih
+ 
+ /-! ## Additional functions -/
+ 

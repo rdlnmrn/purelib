@@ -1,0 +1,35 @@
+module
+public import Purelib.Geometry.Curves.Folium.Formula
+
+public import formalisations.DivineProportions.Chapters.Examples.ChapterOne
+public import formalisations.DivineProportions.Chapters.Examples.ChapterTwo
+public import formalisations.DivineProportions.Chapters.Examples.ChapterTwoSquareSpread
+public import formalisations.DivineProportions.Chapters.Examples.ChapterThree
+public import formalisations.DivineProportions.Chapters.Examples.ChapterThreeCounting
+public import formalisations.DivineProportions.Chapters.Examples.ChapterFive
+public import formalisations.DivineProportions.Chapters.Examples.ChapterSix
+public import formalisations.DivineProportions.Chapters.Examples.ChapterSeven
+public import formalisations.DivineProportions.Chapters.Examples.ChapterSevenFieldFragments
+import Purelib.Polynomial.Recurrence.Spread.Values
+public import formalisations.DivineProportions.Chapters.Examples.ChapterEightFields
+public import formalisations.DivineProportions.Chapters.Examples.ChapterTen
+public import formalisations.DivineProportions.Chapters.Examples.ChapterEleven
+public import formalisations.DivineProportions.Chapters.Examples.ChapterTwelve
+public import formalisations.DivineProportions.Chapters.Examples.ChapterFourteen
+public import formalisations.DivineProportions.Chapters.Examples.ChapterFourteenPentagon
+public import formalisations.DivineProportions.Chapters.Examples.ChapterFourteenPentagonMetrics
+public import formalisations.DivineProportions.Chapters.Examples.ChapterFourteenRational
+public import formalisations.DivineProportions.Chapters.Examples.ChapterFifteen
+public import formalisations.DivineProportions.Chapters.Examples.ChapterFifteenCentralCircles
+public import formalisations.DivineProportions.Chapters.Examples.ChapterSeventeen
+public import formalisations.DivineProportions.Chapters.Examples.ChapterEighteen
+public import formalisations.DivineProportions.Chapters.Examples.ChapterNineteen
+public import formalisations.DivineProportions.Chapters.Examples.ChapterNineteenFolium
+public import formalisations.DivineProportions.Chapters.Examples.ChapterNineteenLemniscate
+
+/-!
+# Divine Proportions examples
+
+The source-numbered worked examples remain in the normal book facade because they are required coverage; this facade
+also exposes them as an example-focused surface.
+-/

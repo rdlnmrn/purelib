@@ -1,0 +1,44 @@
+--- a/Init/Data/Nat/Lemmas.lean
++++ b/Init/Data/Nat/Lemmas.lean
+@@ -359,7 +359,7 @@
+ protected abbrev sub_lt_self := @Nat.sub_lt_of_pos_le
+ 
+ theorem add_lt_of_lt_sub' {a b c : Nat} : b < c - a → a + b < c := by
+-  rw [Nat.add_comm]; exact Nat.add_lt_of_lt_sub
++  intro h; exact Nat.add_comm b a ▸ Nat.add_lt_of_lt_sub h
+ 
+ protected theorem sub_add_lt_sub (h₁ : m + k ≤ n) (h₂ : 0 < k) : n - (m + k) < n - m := by
+   rw [← Nat.sub_sub]; exact Nat.sub_lt_of_pos_le h₂ (Nat.le_sub_of_add_le' h₁)
+@@ -409,7 +409,7 @@
+   | inl h => rw [Nat.min_eq_left h, Nat.min_eq_left (Nat.succ_le_succ h)]
+   | inr h => rw [Nat.min_eq_right h, Nat.min_eq_right (Nat.succ_le_succ h)]
+ 
+-protected theorem min_self (a : Nat) : min a a = a := by simp
++protected theorem min_self (a : Nat) : min a a = a := if_pos (Nat.le_refl a)
+ instance : Std.IdempotentOp (α := Nat) min := ⟨Nat.min_self⟩
+ 
+ @[simp] protected theorem min_assoc : ∀ (a b c : Nat), min (min a b) c = min a (min b c)
+@@ -518,9 +518,9 @@
+   exact Nat.min_max_distrib_left ..
+ 
+ protected theorem pred_min_pred : ∀ (x y), min (pred x) (pred y) = pred (min x y)
+-  | 0, _ => by simp only [Nat.pred_zero, Nat.zero_min]
+-  | _, 0 => by simp only [Nat.pred_zero, Nat.min_zero]
+-  | _+1, _+1 => by simp only [Nat.pred_succ, Nat.succ_min_succ]
++  | 0, _ => by rw [Nat.pred_zero, Nat.zero_min, Nat.zero_min]; rfl
++  | _, 0 => by rw [Nat.pred_zero, Nat.min_zero, Nat.min_zero]; rfl
++  | _+1, _+1 => by rw [Nat.pred_succ, Nat.pred_succ, Nat.succ_min_succ]; rfl
+ 
+ protected theorem pred_max_pred : ∀ (x y), max (pred x) (pred y) = pred (max x y)
+   | 0, _ => by simp only [Nat.pred_zero, Nat.zero_max]
+@@ -1730,8 +1730,8 @@
+   rw [shiftRight_succ_inside _ k, shiftRight_succ]
+ 
+ @[simp, grind =] theorem zero_shiftLeft : ∀ n, 0 <<< n = 0
+-  | 0 => by simp
+-  | n + 1 => by simp [zero_shiftLeft n, shiftLeft_succ]
++  | 0 => rfl
++  | n + 1 => by rw [shiftLeft_succ, zero_shiftLeft n]
+ 
+ @[simp, grind =] theorem zero_shiftRight : ∀ n, 0 >>> n = 0
+   | 0 => by simp

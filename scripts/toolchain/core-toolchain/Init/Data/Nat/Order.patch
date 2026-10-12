@@ -1,0 +1,26 @@
+--- a/Init/Data/Nat/Order.lean
++++ b/Init/Data/Nat/Order.lean
+@@ -16,15 +16,15 @@
+ 
+ namespace Nat
+ 
+-public instance instIsLinearOrder : IsLinearOrder Nat := by
+-  apply IsLinearOrder.of_le
+-  · constructor; apply Nat.le_antisymm
+-  · constructor; apply Nat.le_trans
+-  · constructor; apply Nat.le_total
++public instance instIsLinearOrder : IsLinearOrder Nat where
++  le_refl := Nat.le_refl
++  le_trans := fun _ _ _ => Nat.le_trans
++  le_antisymm := fun _ _ => Nat.le_antisymm
++  le_total := Nat.le_total
+ 
+-public instance : LawfulOrderLT Nat := by
+-  apply LawfulOrderLT.of_le
+-  simp [Nat.lt_iff_le_and_ne]
++public instance : LawfulOrderLT Nat where
++  lt_iff _ _ := ⟨fun h => ⟨Nat.le_of_lt h, Nat.not_le_of_gt h⟩,
++    fun ⟨_, h⟩ => Nat.lt_of_not_ge h⟩
+ 
+ public instance : LawfulOrderMin Nat := by
+   apply LawfulOrderMin.of_le_min_iff

@@ -1,0 +1,153 @@
+--- a/Init/Data/Nat/Div/Basic.lean
++++ b/Init/Data/Nat/Div/Basic.lean
+@@ -40,17 +40,19 @@
+   change Nat.div _ _ = ite _ (Nat.div _ _ + 1) _
+   unfold Nat.div
+   split
+-  next =>
+-    rw [Nat.div.go]
++  next hPos =>
++    rewrite [Nat.div.go]
+     split
+-    next =>
+-      simp only [and_self, ↓reduceIte, *]
+-      congr 1
++    next hLe =>
++      rewrite [if_pos ⟨hPos, hLe⟩]
++      apply congrArg (fun quotient : Nat => quotient + 1)
+       apply div.go.fuel_congr
+-    next =>
+-      simp only [and_false, ↓reduceIte, *]
+-  next =>
+-    simp only [false_and, ↓reduceIte, *]
++    next hNotLe =>
++      rewrite [if_neg (fun guard => hNotLe guard.2)]
++      rfl
++  next hNotPos =>
++    rewrite [if_neg (fun guard => hNotPos guard.1)]
++    rfl
+ 
+ /--
+ An induction principle customized for reasoning about the recursion pattern of natural number
+@@ -71,27 +73,47 @@
+ theorem div_le_self (n k : Nat) : n / k ≤ n := by
+   induction n using Nat.strongRecOn with
+   | ind n ih =>
+-    rw [div_eq]
+-    -- Note: manual split to avoid Classical.em which is not yet defined
++    rewrite [div_eq]
+     cases (inferInstance : Decidable (0 < k ∧ k ≤ n)) with
+-    | isFalse h => simp [h]
++    | isFalse h =>
++      rewrite [if_neg h]
++      exact Nat.zero_le n
+     | isTrue h =>
+-      suffices (n - k) / k + 1 ≤ n by simp [h, this]
++      rewrite [if_pos h]
+       have ⟨hK, hKN⟩ := h
+       have hSub : n - k < n := sub_lt (Nat.lt_of_lt_of_le hK hKN) hK
+       have : (n - k) / k ≤ n - k := ih (n - k) hSub
+       exact succ_le_of_lt (Nat.lt_of_le_of_lt this hSub)
+ 
+ theorem div_lt_self {n k : Nat} (hLtN : 0 < n) (hLtK : 1 < k) : n / k < n := by
+-  rw [div_eq]
++  rewrite [div_eq]
+   cases (inferInstance : Decidable (0 < k ∧ k ≤ n)) with
+-  | isFalse h => simp [hLtN, h]
++  | isFalse h =>
++    rewrite [if_neg h]
++    exact hLtN
+   | isTrue h =>
+-    suffices (n - k) / k + 1 < n by simp [h, this]
++    rewrite [if_pos h]
+     have ⟨_, hKN⟩ := h
+-    have : (n - k) / k ≤ n - k := div_le_self (n - k) k
+-    have := Nat.add_le_of_le_sub hKN this
+-    exact Nat.lt_of_lt_of_le (Nat.add_lt_add_left hLtK _) this
++    have lower : (n - k) / k ≤ n - k := div_le_self (n - k) k
++    have sub_add : ∀ (a b : Nat), b ≤ a → a - b + b = a := by
++      intro a b
++      induction b generalizing a with
++      | zero =>
++        intro _
++        rfl
++      | succ b ih =>
++        cases a with
++        | zero =>
++          intro impossible
++          exact False.elim (Nat.not_succ_le_zero b impossible)
++        | succ a =>
++          intro bound
++          exact (congrArg (fun remaining : Nat => remaining + Nat.succ b)
++            (Nat.succ_sub_succ a b)).trans
++              (congrArg Nat.succ (ih a (Nat.le_of_succ_le_succ bound)))
++    have sum_bound : (n - k) / k + k ≤ n :=
++      Nat.le_trans (Nat.add_le_add_right lower k) (Nat.le_of_eq (sub_add n k hKN))
++    exact Nat.lt_of_lt_of_le (Nat.add_lt_add_left hLtK _) sum_bound
+ 
+ /--
+ Division of two divisible natural numbers. Division by `0` returns `0`.
+@@ -135,13 +157,15 @@
+   next =>
+     rw [Nat.modCore.go]
+     split
+-    next =>
+-      simp only [and_self, ↓reduceIte, *]
++    next hle =>
++      rewrite [if_pos ⟨‹0 < y›, hle⟩]
+       apply modCore.go.fuel_congr
+-    next =>
+-      simp only [and_false, ↓reduceIte, *]
+-  next =>
+-    simp only [false_and, ↓reduceIte, *]
++    next hle =>
++      rewrite [if_neg (fun h => hle h.2)]
++      rfl
++  next hpos =>
++    rewrite [if_neg (fun h => hpos h.1)]
++    rfl
+ 
+ protected theorem modCore_eq_mod (n m : Nat) : Nat.modCore n m = n % m := by
+   change Nat.modCore n m = Nat.mod n m
+@@ -245,9 +269,13 @@
+  rw [div_eq a, if_pos]; constructor <;> assumption
+ 
+ theorem mod_add_div (m k : Nat) : m % k + k * (m / k) = m := by
+-  induction m, k using mod.inductionOn with rw [div_eq, mod_eq]
+-  | base x y h => simp [h]
+-  | ind x y h IH => simp [h]; rw [Nat.mul_succ, ← Nat.add_assoc, IH, Nat.sub_add_cancel h.2]
++  induction m, k using mod.inductionOn with rewrite [div_eq, mod_eq]
++  | base x y h =>
++    rewrite [if_neg h, if_neg h, Nat.mul_zero]
++    exact Nat.add_zero x
++  | ind x y h IH =>
++    rewrite [if_pos h, if_pos h, Nat.mul_succ, ← Nat.add_assoc, IH]
++    exact Nat.sub_add_cancel h.2
+ 
+ theorem mod_def (m k : Nat) : m % k = m - k * (m / k) := by
+   rw [Nat.sub_eq_of_eq_add]
+@@ -299,9 +327,21 @@
+   apply (le_div_iff_mul_le (Nat.mul_pos kpos npos)).1
+   apply Nat.le_refl
+ 
+-theorem div_mul_le_self : ∀ (m n : Nat), m / n * n ≤ m
+-  | m, 0   => by simp
+-  | _, _+1 => (le_div_iff_mul_le (Nat.succ_pos _)).1 (Nat.le_refl _)
++theorem div_mul_le_self : ∀ (m n : Nat), m / n * n ≤ m := by
++  intro m n
++  induction m using Nat.strongRecOn with
++  | ind m ih =>
++    rewrite [div_eq]
++    cases (inferInstance : Decidable (0 < n ∧ n ≤ m)) with
++    | isFalse h =>
++      rewrite [if_neg h, Nat.zero_mul]
++      exact Nat.zero_le m
++    | isTrue h =>
++      rewrite [if_pos h, Nat.add_one_mul]
++      have smaller : m - n < m := sub_lt (Nat.lt_of_lt_of_le h.1 h.2) h.1
++      have bound := Nat.add_le_add_right (ih (m - n) smaller) n
++      rewrite [Nat.sub_add_cancel h.2] at bound
++      exact bound
+ 
+ theorem div_lt_iff_lt_mul (Hk : 0 < k) : x / k < y ↔ x < y * k := by
+   rw [← Nat.not_le, ← Nat.not_le]; exact not_congr (le_div_iff_mul_le Hk)

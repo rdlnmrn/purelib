@@ -1,0 +1,78 @@
+--- a/Init/Data/UInt/Bitwise.lean
++++ b/Init/Data/UInt/Bitwise.lean
+@@ -40,11 +40,71 @@
+ 
+ end $typeName
+ )
+-declare_bitwise_uint_theorems UInt8 8
++namespace UInt8
++
++@[simp, int_toBitVec] protected theorem toBitVec_not {a : UInt8} : (~~~a).toBitVec = ~~~a.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_and (a b : UInt8) : (a &&& b).toBitVec = a.toBitVec &&& b.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_or (a b : UInt8) : (a ||| b).toBitVec = a.toBitVec ||| b.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_xor (a b : UInt8) : (a ^^^ b).toBitVec = a.toBitVec ^^^ b.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_shiftLeft (a b : UInt8) : (a <<< b).toBitVec = a.toBitVec <<< (b.toBitVec % 8) := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_shiftRight (a b : UInt8) : (a >>> b).toBitVec = a.toBitVec >>> (b.toBitVec % 8) := (rfl)
++
++@[simp] protected theorem toNat_and (a b : UInt8) : (a &&& b).toNat = a.toNat &&& b.toNat := rfl
++@[simp] protected theorem toNat_or (a b : UInt8) : (a ||| b).toNat = a.toNat ||| b.toNat := rfl
++@[simp] protected theorem toNat_xor (a b : UInt8) : (a ^^^ b).toNat = a.toNat ^^^ b.toNat := by simp [toNat, -toNat_toBitVec]
++@[simp] protected theorem toNat_shiftLeft (a b : UInt8) : (a <<< b).toNat = a.toNat <<< (b.toNat % 8) % 2 ^ 8 := rfl
++@[simp] protected theorem toNat_shiftRight (a b : UInt8) : (a >>> b).toNat = a.toNat >>> (b.toNat % 8) := by simp [toNat, -toNat_toBitVec]
++
++end UInt8
+ declare_bitwise_uint_theorems UInt16 16
+-declare_bitwise_uint_theorems UInt32 32
+-declare_bitwise_uint_theorems UInt64 64
+-declare_bitwise_uint_theorems USize System.Platform.numBits
++namespace UInt32
++
++@[simp, int_toBitVec] protected theorem toBitVec_not {a : UInt32} : (~~~a).toBitVec = ~~~a.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_and (a b : UInt32) : (a &&& b).toBitVec = a.toBitVec &&& b.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_or (a b : UInt32) : (a ||| b).toBitVec = a.toBitVec ||| b.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_xor (a b : UInt32) : (a ^^^ b).toBitVec = a.toBitVec ^^^ b.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_shiftLeft (a b : UInt32) : (a <<< b).toBitVec = a.toBitVec <<< (b.toBitVec % 32) := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_shiftRight (a b : UInt32) : (a >>> b).toBitVec = a.toBitVec >>> (b.toBitVec % 32) := (rfl)
++
++@[simp] protected theorem toNat_and (a b : UInt32) : (a &&& b).toNat = a.toNat &&& b.toNat := rfl
++@[simp] protected theorem toNat_or (a b : UInt32) : (a ||| b).toNat = a.toNat ||| b.toNat := rfl
++@[simp] protected theorem toNat_xor (a b : UInt32) : (a ^^^ b).toNat = a.toNat ^^^ b.toNat := by simp [toNat, -toNat_toBitVec]
++@[simp] protected theorem toNat_shiftLeft (a b : UInt32) : (a <<< b).toNat = a.toNat <<< (b.toNat % 32) % 2 ^ 32 := rfl
++@[simp] protected theorem toNat_shiftRight (a b : UInt32) : (a >>> b).toNat = a.toNat >>> (b.toNat % 32) := by simp [toNat, -toNat_toBitVec]
++
++end UInt32
++namespace UInt64
++
++@[simp, int_toBitVec] protected theorem toBitVec_not {a : UInt64} : (~~~a).toBitVec = ~~~a.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_and (a b : UInt64) : (a &&& b).toBitVec = a.toBitVec &&& b.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_or (a b : UInt64) : (a ||| b).toBitVec = a.toBitVec ||| b.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_xor (a b : UInt64) : (a ^^^ b).toBitVec = a.toBitVec ^^^ b.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_shiftLeft (a b : UInt64) : (a <<< b).toBitVec = a.toBitVec <<< (b.toBitVec % 64) := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_shiftRight (a b : UInt64) : (a >>> b).toBitVec = a.toBitVec >>> (b.toBitVec % 64) := (rfl)
++
++@[simp] protected theorem toNat_and (a b : UInt64) : (a &&& b).toNat = a.toNat &&& b.toNat := rfl
++@[simp] protected theorem toNat_or (a b : UInt64) : (a ||| b).toNat = a.toNat ||| b.toNat := by simp [toNat, -toNat_toBitVec]
++@[simp] protected theorem toNat_xor (a b : UInt64) : (a ^^^ b).toNat = a.toNat ^^^ b.toNat := by simp [toNat, -toNat_toBitVec]
++@[simp] protected theorem toNat_shiftLeft (a b : UInt64) : (a <<< b).toNat = a.toNat <<< (b.toNat % 64) % 2 ^ 64 := by simp [toNat, -toNat_toBitVec]
++@[simp] protected theorem toNat_shiftRight (a b : UInt64) : (a >>> b).toNat = a.toNat >>> (b.toNat % 64) := by simp [toNat, -toNat_toBitVec]
++
++end UInt64
++namespace USize
++
++@[simp, int_toBitVec] protected theorem toBitVec_not {a : USize} : (~~~a).toBitVec = ~~~a.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_and (a b : USize) : (a &&& b).toBitVec = a.toBitVec &&& b.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_or (a b : USize) : (a ||| b).toBitVec = a.toBitVec ||| b.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_xor (a b : USize) : (a ^^^ b).toBitVec = a.toBitVec ^^^ b.toBitVec := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_shiftLeft (a b : USize) : (a <<< b).toBitVec = a.toBitVec <<< (b.toBitVec % System.Platform.numBits) := (rfl)
++@[simp, int_toBitVec] protected theorem toBitVec_shiftRight (a b : USize) : (a >>> b).toBitVec = a.toBitVec >>> (b.toBitVec % System.Platform.numBits) := (rfl)
++
++@[simp] protected theorem toNat_and (a b : USize) : (a &&& b).toNat = a.toNat &&& b.toNat := rfl
++@[simp] protected theorem toNat_or (a b : USize) : (a ||| b).toNat = a.toNat ||| b.toNat := by simp [toNat, -toNat_toBitVec]
++@[simp] protected theorem toNat_xor (a b : USize) : (a ^^^ b).toNat = a.toNat ^^^ b.toNat := by simp [toNat, -toNat_toBitVec]
++@[simp] protected theorem toNat_shiftLeft (a b : USize) : (a <<< b).toNat = a.toNat <<< (b.toNat % System.Platform.numBits) % 2 ^ System.Platform.numBits := by simp [toNat, -toNat_toBitVec]
++@[simp] protected theorem toNat_shiftRight (a b : USize) : (a >>> b).toNat = a.toNat >>> (b.toNat % System.Platform.numBits) := by simp [toNat, -toNat_toBitVec]
++
++end USize
+ 
+ @[simp, int_toBitVec]
+ theorem Bool.toBitVec_toUInt8 {b : Bool} :

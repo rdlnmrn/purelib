@@ -1,0 +1,39 @@
+--- a/Init/Omega/IntList.lean
++++ b/Init/Omega/IntList.lean
+@@ -195,13 +195,29 @@
+ 
+ theorem combo_eq_smul_add_smul (a : Int) (xs : IntList) (b : Int) (ys : IntList) :
+     combo a xs b ys = a * xs + b * ys := by
+-  dsimp [combo]
+-  induction xs generalizing ys with
+-  | nil => simp; rfl
+-  | cons x xs ih =>
+-    cases ys with
+-    | nil => simp; rfl
+-    | cons y ys => simp_all
++  induction xs generalizing ys with
++  | nil =>
++    induction ys with
++    | nil => rfl
++    | cons y ys ih =>
++      change (a * 0 + b * y) :: combo a [] b ys =
++        (0 + b * y) :: (a * ([] : IntList) + b * ys)
++      exact (congrArg (fun head => head :: combo a [] b ys)
++        (congrArg (fun value => value + b * y) (Int.mul_zero a))).trans
++        (congrArg (List.cons (0 + b * y)) ih)
++  | cons x xs ih =>
++    cases ys with
++    | nil =>
++      have tail := ih ([] : IntList)
++      rw [combo, List.zipWithAll_nil, smul_nil, add_def, List.zipWithAll_nil] at tail
++      rw [combo, List.zipWithAll_nil, smul_cons, smul_nil, add_def, List.zipWithAll_nil]
++      change (a * x + b * 0) :: xs.map (fun value => a * value + b * 0) =
++        (a * x + 0) :: (a * xs).map (fun value => value + 0)
++      exact (congrArg (fun head => head :: xs.map (fun value => a * value + b * 0))
++        (congrArg (fun value => a * x + value) (Int.mul_zero b))).trans
++        (congrArg (List.cons (a * x + 0)) tail)
++    | cons y ys =>
++      exact congrArg (List.cons (a * x + b * y)) (ih ys)
+ 
+ attribute [local simp] add_def mul_def in
+ theorem mul_distrib_left (xs ys zs : IntList) : (xs + ys) * zs = xs * zs + ys * zs := by

@@ -1,0 +1,65 @@
+--- a/Init/Data/Range/Polymorphic/Nat.lean
++++ b/Init/Data/Range/Polymorphic/Nat.lean
+@@ -29,25 +29,25 @@
+ 
+ instance : LawfulUpwardEnumerableLeast? Nat where
+   least?_le a := by
+-    simpa [Least?.least?] using ⟨a, by simp [UpwardEnumerable.succMany?]⟩
++    exact ⟨0, rfl, a, congrArg some (Nat.zero_add a)⟩
+ 
+ instance : LawfulUpwardEnumerableLE Nat where
+   le_iff a b := by
+     constructor
+     · intro h
+-      exact ⟨b - a, by simp [UpwardEnumerable.succMany?, Nat.add_sub_cancel' h]⟩
+-    · rintro ⟨n, hn⟩
+-      simp only [UpwardEnumerable.succMany?, Option.some.injEq] at hn
+-      rw [← hn]
+-      exact Nat.le_add_right _ _
++      exact ⟨b - a, congrArg some (Nat.add_sub_cancel' h)⟩
++    · intro ⟨n, hn⟩
++      exact Option.some.inj hn ▸ Nat.le_add_right a n
++
++
+ 
+ instance : LawfulUpwardEnumerable Nat where
+-  succMany?_zero := by simp [UpwardEnumerable.succMany?]
+-  succMany?_add_one := by simp [UpwardEnumerable.succMany?, UpwardEnumerable.succ?, Nat.add_assoc]
++  succMany?_zero := fun _ => rfl
++  succMany?_add_one := fun _ _ => congrArg some (Nat.add_assoc _ _ _).symm
+   ne_of_lt a b hlt := by
+-    have hn := hlt.choose_spec
+-    simp only [UpwardEnumerable.succMany?, Option.some.injEq] at hn
+-    omega
++    obtain ⟨n, hn⟩ := hlt
++    intro he
++    exact Nat.ne_of_lt (Nat.lt_add_of_pos_right (Nat.succ_pos n)) (he.trans (Option.some.inj hn).symm)
+ 
+ instance : LawfulUpwardEnumerableLT Nat := inferInstance
+ 
+@@ -60,16 +60,16 @@
+ instance : Rxo.HasSize Nat := .ofClosed
+ 
+ instance : Rxc.LawfulHasSize Nat where
+-  size_eq_zero_of_not_le lo hi hu := by
+-    simp only [Rxc.HasSize.size] at hu ⊢
+-    omega
+-  size_eq_one_of_succ?_eq_none upperBound init hu h := by
+-    simp only [UpwardEnumerable.succ?] at h
++  size_eq_zero_of_not_le lo hi hu := Nat.sub_eq_zero_of_le (Nat.succ_le_of_lt (Nat.lt_of_not_ge hu))
++  size_eq_one_of_succ?_eq_none lo hi hu h := by
+     cases h
+-  size_eq_succ_of_succ?_eq_some upperBound init hu h := by
+-    simp only [Rxc.HasSize.size, UpwardEnumerable.succ?,
+-      Option.some.injEq] at hu h ⊢
+-    omega
++  size_eq_succ_of_succ?_eq_some lo hi lo' hle hs := by
++    have he : lo + 1 = lo' := Option.some.inj hs
++    cases he
++    change hi + 1 - lo = hi + 1 - (lo + 1) + 1
++    rewrite [Nat.succ_sub_succ]
++    exact Nat.succ_sub hle
++
+ 
+ instance : Rxc.IsAlwaysFinite Nat := inferInstance
+ instance : Rxo.LawfulHasSize Nat := inferInstance

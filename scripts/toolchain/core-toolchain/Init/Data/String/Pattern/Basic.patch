@@ -1,0 +1,35 @@
+--- a/Init/Data/String/Pattern/Basic.lean
++++ b/Init/Data/String/Pattern/Basic.lean
+@@ -230,26 +230,26 @@
+     Std.Iterator (DefaultForwardSearcher pat s) Id (SearchStep s) where
+   IsPlausibleStep it
+     | .yield it' (.rejected p₁ p₂) => ∃ (h : it.internalState.currPos ≠ s.endPos),
+-      ForwardPattern.skipPrefixOfNonempty? pat (s.sliceFrom it.internalState.currPos) (by simpa) = none ∧
++      ForwardPattern.skipPrefixOfNonempty? pat (s.sliceFrom it.internalState.currPos) (by exact (Slice.isEmpty_sliceFrom_eq_false_iff).mpr h) = none ∧
+       p₁ = it.internalState.currPos ∧ p₂ = it.internalState.currPos.next h ∧
+       it'.internalState.currPos = it.internalState.currPos.next h
+     | .yield it' (.matched p₁ p₂) => ∃ (h : it.internalState.currPos ≠ s.endPos), ∃ pos,
+-      ForwardPattern.skipPrefixOfNonempty? pat (s.sliceFrom it.internalState.currPos) (by simpa) = some pos ∧
++      ForwardPattern.skipPrefixOfNonempty? pat (s.sliceFrom it.internalState.currPos) (by exact (Slice.isEmpty_sliceFrom_eq_false_iff).mpr h) = some pos ∧
+       p₁ = it.internalState.currPos ∧ p₂ = Slice.Pos.ofSliceFrom pos ∧
+       it'.internalState.currPos = Slice.Pos.ofSliceFrom pos
+     | .done => it.internalState.currPos = s.endPos
+     | .skip _ => False
+   step it :=
+     if h : it.internalState.currPos = s.endPos then
+-      pure (.deflate ⟨.done, by simp [h]⟩)
++      pure (.deflate ⟨.done, by exact Eq.mp rfl h⟩)
+     else
+-      match h' : ForwardPattern.skipPrefixOfNonempty? pat (s.sliceFrom it.internalState.currPos) (by simpa) with
++      match h' : ForwardPattern.skipPrefixOfNonempty? pat (s.sliceFrom it.internalState.currPos) (by exact (Slice.isEmpty_sliceFrom_eq_false_iff).mpr h) with
+       | some pos =>
+         pure (.deflate ⟨.yield ⟨⟨Slice.Pos.ofSliceFrom pos⟩⟩
+-          (.matched it.internalState.currPos (Slice.Pos.ofSliceFrom pos)), by simp [h, h']⟩)
++          (.matched it.internalState.currPos (Slice.Pos.ofSliceFrom pos)), by exact ⟨h, pos, h', rfl, rfl, rfl⟩⟩)
+       | none =>
+         pure (.deflate ⟨.yield ⟨⟨it.internalState.currPos.next h⟩⟩
+-          (.rejected it.internalState.currPos (it.internalState.currPos.next h)), by simp [h, h']⟩)
++          (.rejected it.internalState.currPos (it.internalState.currPos.next h)), by exact ⟨h, h', rfl, rfl, rfl⟩⟩)
+ 
+ private def finitenessRelation (s : Slice) [ForwardPattern pat] [StrictForwardPattern pat] :
+     Std.Iterators.FinitenessRelation (DefaultForwardSearcher pat s) Id where

@@ -1,0 +1,31 @@
+--- a/Init/Data/String/FindPos.lean
++++ b/Init/Data/String/FindPos.lean
+@@ -68,10 +68,15 @@
+   if h' : offset.IsValidForSlice s then
+     s.pos offset h'
+   else
+-    have : offset ≠ 0 := by rintro rfl; simp at h'
++    have : offset ≠ 0 := by
++      intro hz
++      subst offset
++      exact h' Pos.Raw.isValidForSlice_zero
+     s.posLE offset.dec
+ termination_by offset.byteIdx
+-decreasing_by simp only [ne_eq, Pos.Raw.eq_zero_iff, Pos.Raw.byteIdx_dec] at ⊢ this; omega
++decreasing_by
++  have hneNat : offset.byteIdx ≠ 0 := fun hn => this (Pos.Raw.ext hn)
++  exact Nat.sub_one_lt_of_le (Nat.pos_of_ne_zero hneNat) (Nat.le_refl _)
+ 
+ /--
+ Obtains the largest valid position that is strictly less than the given byte position.
+@@ -100,7 +105,9 @@
+ -/
+ @[inline, expose]
+ def Slice.Pos.prev {s : Slice} (pos : s.Pos) (h : pos ≠ s.startPos) : s.Pos :=
+-  s.posLT pos.offset (by simpa [Pos.Raw.pos_iff_ne_zero, Pos.ext_iff] using h)
++  s.posLT pos.offset (by
++    have hneNat : pos.offset.byteIdx ≠ 0 := fun hn => h (Pos.ext (Pos.Raw.ext hn))
++    exact Nat.pos_of_ne_zero hneNat)
+ 
+ /-- Returns the previous valid position before the given position, or {lean}`none` if the position is
+ the start position. -/

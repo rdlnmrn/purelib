@@ -1,0 +1,116 @@
+--- a/Init/Data/Array/Lemmas.lean
++++ b/Init/Data/Array/Lemmas.lean
+@@ -180,9 +180,17 @@
+   rw [Array.size] at h
+   simp only [push, ← getElem_toList, List.concat_eq_append, List.getElem_append_left, h]
+ 
+-@[simp] theorem getElem_push_eq {xs : Array α} {x : α} : (xs.push x)[xs.size] = x := by
+-  simp only [push, ← getElem_toList, List.concat_eq_append]
+-  rw [List.getElem_append_right] <;> simp
++@[simp] theorem getElem_push_eq {xs : Array α} {x : α} :
++    (xs.push x)[xs.size]'(by
++      rewrite [size_push]
++      exact Nat.lt_succ_self _) = x := by
++  unfold push size
++  cases xs with
++  | mk as =>
++    change (as.concat x)[as.length]'_ = x
++    induction as with
++    | nil => rfl
++    | cons _ as ih => exact ih
+ 
+ @[grind =] theorem getElem_push {xs : Array α} {x : α} {i : Nat} (h : i < (xs.push x).size) :
+     (xs.push x)[i] = if h : i < xs.size then xs[i] else x := by
+@@ -1188,8 +1196,36 @@
+   simp
+ 
+ @[simp, grind =] theorem size_map {f : α → β} {xs : Array α} : (xs.map f).size = xs.size := by
+-  simp only [← length_toList]
+-  simp
++  let measure : PSigma (fun _ : Nat => Array β) → Nat := fun state =>
++    match state with | ⟨i, _⟩ => xs.size - i
++  let step (state : PSigma (fun _ : Nat => Array β))
++      (go : (next : PSigma (fun _ : Nat => Array β)) → InvImage (· < ·) measure next state → Array β) : Array β :=
++    match state with
++    | ⟨i, bs⟩ => if hlt : i < xs.size then
++        go ⟨i + 1, bs.push (f xs[i])⟩ (by exact Nat.pred_lt (Nat.ne_zero_of_lt (Nat.sub_pos_of_lt hlt)))
++      else bs
++  have loop_size (fuel : Nat) (state : PSigma (fun _ : Nat => Array β))
++      (bound : measure state < fuel) :
++      (WellFounded.Nat.fix.go measure step fuel state bound).size = state.2.size + measure state := by
++    induction fuel generalizing state with
++    | zero => exact (Nat.not_lt_zero _ bound).elim
++    | succ fuel ih =>
++      cases state with
++      | mk i bs =>
++        change (step ⟨i, bs⟩ (fun next smaller => WellFounded.Nat.fix.go measure step fuel next
++          (Nat.lt_of_lt_of_le smaller (Nat.le_of_lt_add_one bound)))).size = bs.size + (xs.size - i)
++        by_cases hlt : i < xs.size
++        · simp only [step, dif_pos hlt]
++          rewrite [ih, size_push]
++          change bs.size + 1 + (xs.size - (i + 1)) = bs.size + (xs.size - i)
++          rewrite [Nat.sub_succ, Nat.add_assoc, Nat.add_comm 1]
++          exact congrArg (bs.size + ·) (Nat.succ_pred_eq_of_pos (Nat.sub_pos_of_lt hlt))
++        · simp only [step, dif_neg hlt]
++          rewrite [Nat.sub_eq_zero_of_le (Nat.le_of_not_lt hlt)]
++          exact (Nat.add_zero bs.size).symm
++  delta map mapM mapM.map mapM.map._unary
++  change (WellFounded.Nat.fix measure step ⟨0, emptyWithCapacity xs.size⟩).size = xs.size
++  exact (loop_size _ _ _).trans (Nat.zero_add xs.size)
+ 
+ -- The argument `f : α → β` is explicit, to facilitate rewriting from right to left.
+ @[simp, grind =] theorem getElem_map (f : α → β) {xs : Array α} {i : Nat} (hi : i < (xs.map f).size) :
+@@ -1758,7 +1794,7 @@
+ /-! ### append -/
+ 
+ @[simp, grind =] theorem size_append {xs ys : Array α} : (xs ++ ys).size = xs.size + ys.size := by
+-  simp only [size, toList_append, List.length_append]
++  simp only [size, toList_append, List.length_append, -eq_self, -iff_self]; rfl
+ 
+ @[simp, grind _=_] theorem push_append {a : α} {xs ys : Array α} : (xs ++ ys).push a = xs ++ ys.push a := by
+   cases xs
+@@ -1833,10 +1869,22 @@
+ @[simp]
+ theorem getElem_append_right {xs ys : Array α} {h : i < (xs ++ ys).size} (hle : xs.size ≤ i) :
+     (xs ++ ys)[i] = ys[i - xs.size]'(Nat.sub_lt_left_of_lt_add hle (size_append .. ▸ h)) := by
+-  simp only [← getElem_toList]
+-  have h' : i < (xs.toList ++ ys.toList).length := by rwa [← length_toList, toList_append] at h
+-  conv => rhs; unfold Array.size; rw [← List.getElem_append_right (h₁ := hle) (h₂ := h')]
+-  apply List.get_of_eq; rw [toList_append]
++  have listRight : ∀ (as bs : List α) (i : Nat)
++      (firstBound : as.length ≤ i) (fullBound : i < (as ++ bs).length),
++      (as ++ bs)[i]'fullBound =
++        bs[i - as.length]'(Nat.sub_lt_left_of_lt_add firstBound (List.length_append ▸ fullBound)) := by
++    intro as
++    induction as with
++    | nil => intro bs i firstBound fullBound; rfl
++    | cons value as ih =>
++      intro bs i firstBound fullBound
++      cases i with
++      | zero => exact False.elim (Nat.not_succ_le_zero as.length firstBound)
++      | succ i =>
++        simp only [List.length_cons, Nat.succ_sub_succ, -eq_self, -iff_self]
++        exact ih bs i (Nat.le_of_succ_le_succ firstBound) (Nat.lt_of_succ_lt_succ fullBound)
++  exact (getElem_congr_coll (i := i) (w := h) (toList_append (xs := xs) (ys := ys))).trans
++    (listRight xs.toList ys.toList i hle _)
+ 
+ theorem getElem?_append_left {xs ys : Array α} {i : Nat} (hn : i < xs.size) :
+     (xs ++ ys)[i]? = xs[i]? := by
+@@ -2801,7 +2849,7 @@
+   induction size using Nat.recAux generalizing start ys with
+   | zero =>
+     rw [size_extract_loop, Nat.zero_min, Nat.add_zero] at h
+-    omega
++    exact False.elim (Nat.not_lt_of_ge hge h)
+   | succ size ih =>
+     have h' : start + i - ys.size < xs.size := getElem_extract_loop_ge_aux hge h
+     have : start < xs.size := by
+@@ -4441,7 +4489,7 @@
+ 
+ theorem size_uset {xs : Array α} {v : α} {i : USize} (h : i.toNat < xs.size) :
+     (uset xs i v h).size = xs.size := by
+-  simp
++  exact size_set h
+ 
+ /-! # get -/
+ 

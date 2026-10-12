@@ -1,5 +1,7 @@
 /.elan/
 /.lake/
+# Expanded cache of the committed compressed Part-2 compiled survey receipt.
+/docs/plans/purelib/p2-compiled-pilots.json
 /.venv/
 __pycache__/
 /.external/
@@ -20,3 +22,5 @@ _region_.tex
 
 /known-projects
 /settings.toml
+
+.opencode

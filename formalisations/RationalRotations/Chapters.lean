@@ -1,0 +1,12 @@
+module
+
+-- Rational Rotations source examples and problem chapters.
+
+public import formalisations.RationalRotations.Chapters.IntroductoryExample
+public import formalisations.RationalRotations.Chapters.GeneratedSubgroupExamples
+import formalisations.RationalRotations.Chapters.GeneratorProfileExamples
+public import formalisations.RationalRotations.Chapters.RotationOrderExamples
+public import formalisations.RationalRotations.Chapters.KernelApproximationExamples
+public import formalisations.RationalRotations.Chapters.PositiveSquareClassSignatureExamples
+public import formalisations.RationalRotations.Chapters.RationalParabolicConjugacyExamples
+public import formalisations.RationalRotations.Chapters.OpenProblems

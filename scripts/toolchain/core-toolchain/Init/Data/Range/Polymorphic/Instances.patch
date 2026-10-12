@@ -1,0 +1,213 @@
+--- a/Init/Data/Range/Polymorphic/Instances.lean
++++ b/Init/Data/Range/Polymorphic/Instances.lean
+@@ -28,19 +28,19 @@
+ instance [LE α] [LT α] [UpwardEnumerable α] [LawfulUpwardEnumerable α]
+     [LawfulUpwardEnumerableLE α] [LawfulOrderLT α] : LawfulUpwardEnumerableLT α where
+   lt_iff a b := by
+-    simp only [LawfulOrderLT.lt_iff, UpwardEnumerable.le_iff]
+     constructor
+-    · intro h
+-      obtain ⟨n, hn⟩ := h.1
+-      cases n
+-      · apply h.2.elim
+-        refine ⟨0, ?_⟩
+-        simpa [succMany?_zero] using hn.symm
+-      exact ⟨_, hn⟩
+-    · intro h
+-      constructor
+-      · match h with | ⟨_, hn⟩ => exact ⟨_, hn⟩
+-      · exact UpwardEnumerable.not_ge_of_lt h
++    · intro hab
++      obtain ⟨hle, hnot⟩ := (LawfulOrderLT.lt_iff a b).mp hab
++      obtain ⟨n, hn⟩ := UpwardEnumerable.le_iff.mp hle
++      cases n with
++      | zero =>
++        apply hnot.elim; apply UpwardEnumerable.le_iff.mpr
++        exact ⟨0, succMany?_zero.trans (succMany?_zero.symm.trans hn).symm⟩
++      | succ n => exact ⟨n, hn⟩
++    · intro hab
++      apply (LawfulOrderLT.lt_iff a b).mpr
++      exact ⟨UpwardEnumerable.le_iff.mpr (UpwardEnumerable.le_of_lt hab),
++        fun hba => UpwardEnumerable.not_ge_of_lt hab (UpwardEnumerable.le_iff.mp hba)⟩
+ 
+ instance [LE α] [Total (α := α) (· ≤ ·)] [UpwardEnumerable α] [LawfulUpwardEnumerable α]
+     [LawfulUpwardEnumerableLE α] :
+@@ -69,24 +69,24 @@
+     [LawfulUpwardEnumerable α] [HasSize α] [LawfulHasSize α] :
+     IsAlwaysFinite α where
+   finite lo hi := by
+-    refine ⟨HasSize.size lo hi, ?_⟩
+-    generalize hn : HasSize.size lo hi = n
++    refine ⟨HasSize.size lo hi, ?_⟩; generalize hn : HasSize.size lo hi = n
+     induction n generalizing lo with
+     | zero =>
+-      simp only [size_eq_zero_iff_not_le] at hn
+-      simp [succMany?_zero, hn]
+-    | succ =>
+-      rename_i n ih
+-      rw [succMany?_add_one_eq_succ?_bind_succMany?]
+-      match hs : succ? lo with
+-      | none => simp
++      rewrite [succMany?_zero]; change ¬ lo ≤ hi; intro hle
++      cases hs : succ? lo with | none => exact Nat.noConfusion (hn.symm.trans (LawfulHasSize.size_eq_one_of_succ?_eq_none lo hi hle hs)) | some a => exact Nat.noConfusion (hn.symm.trans (LawfulHasSize.size_eq_succ_of_succ?_eq_some lo hi a hle hs))
++
++    | succ n ih =>
++      rewrite [succMany?_add_one_eq_succ?_bind_succMany?]
++      cases hs : succ? lo with
++      | none => exact True.intro
+       | some a =>
+-        simp only [Option.bind_some]
+-        apply ih
+-        have : lo ≤ hi := size_pos_iff_le.mp (by omega)
+-        rw [LawfulHasSize.size_eq_succ_of_succ?_eq_some (h := this) (h' := hs)] at hn
+-        omega
+-
++        change (succMany? n a).elim True (fun b => ¬ b ≤ hi); cases he : succMany? n a with
++        | none => exact True.intro
++        | some b =>
++          change ¬ b ≤ hi; intro hb
++          have hnn : ¬ ¬ lo ≤ hi := fun hnot => Nat.noConfusion ((LawfulHasSize.size_eq_zero_of_not_le lo hi hnot).symm.trans hn)
++          apply hnn; intro hle; have hsize := LawfulHasSize.size_eq_succ_of_succ?_eq_some lo hi a hle hs; have ha : HasSize.size a hi = n := Nat.add_right_cancel (hsize.symm.trans hn)
++          have hiha := ih a ha; rewrite [he] at hiha; exact hiha hb
+ end Rxc
+ 
+ namespace Rxo
+@@ -102,36 +102,36 @@
+     [Rxc.HasSize α] [Rxc.LawfulHasSize α] :
+     LawfulHasSize α where
+   size_eq_zero_of_not_le lo hi h := by
+-    simp only [HasSize.size]
+-    by_cases h' : lo ≤ hi
+-    · match hs : succ? lo with
+-      | none => rw [Rxc.LawfulHasSize.size_eq_one_of_succ?_eq_none (h := h') (h' := by omega)]
++    change Rxc.HasSize.size lo hi - 1 = 0
++    by_cases hle : lo ≤ hi
++    · cases hs : succ? lo with
++      | none => exact congrArg (· - 1) (Rxc.LawfulHasSize.size_eq_one_of_succ?_eq_none lo hi hle hs)
+       | some b =>
+-        rw [Rxc.LawfulHasSize.size_eq_succ_of_succ?_eq_some (h := h') (h' := hs)]
+-        have : ¬ b ≤ hi := by
+-          intro hb
+-          have : lo < b := by
+-            rw [UpwardEnumerable.lt_iff]
+-            exact ⟨0, by simpa [succMany?_one] using hs⟩
+-          exact h (lt_of_lt_of_le this hb)
+-        rw [Rxc.LawfulHasSize.size_eq_zero_of_not_le (h := this)]
+-    · suffices Rxc.HasSize.size lo hi = 0 by omega
+-      exact Rxc.LawfulHasSize.size_eq_zero_of_not_le _ _ h'
++        have hlt : lo < b := UpwardEnumerable.lt_iff.mpr ⟨0, succMany?_one.trans hs⟩
++        have hnot : ¬ b ≤ hi := fun hb => h ((LawfulOrderLT.lt_iff lo hi).mpr
++          ⟨IsPreorder.le_trans lo b hi ((LawfulOrderLT.lt_iff lo b).mp hlt).1 hb,
++            fun hl => ((LawfulOrderLT.lt_iff lo b).mp hlt).2 (IsPreorder.le_trans b hi lo hb hl)⟩)
++        rewrite [Rxc.LawfulHasSize.size_eq_succ_of_succ?_eq_some lo hi b hle hs,
++          Rxc.LawfulHasSize.size_eq_zero_of_not_le b hi hnot]; rfl
++    · rewrite [Rxc.LawfulHasSize.size_eq_zero_of_not_le lo hi hle]; rfl
+   size_eq_one_of_succ?_eq_none bound a h h' := by
+-    exfalso
+-    simp only [UpwardEnumerable.lt_iff] at h
+-    obtain ⟨n, hn⟩ := h
+-    simp [succMany?_add_one_eq_succ?_bind_succMany?, h'] at hn
+-  size_eq_succ_of_succ?_eq_some bound a a' h h' := by
+-    simp only [HasSize.size, Nat.pred_eq_succ_iff]
+-    rw [Rxc.LawfulHasSize.size_eq_succ_of_succ?_eq_some (h := le_of_lt h) (h' := h')]
+-    rw [← Nat.sub_add_comm]
+-    · omega
+-    · simp only [Nat.succ_le_iff, Rxc.size_pos_iff_le]
+-      rw [UpwardEnumerable.le_iff]
+-      rw [UpwardEnumerable.lt_iff] at h
+-      refine ⟨h.choose, ?_⟩
+-      simpa [succMany?_add_one_eq_succ?_bind_succMany?, h'] using h.choose_spec
++    obtain ⟨n, hn⟩ := UpwardEnumerable.lt_iff.mp h
++    rewrite [succMany?_add_one_eq_succ?_bind_succMany?, h', Option.bind_none] at hn
++    cases hn
++  size_eq_succ_of_succ?_eq_some a bound a' h h' := by
++    change Rxc.HasSize.size a bound - 1 = Rxc.HasSize.size a' bound - 1 + 1
++    obtain ⟨n, hn⟩ := UpwardEnumerable.lt_iff.mp h
++    rewrite [succMany?_add_one_eq_succ?_bind_succMany?, h', Option.bind_some] at hn
++    have hle' : a' ≤ bound := UpwardEnumerable.le_iff.mpr ⟨n, hn⟩
++    have hpos : 0 < Rxc.HasSize.size a' bound := by
++      cases hs : succ? a' with
++      | none => rewrite [Rxc.LawfulHasSize.size_eq_one_of_succ?_eq_none a' bound hle' hs]; exact Nat.zero_lt_one
++      | some b => rewrite [Rxc.LawfulHasSize.size_eq_succ_of_succ?_eq_some a' bound b hle' hs]; exact Nat.succ_pos _
++    rewrite [Rxc.LawfulHasSize.size_eq_succ_of_succ?_eq_some a bound a' ((LawfulOrderLT.lt_iff a bound).mp h).1 h', Nat.add_sub_cancel]
++    exact (Nat.sub_add_cancel (Nat.succ_le_of_lt hpos)).symm
++
++
++
+ 
+ /--
+ Creates a {lean}`HasSize α` from a {lean}`HasSize α` instance. If the latter is lawful
+@@ -144,24 +144,24 @@
+     [LawfulUpwardEnumerable α] [HasSize α] [LawfulHasSize α] :
+     IsAlwaysFinite α where
+   finite lo hi := by
+-    refine ⟨HasSize.size lo hi, ?_⟩
+-    generalize hn : HasSize.size lo hi = n
++    refine ⟨HasSize.size lo hi, ?_⟩; generalize hn : HasSize.size lo hi = n
+     induction n generalizing lo with
+     | zero =>
+-      simp only [size_eq_zero_iff_not_le] at hn
+-      simp [succMany?_zero, hn]
+-    | succ =>
+-      rename_i n ih
+-      rw [succMany?_add_one_eq_succ?_bind_succMany?]
+-      match hs : succ? lo with
+-      | none => simp
++      rewrite [succMany?_zero]; change ¬ lo < hi; intro hle
++      cases hs : succ? lo with | none => exact Nat.noConfusion (hn.symm.trans (LawfulHasSize.size_eq_one_of_succ?_eq_none lo hi hle hs)) | some a => exact Nat.noConfusion (hn.symm.trans (LawfulHasSize.size_eq_succ_of_succ?_eq_some lo hi a hle hs))
++
++    | succ n ih =>
++      rewrite [succMany?_add_one_eq_succ?_bind_succMany?]
++      cases hs : succ? lo with
++      | none => exact True.intro
+       | some a =>
+-        simp only [Option.bind_some]
+-        apply ih
+-        have : lo < hi := size_pos_iff_lt.mp (by omega)
+-        rw [LawfulHasSize.size_eq_succ_of_succ?_eq_some (h := this) (h' := hs)] at hn
+-        omega
+-
++        change (succMany? n a).elim True (fun b => ¬ b < hi); cases he : succMany? n a with
++        | none => exact True.intro
++        | some b =>
++          change ¬ b < hi; intro hb
++          have hnn : ¬ ¬ lo < hi := fun hnot => Nat.noConfusion ((LawfulHasSize.size_eq_zero_of_not_le lo hi hnot).symm.trans hn)
++          apply hnn; intro hle; have hsize := LawfulHasSize.size_eq_succ_of_succ?_eq_some lo hi a hle hs; have ha : HasSize.size a hi = n := Nat.add_right_cancel (hsize.symm.trans hn)
++          have hiha := ih a ha; rewrite [he] at hiha; exact hiha hb
+ end Rxo
+ 
+ namespace Rxi
+@@ -170,21 +170,21 @@
+     [LawfulUpwardEnumerable α] [HasSize α] [LawfulHasSize α] :
+     IsAlwaysFinite α where
+   finite lo := by
+-    refine ⟨HasSize.size lo, ?_⟩
+-    generalize hn : HasSize.size lo = n
++    refine ⟨HasSize.size lo, ?_⟩; generalize hn : HasSize.size lo = n
+     induction n generalizing lo with
+     | zero =>
+-      simp [Nat.ne_of_gt size_pos] at hn
+-    | succ =>
+-      rename_i n ih
+-      rw [succMany?_add_one_eq_succ?_bind_succMany?]
+-      match hs : succ? lo with
+-      | none => simp
++      cases hs : succ? lo with
++      | none => exact Nat.noConfusion (hn.symm.trans (LawfulHasSize.size_eq_one_of_succ?_eq_none lo hs))
++      | some a => exact Nat.noConfusion (hn.symm.trans (LawfulHasSize.size_eq_succ_of_succ?_eq_some lo a hs))
++    | succ n ih =>
++      rewrite [succMany?_add_one_eq_succ?_bind_succMany?]
++      cases hs : succ? lo with
++      | none => rfl
+       | some a =>
+-        simp only [Option.bind_some]
+-        apply ih
+-        rw [LawfulHasSize.size_eq_succ_of_succ?_eq_some (h := hs)] at hn
+-        omega
++        have ha : HasSize.size a = n := Nat.add_right_cancel ((LawfulHasSize.size_eq_succ_of_succ?_eq_some lo a hs).symm.trans hn)
++        exact ih a ha
++
++
+ 
+ end Rxi
+ 

@@ -1,0 +1,127 @@
+--- a/Init/Data/Range/Polymorphic/Iterators.lean
++++ b/Init/Data/Range/Polymorphic/Iterators.lean
+@@ -100,8 +100,8 @@
+   forIn' r init f := by
+     haveI := Iter.instForIn' (α := Rxc.Iterator α) (β := α) (n := m)
+     refine ForIn'.forIn' (α := α) (Internal.iter r) init (fun a ha acc => f a ?_ acc)
+-    simp only [Membership.mem] at ha
+-    rwa [Internal.isPlausibleIndirectOutput_iter_iff] at ha
++    change (Internal.iter r).IsPlausibleIndirectOutput a at ha
++    exact Internal.isPlausibleIndirectOutput_iter_iff.mp ha
+ 
+ end Iterator
+ 
+@@ -186,8 +186,8 @@
+   forIn' r init f := by
+     haveI := Iter.instForIn' (α := Rxo.Iterator α) (β := α) (n := m)
+     refine ForIn'.forIn' (α := α) (Internal.iter r) init (fun a ha acc => f a ?_ acc)
+-    simp only [Membership.mem] at ha
+-    rwa [Internal.isPlausibleIndirectOutput_iter_iff] at ha
++    change (Internal.iter r).IsPlausibleIndirectOutput a at ha
++    exact Internal.isPlausibleIndirectOutput_iter_iff.mp ha
+ 
+ end Iterator
+ 
+@@ -271,8 +271,8 @@
+   forIn' r init f := by
+     haveI := Iter.instForIn' (α := Rxi.Iterator α) (β := α) (n := m)
+     refine ForIn'.forIn' (α := α) (Internal.iter r) init (fun a ha acc => f a ?_ acc)
+-    simp only [Membership.mem] at ha
+-    rwa [Internal.isPlausibleIndirectOutput_iter_iff] at ha
++    change (Internal.iter r).IsPlausibleIndirectOutput a at ha
++    exact Internal.isPlausibleIndirectOutput_iter_iff.mp ha
+ 
+ end Iterator
+ 
+@@ -352,8 +352,8 @@
+   forIn' r init f := by
+     haveI := Iter.instForIn' (α := Rxc.Iterator α) (β := α) (n := m)
+     refine ForIn'.forIn' (α := α) (Internal.iter r) init (fun a ha acc => f a ?_ acc)
+-    simp only [Membership.mem] at ha
+-    rwa [Internal.isPlausibleIndirectOutput_iter_iff] at ha
++    change (Internal.iter r).IsPlausibleIndirectOutput a at ha
++    exact Internal.isPlausibleIndirectOutput_iter_iff.mp ha
+ 
+ end Iterator
+ 
+@@ -432,8 +432,8 @@
+   forIn' r init f := by
+     haveI := Iter.instForIn' (α := Rxo.Iterator α) (β := α) (n := m)
+     refine ForIn'.forIn' (α := α) (Internal.iter r) init (fun a ha acc => f a ?_ acc)
+-    simp only [Membership.mem] at ha
+-    rwa [Internal.isPlausibleIndirectOutput_iter_iff] at ha
++    change (Internal.iter r).IsPlausibleIndirectOutput a at ha
++    exact Internal.isPlausibleIndirectOutput_iter_iff.mp ha
+ 
+ end Iterator
+ 
+@@ -508,8 +508,8 @@
+   forIn' r init f := by
+     haveI := Iter.instForIn' (α := Rxi.Iterator α) (β := α) (n := m)
+     refine ForIn'.forIn' (α := α) (Internal.iter r) init (fun a ha acc => f a ?_ acc)
+-    simp only [Membership.mem] at ha
+-    rwa [Internal.isPlausibleIndirectOutput_iter_iff] at ha
++    change (Internal.iter r).IsPlausibleIndirectOutput a at ha
++    exact Internal.isPlausibleIndirectOutput_iter_iff.mp ha
+ 
+ end Iterator
+ 
+@@ -583,8 +583,8 @@
+   forIn' r init f := by
+     haveI := Iter.instForIn' (α := Rxc.Iterator α) (β := α) (n := m)
+     refine ForIn'.forIn' (α := α) (Internal.iter r) init (fun a ha acc => f a ?_ acc)
+-    simp only [Membership.mem] at ha
+-    rwa [Internal.isPlausibleIndirectOutput_iter_iff] at ha
++    change (Internal.iter r).IsPlausibleIndirectOutput a at ha
++    exact Internal.isPlausibleIndirectOutput_iter_iff.mp ha
+ 
+ end Iterator
+ 
+@@ -636,16 +636,16 @@
+     [LawfulUpwardEnumerable α] [LawfulUpwardEnumerableLT α]
+     [LawfulUpwardEnumerableLeast? α] {r : Rio α} {a : α} :
+     (Internal.iter r).IsPlausibleIndirectOutput a ↔ a ∈ r := by
+-  rw [Rxo.Iterator.isPlausibleIndirectOutput_iff]
+-  constructor
+-  · rintro ⟨n, hn, hu⟩
+-    simp only [Membership.mem, LawfulUpwardEnumerableLT.lt_iff]
+-    cases hr : (Internal.iter r).internalState.next
+-    · simp [hr] at hn
+-    · simpa [LawfulUpwardEnumerableLT.lt_iff] using! hu
++  constructor
++  · intro h
++    obtain ⟨n, hn, hu⟩ := Rxo.Iterator.isPlausibleIndirectOutput_iff.mp h
++    exact hu
+   · intro hu
+-    obtain ⟨init, hi, hia⟩ := LawfulUpwardEnumerableLeast?.least?_le a
+-    simpa [iter, hi] using ⟨hia, hu⟩
++    obtain ⟨init, hi, n, hn⟩ := LawfulUpwardEnumerableLeast?.least?_le a
++    apply Rxo.Iterator.isPlausibleIndirectOutput_iff.mpr
++    refine ⟨n, ?_, hu⟩
++    change Least?.least?.bind (succMany? n ·) = some a
++    rewrite [hi, Option.bind_some]; exact hn
+ 
+ @[no_expose]
+ instance {m} [UpwardEnumerable α]
+@@ -657,8 +657,8 @@
+   forIn' r init f := by
+     haveI := Iter.instForIn' (α := Rxo.Iterator α) (β := α) (n := m)
+     refine ForIn'.forIn' (α := α) (Internal.iter r) init (fun a ha acc => f a ?_ acc)
+-    simp only [Membership.mem] at ha
+-    rwa [Internal.isPlausibleIndirectOutput_iter_iff] at ha
++    change (Internal.iter r).IsPlausibleIndirectOutput a at ha
++    exact Internal.isPlausibleIndirectOutput_iter_iff.mp ha
+ 
+ end Iterator
+ 
+@@ -722,8 +722,8 @@
+   forIn' r init f := by
+     haveI := Iter.instForIn' (α := Rxi.Iterator α) (β := α) (n := m)
+     refine ForIn'.forIn' (α := α) (Internal.iter r) init (fun a ha acc => f a ?_ acc)
+-    simp only [Membership.mem] at ha
+-    rwa [Internal.isPlausibleIndirectOutput_iter_iff] at ha
++    change (Internal.iter r).IsPlausibleIndirectOutput a at ha
++    exact Internal.isPlausibleIndirectOutput_iter_iff.mp ha
+ 
+ end Iterator
+ 

@@ -1,0 +1,12 @@
+--- a/Init/Data/Nat/Bitwise/Basic.lean
++++ b/Init/Data/Nat/Bitwise/Basic.lean
+@@ -112,7 +112,8 @@
+   match b with
+   | 0 => (Nat.mul_one _).symm
+   | b+1 => (shiftLeft_eq _ b).trans <| by
+-    simp [Nat.pow_succ, Nat.mul_assoc, Nat.mul_comm]
++    simp only [Nat.pow_succ, Nat.mul_assoc, Nat.mul_comm, -eq_self, -iff_self]
++    rfl
+ 
+ @[simp, grind =] theorem shiftRight_zero : n >>> 0 = n := rfl
+ 

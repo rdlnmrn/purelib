@@ -1,0 +1,136 @@
+--- a/Init/Data/Nat/Bitwise/Lemmas.lean
++++ b/Init/Data/Nat/Bitwise/Lemmas.lean
+@@ -450,28 +450,36 @@
+ theorem bitwise_lt_two_pow (left : x < 2^n) (right : y < 2^n) : (Nat.bitwise f x y) < 2^n := by
+   induction n generalizing x y with
+   | zero =>
+-    simp only [eq_0_of_lt] at left right
++    have hx : x = 0 := Nat.eq_zero_of_le_zero (Nat.le_of_lt_succ left)
++    have hy : y = 0 := Nat.eq_zero_of_le_zero (Nat.le_of_lt_succ right)
++    subst x
++    subst y
+     unfold bitwise
+-    simp [left, right]
+-  | succ n hyp =>
++    rw [if_pos rfl]
++    split <;> exact Nat.zero_lt_one
++  | succ n ih =>
+     unfold bitwise
+-    if x_zero : x = 0 then
+-      simp only [x_zero, if_pos]
+-      by_cases p : f false true = true <;> simp [p, right]
+-    else if y_zero : y = 0 then
+-      simp only [x_zero, y_zero, if_pos]
+-      by_cases p : f true false = true <;> simp [p, left]
+-    else
+-      simp only [x_zero, y_zero]
+-      have hyp1 := hyp (div_two_le_of_lt_two left) (div_two_le_of_lt_two right)
+-      by_cases p : f (decide (x % 2 = 1)) (decide (y % 2 = 1)) = true <;>
+-        simp [p, Nat.pow_succ, mul_succ, Nat.add_assoc]
+-      case pos =>
+-        apply lt_of_succ_le
+-        simp only [← Nat.succ_add]
+-        apply Nat.add_le_add <;> exact hyp1
+-      case neg =>
+-        apply Nat.add_lt_add <;> exact hyp1
++    split
++    · split
++      · exact right
++      · exact Nat.two_pow_pos _
++    · split
++      · split
++        · exact left
++        · exact Nat.two_pow_pos _
++      · have divBound (z : Nat) (hz : z < 2^(n+1)) : z / 2 < 2^n := by
++          apply Nat.lt_of_not_ge
++          intro hle
++          have hm := Nat.mul_le_mul_right 2 hle
++          have hd := Nat.div_mul_le_self z 2
++          exact Nat.not_le_of_gt (Nat.pow_succ 2 n ▸ hz) (Nat.le_trans hm hd)
++        have hr := ih (x := x / 2) (y := y / 2) (divBound x left) (divBound y right)
++        rw [Nat.pow_succ, Nat.mul_two]
++        dsimp only
++        split
++        · rw [Nat.add_assoc]
++          exact Nat.add_lt_add_of_lt_of_le hr (Nat.succ_le_of_lt hr)
++        · exact Nat.add_lt_add hr hr
+ 
+ theorem bitwise_div_two_pow (of_false_false : f false false = false := by rfl) :
+   (bitwise f x y) / 2 ^ n = bitwise f (x / 2 ^ n) (y / 2 ^ n) := by
+@@ -521,13 +529,30 @@
+   idempotent := Nat.and_self
+ 
+ theorem and_lt_two_pow (x : Nat) {y n : Nat} (right : y < 2^n) : (x &&& y) < 2^n := by
+-  apply lt_pow_two_of_testBit
+-  intro i i_ge_n
+-  have yf : testBit y i = false := by
+-          apply Nat.testBit_lt_two_pow
+-          apply Nat.lt_of_lt_of_le right
+-          exact Nat.pow_le_pow_right Nat.zero_lt_two i_ge_n
+-  simp [testBit_and, yf]
++  change bitwise Bool.and x y < 2^n
++  induction n generalizing x y with
++  | zero =>
++    have hy : y = 0 := Nat.eq_zero_of_le_zero (Nat.le_of_lt_succ right)
++    subst y
++    unfold bitwise
++    split <;> exact Nat.zero_lt_one
++  | succ n ih =>
++    unfold bitwise
++    split
++    · exact Nat.two_pow_pos _
++    · split
++      · exact Nat.two_pow_pos _
++      · have hmul : y / 2 * 2 < 2^n * 2 :=
++          Nat.lt_of_le_of_lt (Nat.div_mul_le_self y 2) (Nat.pow_succ 2 n ▸ right)
++        have hy : y / 2 < 2^n := Nat.lt_of_not_ge
++          (fun hle => Nat.not_le_of_gt hmul (Nat.mul_le_mul_right 2 hle))
++        have hr := ih (x := x / 2) hy
++        rw [Nat.pow_succ, Nat.mul_two]
++        dsimp only
++        split
++        · rw [Nat.add_assoc]
++          exact Nat.add_lt_add_of_lt_of_le hr (Nat.succ_le_of_lt hr)
++        · exact Nat.add_lt_add hr hr
+ 
+ @[simp] theorem and_two_pow_sub_one_eq_mod (x n : Nat) : x &&& 2^n - 1 = x % 2^n := by
+   apply eq_of_testBit_eq
+@@ -865,8 +890,36 @@
+ theorem and_le_left {n m : Nat} : n &&& m ≤ n :=
+   le_of_testBit (by simpa using fun i x _ => x)
+ 
+-theorem and_le_right {n m : Nat} : n &&& m ≤ m :=
+-  le_of_testBit (by simp)
++theorem and_le_right {n m : Nat} : n &&& m ≤ m := by
++  change bitwise Bool.and n m ≤ m
++  induction m using Nat.strongRecOn generalizing n with
++  | ind m ih =>
++    unfold bitwise
++    split
++    · exact Nat.zero_le _
++    · split
++      · exact Nat.zero_le _
++      · rename_i hm
++        have hr : bitwise Bool.and (n / 2) (m / 2) ≤ m / 2 :=
++          ih (m / 2) (bitwise_rec_lemma hm)
++        have hs := Nat.add_le_add hr hr
++        have hd : m / 2 + m / 2 + m % 2 = m := by
++          rewrite [← Nat.two_mul, Nat.add_comm]
++          exact Nat.mod_add_div m 2
++        dsimp only
++        split
++        · rename_i hb
++          have right_true (a b : Bool) (h : (a && b) = true) : b = true := by
++            cases a <;> cases b
++            · cases h
++            · cases h
++            · cases h
++            · rfl
++          have hmod : m % 2 = 1 := of_decide_eq_true (right_true _ _ hb)
++          rewrite [hmod] at hd
++          exact Nat.le_trans (Nat.add_le_add_right hs 1) (Nat.le_of_eq hd)
++        · exact Nat.le_trans hs
++            (Nat.le_trans (Nat.le_add_right _ _) (Nat.le_of_eq hd))
+ 
+ theorem left_le_or {n m : Nat} : n ≤ n ||| m :=
+   le_of_testBit (by simp [imp_or_left_iff_true])

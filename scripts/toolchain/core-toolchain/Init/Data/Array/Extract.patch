@@ -1,0 +1,110 @@
+--- a/Init/Data/Array/Extract.lean
++++ b/Init/Data/Array/Extract.lean
+@@ -105,17 +105,80 @@
+   · simp only [size_extract, size_pop] at h₁ h₂
+     simp [getElem_extract, getElem_pop]
+ 
++private theorem extract_partition_size (n i j k : Nat) :
++    min j n - i + (min k n - j) = min (max j k) n - min i j := by
++  have maxLeft : ∀ (a b : Nat), b ≤ a → max a b = a := by
++    intro a b h
++    by_cases reverse : a ≤ b
++    · exact (if_pos reverse).trans (Nat.le_antisymm h reverse)
++    · exact if_neg reverse
++  have zeroMax : ∀ (k : Nat), max 0 k = k := fun k => if_pos (Nat.zero_le k)
++  have maxZero : ∀ (j : Nat), max j 0 = j := fun j => maxLeft j 0 (Nat.zero_le j)
++  have succMax : ∀ (j k : Nat), max (j + 1) (k + 1) = max j k + 1 := by
++    intro j k
++    rcases Nat.le_total j k with h | h
++    · rw [Nat.max_eq_right h, Nat.max_eq_right (Nat.succ_le_succ h)]
++    · rw [maxLeft j k h, maxLeft (j + 1) (k + 1) (Nat.succ_le_succ h)]
++  induction n generalizing i j k with
++  | zero =>
++    simp only [Nat.min_zero, Nat.zero_sub, Nat.zero_add, -eq_self, -iff_self]
++    rfl
++  | succ n ih =>
++    cases j with
++    | zero =>
++      simp only [Nat.zero_min, Nat.zero_sub, Nat.zero_add, Nat.sub_zero, zeroMax, Nat.min_zero, -eq_self, -iff_self]
++      rfl
++    | succ j =>
++      cases k with
++      | zero =>
++        rw [Nat.zero_min, Nat.zero_sub, Nat.add_zero, maxZero]
++        rcases Nat.le_total i (j + 1) with h | h
++        · rw [Nat.min_eq_left h]
++        · rw [Nat.min_eq_right h,
++            Nat.sub_eq_zero_of_le (Nat.le_trans (Nat.min_le_left _ _) h),
++            Nat.sub_eq_zero_of_le (Nat.min_le_left _ _)]
++      | succ k =>
++        cases i with
++        | zero =>
++          simp only [Nat.succ_min_succ, succMax, Nat.sub_zero,
++            Nat.zero_min, Nat.succ_sub_succ, Nat.succ_add, -eq_self, -iff_self]
++          exact congrArg Nat.succ (ih 0 j k)
++        | succ i =>
++          simp only [Nat.succ_min_succ, succMax, Nat.succ_sub_succ, -eq_self, -iff_self]
++          exact ih i j k
++
+ @[simp, grind _=_]
+ theorem extract_append_extract {as : Array α} {i j k : Nat} :
+     as.extract i j ++ as.extract j k = as.extract (min i j) (max j k) := by
+   ext l h₁ h₂
+-  · simp
+-    omega
+-  · simp only [size_append, size_extract] at h₁ h₂
+-    simp only [getElem_append, size_extract, getElem_extract]
+-    split <;>
+-    · congr 1
+-      omega
++  · rw [size_append, size_extract, size_extract, size_extract]
++    exact extract_partition_size as.size i j k
++  · simp only [size_append, size_extract, -eq_self, -iff_self] at h₁ h₂
++    by_cases inside : l < (as.extract i j).size
++    · rw [getElem_append_left inside, getElem_extract, getElem_extract]
++      rw [size_extract] at inside
++      congr 1
++      have hi : i ≤ j := Nat.le_trans (Nat.le_add_left i l)
++        (Nat.le_trans (Nat.le_of_lt (Nat.add_lt_of_lt_sub inside)) (Nat.min_le_left _ _))
++      rw [Nat.min_eq_left hi]
++    · have outside := Nat.le_of_not_lt inside
++      rw [getElem_append_right outside, getElem_extract, getElem_extract]
++      rw [size_extract] at outside
++      congr 1
++      rw [size_extract]
++      rcases Nat.le_total j as.size with bounded | overflow
++      · rw [Nat.min_eq_left bounded] at outside ⊢
++        rcases Nat.le_total i j with ordered | reversed
++        · rw [Nat.min_eq_left ordered]
++          calc
++            j + (l - (j - i)) = (i + (j - i)) + (l - (j - i)) :=
++              congrArg (fun value => value + (l - (j - i))) (Nat.add_sub_of_le ordered).symm
++            _ = i + l := by rw [Nat.add_assoc, Nat.add_sub_of_le outside]
++        · rw [Nat.min_eq_right reversed, Nat.sub_eq_zero_of_le reversed, Nat.sub_zero]
++      · have empty : min k as.size - j = 0 := Nat.sub_eq_zero_of_le
++          (Nat.le_trans (Nat.min_le_right _ _) overflow)
++        rw [empty, Nat.add_zero] at h₁
++        exact False.elim (Nat.not_lt_of_ge outside h₁)
+ 
+ @[simp]
+ theorem extract_eq_empty_iff {as : Array α} :
+@@ -212,10 +275,15 @@
+ @[simp] theorem extract_extract {as : Array α} {i j k l : Nat} :
+     (as.extract i j).extract k l = as.extract (i + k) (min (i + l) j) := by
+   ext m h₁ h₂
+-  · simp
+-    omega
+-  · simp only [size_extract] at h₁ h₂
+-    simp [Nat.add_assoc]
++  · rw [size_extract, size_extract, size_extract]
++    have transport := Nat.sub_min_sub_right (i + l) (min j as.size) i
++    rw [Nat.add_sub_cancel_left] at transport
++    exact (congrArg (fun value => value - k) transport).trans
++      ((Nat.sub_sub _ _ _).trans
++        (congrArg (fun value => value - (i + k)) (Nat.min_assoc _ _ _).symm))
++  · simp only [size_extract, -eq_self, -iff_self] at h₁ h₂
++    simp only [getElem_extract, Nat.add_assoc, -eq_self, -iff_self]
++    rfl
+ 
+ grind_pattern extract_extract => (as.extract i j).extract k l where
+   as =/= #[]

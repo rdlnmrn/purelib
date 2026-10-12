@@ -1,0 +1,18 @@
+--- a/Lake/Build/Module.lean
++++ b/Lake/Build/Module.lean
+@@ -456,9 +456,12 @@
+ 
+ /-- Computes the import artifacts and transitive import trace of a module's imports. -/
+ def Module.computeExportInfo (mod : Module) : FetchM (Job ModuleExportInfo) := do
+-  (← mod.leanArts.fetch).mapM (sync := true) fun arts => do
+-    let input ← (← mod.input.fetch).await
+-    let importInfo ← (← mod.importInfo.fetch).await
++  let inputJob ← mod.input.fetch
++  let importJob ← mod.importInfo.fetch
++  let artsJob ← mod.leanArts.fetch
++  inputJob.bindM (sync := true) fun input => do
++  importJob.bindM (sync := true) fun importInfo => do
++  artsJob.mapM (sync := true) fun arts => do
+     let artsTrace := BuildTrace.nil s!"{mod.name}:importArts"
+     let metaArtsTrace := BuildTrace.nil s!"{mod.name}:importArts (meta)"
+     let allArtsTrace := BuildTrace.nil s!"{mod.name}:importAllArts"
